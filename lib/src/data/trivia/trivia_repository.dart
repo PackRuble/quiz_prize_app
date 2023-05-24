@@ -52,7 +52,11 @@ extension GetCategories on TriviaRepository {
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
   Future<List<CategoryDTO>> getCategories() async {
+    log('$TriviaRepository.getCategories been called');
+
     final uri = Uri.https(TriviaRepository._baseUrl, 'api_category.php');
+
+    log('url: $uri');
 
     final http.Response response;
 
@@ -65,17 +69,17 @@ extension GetCategories on TriviaRepository {
         );
       }
     } catch (e, s) {
+      print(e);
+      print(s);
       throw Exception(e);
     }
 
     final body = json.decode(response.body) as Map;
 
-    final categoriesJson = (body["trivia_categories"] as List).cast<Map>();
+    final categoriesJson =
+        (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return [
-      for (final json in categoriesJson)
-        CategoryDTO.fromJson(json as Map<String, dynamic>)
-    ];
+    return categoriesJson.map(CategoryDTO.fromJson).toList();
   }
 }
 
@@ -110,6 +114,8 @@ extension GetQuizzes on TriviaRepository {
       ),
     );
 
+    log('url: $uri');
+
     final http.Response response;
     try {
       response = await client.get(uri);
@@ -122,6 +128,7 @@ extension GetQuizzes on TriviaRepository {
     } catch (e, s) {
       print(e);
       print(s);
+      throw Exception(e);
       return []; // todo: impl
     }
 
