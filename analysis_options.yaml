@@ -1,0 +1,12 @@
+include: package:lint/strict.yaml
+
+analyzer:
+  plugins:
+    - custom_lint
+
+linter:
+  rules:
+    unawaited_futures: true
+    discarded_futures: true
+    always_use_package_imports: false
+    sort_pub_dependencies: false
