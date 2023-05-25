@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/ui/game/game_bloc.dart';
 
 import '../shared/material_state_custom.dart';
@@ -18,13 +20,40 @@ class GamePage extends ConsumerWidget {
     final state = ref.watch(GamePageBloc.instance);
     final notifier = ref.watch(GamePageBloc.instance.notifier);
 
+    // todo
+    final solvedCount = 25;
+    final unsolvedCount = 6;
+
+    final score = solvedCount - unsolvedCount;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Card(
-          child: AppBar(
-            forceMaterialTransparency: true,
-            title: const Text('Game'),
+          child: Row(
+            children: [
+              const BackButton(),
+              Text(
+                'Score: $score',
+                style: textTheme.labelLarge,
+              ),
+              const Spacer(),
+              Text(
+                '⬆$solvedCount',
+                style: textTheme.labelLarge,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '⬇$unsolvedCount',
+                style: textTheme.labelLarge,
+              ),
+              const SizedBox(width: 8),
+
+              // AppBar(
+              //   forceMaterialTransparency: true,
+              //   title: const Text('Game'),
+              // ),
+            ],
           ),
         ),
       ),
@@ -37,9 +66,20 @@ class GamePage extends ConsumerWidget {
               padding: const EdgeInsets.all(8.0),
               child: ListView(
                 children: [
-                  Text('Available questions: ${data.amountQuizzes}'),
-                  Text(quiz.category),
-                  Text(quiz.difficulty.name),
+                  if (false ?? kDebugMode)
+                    Text('Available questions: ${data.amountQuizzes}'),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          quiz.category,
+                          style: textTheme.titleSmall,
+                        ),
+                      ),
+                      DifficultyStarWidget(difficulty: quiz.difficulty),
+                    ],
+                  ),
                   const Divider(),
                   Text(
                     quiz.question,
@@ -59,13 +99,14 @@ class GamePage extends ConsumerWidget {
                       answer: answer,
                       onTap: () async => notifier.checkAnswer(answer),
                     ),
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 30),
                   if (quiz.isCorrectYourAnswer != null)
-                    ElevatedButton(
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.arrow_forward),
                       onPressed: notifier.onNextQuiz,
-                      child: const Text('Next quiz'),
+                      label: const Text('Next question'),
                     ),
-                  Text('Correct answer: ${quiz.correctAnswer}'),
+                  if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
                 ],
               ),
             ),
@@ -74,7 +115,7 @@ class GamePage extends ConsumerWidget {
         error: (error, stackTrace) {
           FlutterError.reportError(
               FlutterErrorDetails(exception: error, stack: stackTrace));
-          return Text('$error $stackTrace');
+          return Center(child: Text('$error'));
         },
         loading: () => const CircularProgressIndicator(),
       ),
@@ -123,7 +164,29 @@ class _AnswerSelectButton extends ConsumerWidget {
           foregroundColor: MaterialStateColorOrNull.resolveWith(resolveFg),
         ),
         onPressed: blocked ? null : onTap,
-        child: Text(answer),
+        child: Text(
+          answer,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class DifficultyStarWidget extends StatelessWidget {
+  const DifficultyStarWidget({super.key, required this.difficulty});
+
+  final TriviaQuizDifficulty difficulty;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(
+        difficulty.index,
+        (index) => const Icon(
+          Icons.star_rounded,
+          color: Colors.deepOrange,
+        ),
       ),
     );
   }
