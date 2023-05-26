@@ -9,7 +9,7 @@ import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/data/trivia/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
-import 'quiz.model.dart';
+import 'model/quiz.model.dart';
 
 class TriviaBloc {
   @visibleForTesting
@@ -63,14 +63,31 @@ class TriviaBloc {
 
   /// Get a new quiz.
   Future<Quiz> getQuiz() async {
+    final QuizDTO quiz = (await _fetchQuizzes()).take(_takeQuizIndex).first;
+
+    return _quizFromDTO(quiz);
+  }
+
+  Quiz _quizFromDTO(QuizDTO quizDTO) {
+    return Quiz(
+      category: quizDTO.category,
+      type: quizDTO.type,
+      difficulty: quizDTO.difficulty,
+      question: quizDTO.question,
+      correctAnswer: quizDTO.correctAnswer,
+      answers: [quizDTO.correctAnswer, ...quizDTO.incorrectAnswers]..shuffle(),
+    );
+  }
+
+  Future<List<QuizDTO>> _fetchQuizzes() async {
     final quizzes = ref.read(this.quizzes);
 
     print(quizzes);
 
-    final Quiz resultQuiz;
     if (quizzes.length > _minCountQuizzesForFetching) {
-      resultQuiz = Quiz(quizzes.take(_takeQuizIndex).first);
+      return quizzes;
     } else {
+      // не нужно ожидать
       final fetchedQuiz = await triviaRepository.getQuizzes(
         category: CategoryDTO.fromJson({"id": 9, "name": "General Knowledge"}),
         difficulty: ref.read(quizDifficulty),
@@ -82,9 +99,13 @@ class TriviaBloc {
 
       unawaited(storage.set<List<QuizDTO>>(GameCard.lastQuiz, fetchedQuiz));
 
-      resultQuiz = Quiz(fetchedQuiz.take(_takeQuizIndex).first);
+      return fetchedQuiz;
     }
+  }
 
-    return resultQuiz;
+  Future<Quiz> checkMyAnswer(Quiz quiz, String answer) async {
+    final newQuiz = quiz.copyWith(yourAnswer: answer);
+    // todo: save in storage
+    return newQuiz;
   }
 }
