@@ -70,73 +70,73 @@ class TriviaQuizBloc {
     );
   });
 
-  static const _minCountQuizzesForFetching = 10;
-  static const _countFetchQuizzes = 25;
+  static const _minCountCachedQuizzes = 10;
+
+  bool _enoughCachedQuizzes() =>
+      storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
+
+  bool _suitQuizByFilter(Quiz quiz) {
+    final category = _ref.read(quizCategory);
+    final difficulty = _ref.read(quizDifficulty);
+    final type = _ref.read(quizType);
+
+    if ((quiz.category == category.name) &&
+        (quiz.difficulty == difficulty ||
+            difficulty == TriviaQuizDifficulty.any) &&
+        (quiz.type == type || type == TriviaQuizType.any)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  Iterator<Quiz>? quizzesIterator;
 
   /// Get a new quiz.
   ///
   /// Generates errors if no quizzes are found.
   Future<Quiz> getQuiz() async {
-    final quiz = await _getNextQuiz();
+    final cachedQuizzes = storage.get(GameCard.quizzes);
 
-    return quiz;
-  }
+    Completer<void>? completer;
+    // silently increase the quiz cache if their number is below the allowed level
+    if (!_enoughCachedQuizzes()) {
+      quizzesIterator = null;
+      completer = Completer();
+      completer.complete(_increaseCachedQuizzes());
+    }
 
-  int? _lastFoundByIndex;
+    // looking for a quiz that matches the filters
+    quizzesIterator ??= cachedQuizzes.iterator;
+    while (quizzesIterator!.moveNext()) {
+      final quiz = quizzesIterator!.current;
 
-  /// If no additional restrictions are specified, the first value from the list
-  /// will be returned.
-  Quiz? _findQuizBy(
-    List<Quiz> quizzes, {
-    CategoryDTO? category,
-    TriviaQuizDifficulty? difficulty,
-    TriviaQuizType? type,
-  }) {
-    for (int i = _lastFoundByIndex ?? 0; i < quizzes.length; ++i) {
-      final q = quizzes[i];
-
-      if ((q.category == (category?.name ?? true)) &&
-          (q.difficulty == (difficulty ?? true) ||
-              difficulty == TriviaQuizDifficulty.any) &&
-          (q.type == (type ?? true) || type == TriviaQuizType.any)) {
-        _lastFoundByIndex = i;
-        return q;
+      if (_suitQuizByFilter(quiz)) {
+        print('Новое ${quiz.question}');
+        return quiz;
       }
     }
-    _lastFoundByIndex = null;
 
-    return null;
+    // quiz not found or list is empty...
+    quizzesIterator = null;
+    await (completer?.future ?? _increaseCachedQuizzes());
+    return getQuiz();
   }
 
-  Future<Quiz> _getNextQuiz() async {
-    final quizzes = _ref.read(this.quizzes);
+  Future<void> _increaseCachedQuizzes() async {
+    // todo if the quizzes are over on the server
+    final fetched = await _fetchQuizzes();
 
-    // print(quizzes);
-
-    final List<Quiz> results;
-
-    if (quizzes.length > _minCountQuizzesForFetching) {
-      results = quizzes;
-    } else {
-      final fetchedQuiz = await _fetchQuizzes();
-      fetchedQuiz.addAll(quizzes);
-      unawaited(storage.set<List<Quiz>>(GameCard.quizzes, fetchedQuiz));
-      results = fetchedQuiz;
-    }
-
-    final Quiz? quiz = _findQuizBy(
-      results,
-      category: _ref.read(quizCategory),
-      difficulty: _ref.read(quizDifficulty),
-      type: _ref.read(quizType),
-    );
-
-    if (quiz == null) {
-      throw 'Викторины на данную тематику закончились'; // todo сделать разборку викторин на группы
-    }
-
-    return quiz;
+    // we leave unsuitable quizzes for future times
+    await storage.set<List<Quiz>>(GameCard.quizzes, [
+      ...fetched,
+      ...storage.get(GameCard.quizzes),
+    ]);
   }
+
+  // ***************************************************************************
+
+  static const _countFetchQuizzes = 6;
 
   /// Get quizzes from [TriviaRepository.getQuizzes].
   Future<List<Quiz>> _fetchQuizzes() async {
@@ -150,7 +150,9 @@ class TriviaQuizBloc {
     return _quizzesFromDTO(fetchedQuizDTO);
   }
 
-  Future<Quiz> checkMyAnswer(Quiz quiz, String answer) async {
+  Future<Quiz> checkMyAnswer(String answer) async {
+    var quiz = quizzesIterator!.current;
+    print('Проверка ответа ${quiz.question}');
     quiz = quiz.copyWith(yourAnswer: answer); // ignore: parameter_assignments
 
     unawaited(_triviaStatsBloc._savePoints(quiz.correctlySolved!));
@@ -161,14 +163,14 @@ class TriviaQuizBloc {
   Future<void> _moveQuizAsPlayed(Quiz quiz) async {
     final quizzes = storage.get(GameCard.quizzes);
 
-    final removedIndex = quizzes.indexWhere(
-      (q) =>
-          q.correctAnswer == quiz.correctAnswer &&
-          q.question == quiz.question, // todo: uuid
-    );
+    // final removedIndex = quizzes.indexWhere(
+    //   (q) =>
+    //       q.correctAnswer == quiz.correctAnswer &&
+    //       q.question == quiz.question, // todo: uuid
+    // );
     await storage.set<List<Quiz>>(
       GameCard.quizzes,
-      quizzes..removeAt(removedIndex),
+      quizzes..remove(quiz),
     );
 
     final quizzesPlayed = storage.get(GameCard.quizzesPlayed);
