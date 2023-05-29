@@ -18,4 +18,9 @@ class CategoryDTO with _$CategoryDTO {
 
   factory CategoryDTO.fromJson(Map<String, dynamic> json) =>
       _$CategoryDTOFromJson(json);
+
+  static const CategoryDTO general = CategoryDTO(
+    id: 9,
+    name: 'General Knowledge',
+  );
 }

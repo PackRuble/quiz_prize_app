@@ -128,8 +128,7 @@ extension GetQuizzes on TriviaRepository {
     } catch (e, s) {
       print(e);
       print(s);
-      throw Exception(e);
-      return []; // todo: impl
+      throw Exception(e); //todo: impl
     }
 
     final decoded = json.decode(response.body) as Map;
