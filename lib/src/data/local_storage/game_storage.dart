@@ -2,15 +2,17 @@ import 'dart:convert';
 
 import 'package:cardoteka/cardoteka.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
-import 'package:trivia_app/src/data/trivia/quiz/quiz.dto.dart';
+import 'package:trivia_app/src/domain/bloc/trivia_quiz/model/quiz.model.dart';
 
-final gameStorageProvider = Provider<GameStorage>((ref) {
-  throw UnimplementedError();
-});
-
+/// Define our storage class with the necessary mixins and parameters.
 class GameStorage extends Cardoteka with WatcherImpl {
-  GameStorage() : super(config: GameCard._config);
+  GameStorage._() : super(config: GameCard._config);
+
+  /// Using the riverpod state manager to create a single storage instance.
+  /// Putting the provider inside the class for an explicit singleton analogy.
+  static final instance = Provider<GameStorage>((ref) => GameStorage._());
 }
 
 /// [Card]s related to the process of the game.
@@ -22,10 +24,14 @@ class GameStorage extends Cardoteka with WatcherImpl {
 /// [defaultValue]. To access such a value, use [Cardoteka.getOrNull]
 /// and [Cardoteka.setOrNull]. [defaultValue]s must be constant.
 enum GameCard<T extends Object> implements Card<T> {
-  lastQuiz<List<QuizDTO>>(DataType.stringList, []),
+  quizzes<List<Quiz>>(DataType.stringList, []),
+  quizzesPlayed<List<Quiz>>(DataType.stringList, []),
+  winning<int>(DataType.int, 0),
+  losing<int>(DataType.int, 0),
   quizDifficulty<TriviaQuizDifficulty>(
       DataType.string, TriviaQuizDifficulty.any),
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
+  quizCategory<CategoryDTO>(DataType.string, CategoryDTO.general),
   ;
 
   const GameCard(this.type, this.defaultValue);
@@ -53,9 +59,11 @@ enum GameCard<T extends Object> implements Card<T> {
     name: 'GameCard',
     cards: values,
     converters: {
-      lastQuiz: _ListQuizDTOConverter(),
+      quizzes: _QuizzesConverter(),
+      quizzesPlayed: _QuizzesConverter(),
       quizDifficulty: EnumAsStringConverter(TriviaQuizDifficulty.values),
       quizType: _QuizTypeConverter(),
+      quizCategory: _QuizCategoryConverter(),
     },
   );
 }
@@ -75,17 +83,28 @@ class _QuizTypeConverter extends Converter<TriviaQuizType, String> {
   String to(TriviaQuizType object) => object.name;
 }
 
-/// A special converter for processing a collection of elements [QuizDTO].
+/// A special converter for processing a collection of elements [Quiz].
 ///
 /// All you need is to implement [objFrom] and [objTo] to transform the item.
 /// To use [ListConverter], it must be extended, not implemented.
-class _ListQuizDTOConverter extends ListConverter<QuizDTO> {
-  const _ListQuizDTOConverter();
+class _QuizzesConverter extends ListConverter<Quiz> {
+  const _QuizzesConverter();
 
   @override
-  QuizDTO objFrom(String element) =>
-      QuizDTO.fromJson(jsonDecode(element) as Map<String, dynamic>);
+  Quiz objFrom(String element) =>
+      Quiz.fromJson(jsonDecode(element) as Map<String, dynamic>);
 
   @override
-  String objTo(QuizDTO obj) => jsonEncode(obj.toJson());
+  String objTo(Quiz obj) => jsonEncode(obj.toJson());
+}
+
+class _QuizCategoryConverter extends Converter<CategoryDTO, String> {
+  const _QuizCategoryConverter();
+
+  @override
+  CategoryDTO from(String source) =>
+      CategoryDTO.fromJson(jsonDecode(source) as Map<String, dynamic>);
+
+  @override
+  String to(CategoryDTO object) => jsonEncode(object.toJson());
 }
