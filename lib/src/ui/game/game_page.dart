@@ -1,7 +1,12 @@
+import 'dart:math';
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
+import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/game/game_bloc.dart';
 
 import '../shared/material_state_custom.dart';
@@ -20,42 +25,10 @@ class GamePage extends ConsumerWidget {
     final state = ref.watch(GamePageBloc.instance);
     final notifier = ref.watch(GamePageBloc.instance.notifier);
 
-    // todo
-    final solvedCount = 25;
-    final unsolvedCount = 6;
-
-    final score = solvedCount - unsolvedCount;
-
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Card(
-          child: Row(
-            children: [
-              const BackButton(),
-              Text(
-                'Score: $score',
-                style: textTheme.labelLarge,
-              ),
-              const Spacer(),
-              Text(
-                '⬆$solvedCount',
-                style: textTheme.labelLarge,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '⬇$unsolvedCount',
-                style: textTheme.labelLarge,
-              ),
-              const SizedBox(width: 8),
-
-              // AppBar(
-              //   forceMaterialTransparency: true,
-              //   title: const Text('Game'),
-              // ),
-            ],
-          ),
-        ),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: AppCardBar(),
       ),
       body: state.when(
         data: (data) {
@@ -89,18 +62,19 @@ class GamePage extends ConsumerWidget {
                   const SizedBox(height: 20),
                   for (final answer in quiz.answers)
                     _AnswerSelectButton(
-                      isCorrect: switch (quiz.isCorrectYourAnswer) {
+                      isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
+                      isCorrect: switch (quiz.correctlySolved) {
                         true when answer == quiz.yourAnswer => true,
-                        false when answer == quiz.correctAnswer => true,
                         false when answer == quiz.yourAnswer => false,
+                        false when answer == quiz.correctAnswer => true,
                         _ => null,
                       },
-                      blocked: quiz.isCorrectYourAnswer != null,
+                      blocked: quiz.correctlySolved != null,
                       answer: answer,
                       onTap: () async => notifier.checkAnswer(answer),
                     ),
                   const SizedBox(height: 30),
-                  if (quiz.isCorrectYourAnswer != null)
+                  if (quiz.correctlySolved != null)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.arrow_forward),
                       onPressed: notifier.onNextQuiz,
@@ -123,18 +97,20 @@ class GamePage extends ConsumerWidget {
   }
 }
 
-class _AnswerSelectButton extends ConsumerWidget {
+class _AnswerSelectButton extends HookConsumerWidget {
   const _AnswerSelectButton({
     super.key,
     required this.onTap,
     required this.answer,
     required this.isCorrect,
+    required this.isCorrectChoice,
     required this.blocked,
   });
 
   final VoidCallback onTap;
   final String answer;
   final bool? isCorrect;
+  final bool isCorrectChoice;
   final bool blocked;
 
   @override
@@ -156,20 +132,76 @@ class _AnswerSelectButton extends ConsumerWidget {
           : null;
     }
 
+    final confettiCtrl = useState(
+      ConfettiController(duration: const Duration(seconds: 1)),
+    ).value;
+
+    useEffect(
+      () {
+        if ((isCorrect ?? false) && isCorrectChoice == true) {
+          confettiCtrl.play();
+        }
+        return null;
+      },
+      [isCorrect],
+    );
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: FilledButton.tonal(
-        style: ButtonStyle(
-          backgroundColor: MaterialStateColorOrNull.resolveWith(resolveBg),
-          foregroundColor: MaterialStateColorOrNull.resolveWith(resolveFg),
-        ),
-        onPressed: blocked ? null : onTap,
-        child: Text(
-          answer,
-          textAlign: TextAlign.center,
-        ),
+      child: Stack(
+        children: [
+          Align(
+            child: ConfettiWidget(
+              blastDirectionality: BlastDirectionality.explosive,
+              createParticlePath: drawStar,
+              pauseEmissionOnLowFrameRate: false,
+              confettiController: confettiCtrl,
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonal(
+              style: ButtonStyle(
+                backgroundColor:
+                    MaterialStateColorOrNull.resolveWith(resolveBg),
+                foregroundColor:
+                    MaterialStateColorOrNull.resolveWith(resolveFg),
+              ),
+              onPressed: blocked ? null : onTap,
+              child: Text(
+                answer,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  /// A custom Path to paint stars.
+  Path drawStar(Size size) {
+    // Method to convert degree to radians
+    double degToRad(double deg) => deg * (pi / 180.0);
+
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(halfWidth + externalRadius * cos(step),
+          halfWidth + externalRadius * sin(step));
+      path.lineTo(halfWidth + internalRadius * cos(step + halfDegreesPerStep),
+          halfWidth + internalRadius * sin(step + halfDegreesPerStep));
+    }
+    path.close();
+    return path;
   }
 }
 
@@ -187,6 +219,43 @@ class DifficultyStarWidget extends StatelessWidget {
           Icons.star_rounded,
           color: Colors.deepOrange,
         ),
+      ),
+    );
+  }
+}
+
+class AppCardBar extends ConsumerWidget {
+  const AppCardBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final gameStats = ref.watch(TriviaStatsBloc.instance);
+
+    final solvedCount = ref.watch(gameStats.winning);
+    final unsolvedCount = ref.watch(gameStats.losing);
+    final score = solvedCount - unsolvedCount;
+
+    return Card(
+      child: Row(
+        children: [
+          const BackButton(),
+          Text(
+            'Score: $score',
+            style: textTheme.labelLarge,
+          ),
+          const Spacer(),
+          Text(
+            '⬆$solvedCount',
+            style: textTheme.labelLarge,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '⬇$unsolvedCount',
+            style: textTheme.labelLarge,
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
     );
   }
