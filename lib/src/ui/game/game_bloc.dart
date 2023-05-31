@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz.model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_bloc.dart';
+import 'package:trivia_app/src/domain/bloc/trivia_quiz/model/quiz.model.dart';
+import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 
 @immutable
 class GameState {
@@ -33,27 +33,24 @@ class GamePageBloc extends AutoDisposeAsyncNotifier<GameState> {
 
   @override
   Future<GameState> build() async {
-    final triviaBloc = ref.watch(TriviaBloc.instance);
+    final triviaBloc = ref.watch(TriviaQuizBloc.instance);
     final quiz = await triviaBloc.getQuiz();
-    final amountQuizzes = ref.watch(triviaBloc.quizzes).length;
-
+    final amountQuizzes = ref.read(triviaBloc.quizzes).length; // todo
     return GameState(quiz: quiz, amountQuizzes: amountQuizzes);
   }
 
   Future<void> checkAnswer(String answer) async {
-    final triviaBloc = ref.read(TriviaBloc.instance);
+    final triviaBloc = ref.read(TriviaQuizBloc.instance);
 
-    final quiz = state.requireValue.quiz;
+    final quiz = await triviaBloc.checkMyAnswer(answer);
 
-    final newQuiz = await triviaBloc.checkMyAnswer(quiz, answer);
-
-    state = AsyncData(state.requireValue.copyWith(quiz: newQuiz));
+    state = AsyncData(state.requireValue.copyWith(quiz: quiz));
   }
 
   Future<void> onNextQuiz() async {
     state = const AsyncLoading();
 
-    final triviaBloc = ref.read(TriviaBloc.instance);
+    final triviaBloc = ref.read(TriviaQuizBloc.instance);
     final quiz = await triviaBloc.getQuiz();
     final amountQuizzes = ref.read(triviaBloc.quizzes).length;
 
