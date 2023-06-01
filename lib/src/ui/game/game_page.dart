@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/game/game_page_ctrl.dart';
 
 import '../shared/material_state_custom.dart';
@@ -43,8 +42,8 @@ class _QuizWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final notifier = ref.watch(GamePageCtrl.instance);
-    final currentQuiz = ref.watch(notifier.currentQuiz);
+    final pageController = ref.watch(GamePageCtrl.instance);
+    final currentQuiz = ref.watch(pageController.currentQuiz);
 
     return currentQuiz.when(
       data: (quiz) => ListView(
@@ -53,7 +52,7 @@ class _QuizWidget extends ConsumerWidget {
             Consumer(
               builder: (context, ref, child) {
                 return Text(
-                  'Available questions: ${ref.watch(notifier.amountQuizzes)}',
+                  'Available questions: ${ref.watch(pageController.amountQuizzes)}',
                 );
               },
             ),
@@ -87,13 +86,13 @@ class _QuizWidget extends ConsumerWidget {
               },
               blocked: quiz.correctlySolved != null,
               answer: answer,
-              onTap: () async => notifier.checkAnswer(answer),
+              onTap: () async => pageController.checkAnswer(answer),
             ),
           const SizedBox(height: 30),
           if (quiz.correctlySolved != null)
             ElevatedButton.icon(
               icon: const Icon(Icons.arrow_forward),
-              onPressed: notifier.onNextQuiz,
+              onPressed: pageController.onNextQuiz,
               label: const Text('Next question'),
             ),
           if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
@@ -242,10 +241,10 @@ class _AppCardBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final gameStats = ref.watch(TriviaStatsBloc.instance);
+    final pageController = ref.watch(GamePageCtrl.instance);
 
-    final solvedCount = ref.watch(gameStats.winning);
-    final unsolvedCount = ref.watch(gameStats.losing);
+    final solvedCount = ref.watch(pageController.triviaStatsBloc.winning);
+    final unsolvedCount = ref.watch(pageController.triviaStatsBloc.losing);
     final score = solvedCount - unsolvedCount;
 
     return Card(

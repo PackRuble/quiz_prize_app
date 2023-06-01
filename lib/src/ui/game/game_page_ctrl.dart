@@ -6,29 +6,29 @@ class GamePageCtrl {
   GamePageCtrl({
     required Ref ref,
     required TriviaQuizBloc triviaQuizBloc,
+    required this.triviaStatsBloc,
   })  : _triviaQuizBloc = triviaQuizBloc,
         _ref = ref;
 
   final Ref _ref;
   final TriviaQuizBloc _triviaQuizBloc;
+  final TriviaStatsBloc triviaStatsBloc;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
     (ref) => GamePageCtrl(
       ref: ref,
       triviaQuizBloc: ref.watch(TriviaQuizBloc.instance),
+      triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
     ),
   );
 
-  Future<AsyncValue<Quiz>> _getQuiz() =>
-      AsyncValue.guard(_triviaQuizBloc.getQuiz);
-
   late final currentQuiz = AutoDisposeStateProvider<AsyncValue<Quiz>>((ref) {
     ref.listenSelf((_, next) async {
-      await next.whenOrNull(
-        loading: () async => ref.controller.state = await _getQuiz(),
-      );
+      if (next is AsyncLoading) {
+        ref.controller.state = await AsyncValue.guard(_triviaQuizBloc.getQuiz);
+      }
     });
-    return const AsyncValue.loading();
+    return const AsyncLoading();
   });
 
   late final amountQuizzes = AutoDisposeProvider<int>(
@@ -41,6 +41,8 @@ class GamePageCtrl {
   }
 
   Future<void> onNextQuiz() async {
-    _ref.invalidate(currentQuiz);
+    // we need to return the value immediately without waiting.
+    // ignore: unused_result
+    _ref.refresh(currentQuiz);
   }
 }
