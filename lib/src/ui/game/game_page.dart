@@ -7,7 +7,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
-import 'package:trivia_app/src/ui/game/game_bloc.dart';
+import 'package:trivia_app/src/ui/game/game_page_ctrl.dart';
 
 import '../shared/material_state_custom.dart';
 
@@ -20,79 +20,91 @@ class GamePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
-
-    final state = ref.watch(GamePageBloc.instance);
-    final notifier = ref.watch(GamePageBloc.instance.notifier);
-
-    return Scaffold(
-      appBar: const PreferredSize(
+    return const Scaffold(
+      appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
-        child: AppCardBar(),
+        child: _AppCardBar(),
       ),
-      body: state.when(
-        data: (data) {
-          final quiz = data.quiz;
+      body: Card(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: _QuizWidget(),
+        ),
+      ),
+    );
+  }
+}
 
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListView(
-                children: [
-                  if (false ?? kDebugMode)
-                    Text('Available questions: ${data.amountQuizzes}'),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          quiz.category,
-                          style: textTheme.titleSmall,
-                        ),
-                      ),
-                      DifficultyStarWidget(difficulty: quiz.difficulty),
-                    ],
-                  ),
-                  const Divider(),
-                  Text(
-                    quiz.question,
-                    textAlign: TextAlign.center,
-                    style: textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 20),
-                  for (final answer in quiz.answers)
-                    _AnswerSelectButton(
-                      isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
-                      isCorrect: switch (quiz.correctlySolved) {
-                        true when answer == quiz.yourAnswer => true,
-                        false when answer == quiz.yourAnswer => false,
-                        false when answer == quiz.correctAnswer => true,
-                        _ => null,
-                      },
-                      blocked: quiz.correctlySolved != null,
-                      answer: answer,
-                      onTap: () async => notifier.checkAnswer(answer),
-                    ),
-                  const SizedBox(height: 30),
-                  if (quiz.correctlySolved != null)
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: notifier.onNextQuiz,
-                      label: const Text('Next question'),
-                    ),
-                  if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
-                ],
-              ),
+class _QuizWidget extends ConsumerWidget {
+  const _QuizWidget({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final notifier = ref.watch(GamePageCtrl.instance);
+    final currentQuiz = ref.watch(notifier.currentQuiz);
+
+    return currentQuiz.when(
+      data: (quiz) => ListView(
+        children: [
+          if (true ?? kDebugMode)
+            Consumer(
+              builder: (context, ref, child) {
+                return Text(
+                  'Available questions: ${ref.watch(notifier.amountQuizzes)}',
+                );
+              },
             ),
-          );
-        },
-        error: (error, stackTrace) {
-          FlutterError.reportError(
-              FlutterErrorDetails(exception: error, stack: stackTrace));
-          return Center(child: Text('$error'));
-        },
-        loading: () => const CircularProgressIndicator(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: Text(
+                  quiz.category,
+                  style: textTheme.titleSmall,
+                ),
+              ),
+              _DifficultyStarWidget(difficulty: quiz.difficulty),
+            ],
+          ),
+          const Divider(),
+          Text(
+            quiz.question,
+            textAlign: TextAlign.center,
+            style: textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 20),
+          for (final answer in quiz.answers)
+            _AnswerSelectButton(
+              isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
+              isCorrect: switch (quiz.correctlySolved) {
+                true when answer == quiz.yourAnswer => true,
+                false when answer == quiz.yourAnswer => false,
+                false when answer == quiz.correctAnswer => true,
+                _ => null,
+              },
+              blocked: quiz.correctlySolved != null,
+              answer: answer,
+              onTap: () async => notifier.checkAnswer(answer),
+            ),
+          const SizedBox(height: 30),
+          if (quiz.correctlySolved != null)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.arrow_forward),
+              onPressed: notifier.onNextQuiz,
+              label: const Text('Next question'),
+            ),
+          if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
+        ],
       ),
+      error: (error, stackTrace) {
+        FlutterError.reportError(
+            FlutterErrorDetails(exception: error, stack: stackTrace));
+        return Center(child: Text('$error'));
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -205,8 +217,8 @@ class _AnswerSelectButton extends HookConsumerWidget {
   }
 }
 
-class DifficultyStarWidget extends StatelessWidget {
-  const DifficultyStarWidget({super.key, required this.difficulty});
+class _DifficultyStarWidget extends StatelessWidget {
+  const _DifficultyStarWidget({super.key, required this.difficulty});
 
   final TriviaQuizDifficulty difficulty;
 
@@ -224,8 +236,8 @@ class DifficultyStarWidget extends StatelessWidget {
   }
 }
 
-class AppCardBar extends ConsumerWidget {
-  const AppCardBar({super.key});
+class _AppCardBar extends ConsumerWidget {
+  const _AppCardBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
