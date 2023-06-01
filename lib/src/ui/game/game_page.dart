@@ -258,12 +258,16 @@ class _AppCardBar extends ConsumerWidget {
           const Spacer(),
           Text(
             '⬆$solvedCount',
-            style: textTheme.labelLarge,
+            style: textTheme.labelLarge?.copyWith(
+              color: Colors.green.shade900,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
             '⬇$unsolvedCount',
-            style: textTheme.labelLarge,
+            style: textTheme.labelLarge?.copyWith(
+              color: Colors.red.shade900,
+            ),
           ),
           const SizedBox(width: 8),
         ],
