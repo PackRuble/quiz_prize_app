@@ -1,16 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import 'package:trivia_app/extension/hex_color.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
+import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/game/game_page.dart';
 
-import '../../data/trivia/category/category.dto.dart';
 import 'home_page_ctrl.dart';
 
 class HomePage extends HookConsumerWidget {
@@ -29,36 +27,44 @@ class HomePage extends HookConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
+                // if that's not enough - use SingleChildScrollView
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text('Супер Игра'),
-                  Spacer(),
-                  Column(
-                    children: [
-                      _ChapterButton(
-                        chapter: 'Play',
-                        onTap: () async {
-                          await Navigator.of(context).pushNamed(GamePage.path);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      const _CategoryButton(),
-                      const SizedBox(height: 10),
-                      const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: _DifficultyButton(),
-                      ),
-                      const SizedBox(height: 10),
-                      _ChapterButton(
-                        chapter: 'Statistics',
-                        onTap: () async {
-                          // await Navigator.of(context).pushNamed(GamePage.path);
-                        },
-                      ),
-                    ],
+                  const Spacer(),
+                  Text(
+                    'Trivia Quiz',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
-                  Spacer(),
-                  const _ShieldsBar()
+                  const Spacer(),
+                  _ChapterButton(
+                    chapter: 'Play',
+                    onTap: () async {
+                      await Navigator.of(context).pushNamed(GamePage.path);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _ChapterButton(
+                    chapter: 'Statistics',
+                    onTap: () async {
+                      // await Navigator.of(context).pushNamed(GamePage.path);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  const Flexible(
+                    flex: 2,
+                    child: SizedBox(height: 32),
+                  ),
+                  // SizedBox(height: 44)),
+                  const _CategoryButton(),
+                  const SizedBox(height: 12),
+                  const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _DifficultyButton(),
+                  ),
+                  const Spacer(flex: 3),
+                  const _ShieldsBar(),
+                  const _InfoWidget(),
                 ],
               ),
             ),
@@ -87,6 +93,7 @@ class _ChapterButton extends ConsumerWidget {
         onPressed: onTap,
         child: Text(
           chapter,
+          textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
       );
@@ -122,25 +129,46 @@ class _DifficultyButton extends ConsumerWidget {
 
 class _CategoryButton extends ConsumerWidget {
   const _CategoryButton({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pageCtrl = ref.watch(HomePageCtrl.instance);
+    final current = ref.watch(pageCtrl.currentCategory);
 
-    return TextButton(
-      onPressed: () async {
-        await showModalBottomSheet(
-          constraints: const BoxConstraints.expand(
-            width: double.infinity,
+    return FilledButton.tonal(
+      style: const ButtonStyle(
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: MaterialStatePropertyAll(Colors.transparent),
+        padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
+      ),
+      onPressed: () {},
+      child: Column(
+        children: [
+          Text(
+            current.name,
+            textAlign: TextAlign.center,
           ),
-          showDragHandle: true,
-          context: context,
-          builder: (_) => const _FetchedCategories(),
-        );
-      },
-      child: Text('Текущая категория'),
+          const SizedBox(width: 200, child: Divider(height: 4)),
+          TextButton(
+            child: const Text(
+              'Select category',
+              textAlign: TextAlign.center,
+            ),
+            onPressed: () async {
+              await showModalBottomSheet(
+                constraints: const BoxConstraints.expand(
+                  width: double.infinity,
+                ),
+                showDragHandle: true,
+                context: context,
+                builder: (_) => const _FetchedCategories(),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -254,5 +282,14 @@ class _ShieldsBar extends HookConsumerWidget {
         // todo: add others
       ],
     );
+  }
+}
+
+class _InfoWidget extends StatelessWidget {
+  const _InfoWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('© 2023 by Ruble');
   }
 }
