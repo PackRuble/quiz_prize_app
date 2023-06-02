@@ -23,8 +23,16 @@ class HomePageCtrl {
   AutoDisposeProvider<CategoryDTO> get currentCategory =>
       _triviaQuizBloc.quizCategory;
 
+  /// We want to keep the result of the request for the entire life cycle of the
+  /// application.
   late final fetchedCategories =
       StateProvider<AsyncValue<List<CategoryDTO>>>((ref) {
+    ref.listenSelf((_, next) {
+      // initialization method
+      if (next.isLoading) {
+        fetchCategories();
+      }
+    });
     return const AsyncLoading();
   });
 
@@ -32,12 +40,8 @@ class HomePageCtrl {
       _ref.read(fetchedCategories.notifier).update((_) => value);
 
   Future<void> fetchCategories() async {
-    final fetched = _ref.read(fetchedCategories);
-    if (fetched.isLoading || fetched.hasError) {
-      final result = await AsyncValue.guard(_triviaQuizBloc.fetchCategories);
-
-      _updFetchedCategories(result);
-    }
+    final result = await AsyncValue.guard(_triviaQuizBloc.fetchCategories);
+    _updFetchedCategories(result);
   }
 
   Future<void> selectCategory(CategoryDTO category) async {

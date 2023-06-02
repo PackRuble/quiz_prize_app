@@ -131,8 +131,6 @@ class _CategoryButton extends ConsumerWidget {
 
     return TextButton(
       onPressed: () async {
-        unawaited(pageCtrl.fetchCategories());
-
         await showModalBottomSheet(
           constraints: const BoxConstraints.expand(
             width: double.infinity,
