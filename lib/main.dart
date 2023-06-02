@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cardoteka/cardoteka.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,7 +32,6 @@ void main() async {
   };
 
   await Cardoteka.init();
-  // final gameStorage = GameStorage();
 
   void body() => runApp(
         const ProviderScope(
@@ -60,6 +60,15 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: HomePage.path,
+      builder: (context, child) => ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: child!,
+      ),
       routes: <String, WidgetBuilder>{
         HomePage.path: (context) => const HomePage(),
         GamePage.path: (context) => const GamePage(),
