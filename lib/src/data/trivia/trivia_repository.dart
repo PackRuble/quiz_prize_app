@@ -63,7 +63,7 @@ extension GetCategories on TriviaRepository {
     try {
       response = await client.get(uri);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode != 200) {
         throw Exception(
           ['Failed to get quiz. Status code ${response.statusCode}'],
         );

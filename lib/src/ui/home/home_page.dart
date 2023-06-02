@@ -1,13 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
+import 'package:trivia_app/extension/hex_color.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/game/game_page.dart';
+
+import '../../data/trivia/category/category.dto.dart';
+import 'home_page_ctrl.dart';
 
 class HomePage extends HookConsumerWidget {
   const HomePage({super.key});
@@ -54,9 +58,7 @@ class HomePage extends HookConsumerWidget {
                     ],
                   ),
                   Spacer(),
-                  Row(
-                    children: [CircleAvatar(radius: 12), _Shield()],
-                  ),
+                  const _ShieldsBar()
                 ],
               ),
             ),
@@ -125,21 +127,19 @@ class _CategoryButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pageCtrl = ref.watch(HomePageCtrl.instance);
+
     return TextButton(
       onPressed: () async {
+        unawaited(pageCtrl.fetchCategories());
+
         await showModalBottomSheet(
-          constraints: BoxConstraints.expand(
+          constraints: const BoxConstraints.expand(
             width: double.infinity,
           ),
           showDragHandle: true,
           context: context,
-          builder: (context) {
-            return Column(
-              children: [
-                Text('Категория 1'),
-              ],
-            );
-          },
+          builder: (_) => const _FetchedCategories(),
         );
       },
       child: Text('Текущая категория'),
@@ -147,25 +147,113 @@ class _CategoryButton extends ConsumerWidget {
   }
 }
 
-class _Shield extends HookConsumerWidget {
-  const _Shield({
-    Key? key,
-  }) : super(key: key);
+class _FetchedCategories extends ConsumerWidget {
+  const _FetchedCategories({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final link = 'https://cdn.simpleicons.org/telegram/2DABE7';
+    final pageCtrl = ref.watch(HomePageCtrl.instance);
+    final categories = ref.watch(pageCtrl.fetchedCategories);
+    final current = ref.watch(pageCtrl.currentCategory);
 
-    return Row(
+    return ListView(
       children: [
-        SvgPicture.network(
-          link,
-          width: 28,
+        _CategoryTile(
+          leading: 'Current:',
+          title: current.name,
+          selected: true,
+          onTap: () {},
+          trailing: IconButton(
+            icon: const Icon(Icons.cloud_sync_rounded),
+            onPressed: pageCtrl.reloadCategories,
+          ),
+        ),
+        const Divider(height: 0.0),
+        ...categories.when<List<Widget>>(
+          data: (data) => (data..remove(current))
+              .map(
+                (category) => _CategoryTile(
+                  onTap: () {
+                    unawaited(pageCtrl.selectCategory(category));
+                    Navigator.of(context).pop();
+                  },
+                  selected: false,
+                  title: category.name,
+                ),
+              )
+              .toList(),
+          error: (error, stackTrace) => [Text('$error')],
+          loading: () => [const LinearProgressIndicator()],
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryTile extends ConsumerWidget {
+  const _CategoryTile({
+    super.key,
+    this.leading,
+    this.trailing,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String? leading;
+  final Widget? trailing;
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      visualDensity: VisualDensity.compact,
+      dense: true,
+      selected: selected,
+      leading: leading != null ? Text(leading!) : null,
+      trailing: trailing,
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+}
+
+class _ShieldsBar extends HookConsumerWidget {
+  const _ShieldsBar({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: () {},
+          icon: Icon(
+            SimpleIcons.telegram,
+            color: ColorHex.fromHex('#26A5E4'), // corporate color
+          ),
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(SimpleIcons.telegram),
+          icon: Icon(
+            SimpleIcons.github,
+            color: ColorHex.fromHex('#181717'), // corporate color
+          ),
         ),
+        IconButton(
+          onPressed: () {},
+          icon: Icon(
+            SimpleIcons.habr,
+            color: ColorHex.fromHex('#65A3BE'), // corporate color
+          ),
+        ),
+        // todo: add others
       ],
     );
   }

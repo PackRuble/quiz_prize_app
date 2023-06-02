@@ -19,6 +19,7 @@ dependencies:
   json_annotation: 4.8.1
   freezed_annotation: 2.2.0
   html_unescape: ^2.0.0
+  simple_icons: ^7.10.0
 
   cardoteka:
     path: ../../cardoteka
