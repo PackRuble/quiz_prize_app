@@ -73,6 +73,16 @@ class TriviaQuizBloc {
     );
   });
 
+  /// Get all sorts of categories of quizzes.
+  Future<List<CategoryDTO>> fetchCategories() async {
+    return _triviaRepository.getCategories();
+  }
+
+  /// Set the quiz category as the current selection.
+  Future<void> setCategory(CategoryDTO category) async {
+    await storage.set<CategoryDTO>(GameCard.quizCategory, category);
+  }
+
   static const _minCountCachedQuizzes = 10;
 
   bool _enoughCachedQuizzes() =>
