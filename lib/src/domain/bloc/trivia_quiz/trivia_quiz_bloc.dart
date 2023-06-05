@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +11,7 @@ import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
 import 'model/quiz.model.dart';
 
+/// Contains business logic for obtaining quizzes and categories. Also, caches data.
 class TriviaQuizBloc {
   @visibleForTesting
   TriviaQuizBloc({
@@ -105,15 +107,22 @@ class TriviaQuizBloc {
 
   Iterator<Quiz>? quizzesIterator;
 
+  // todo: feature: make a request before the quizzes are over
+  // Quiz? nextQuiz;
+
   /// Get a new quiz.
   ///
   /// Generates errors if no quiz are found.
   Future<Quiz> getQuiz() async {
+    log('$TriviaQuizBloc.getQuiz called');
+
     final cachedQuizzes = storage.get(GameCard.quizzes);
 
     Completer<void>? completer;
     // silently increase the quiz cache if their number is below the allowed level
     if (!_enoughCachedQuizzes()) {
+      log('-> not enough cached quizzes');
+
       quizzesIterator = null;
       completer = Completer();
       completer.complete(_increaseCachedQuizzes());
@@ -132,10 +141,13 @@ class TriviaQuizBloc {
     // quiz not found or list is empty...
     quizzesIterator = null;
     await (completer?.future ?? _increaseCachedQuizzes());
+
+    log('-> getting quizzes again');
     return getQuiz();
   }
 
   Future<void> _increaseCachedQuizzes() async {
+    log('-> get new quizzes and save them to the storage');
     // todo if the quizzes are over on the server
     final fetched = await _fetchQuizzes();
 
