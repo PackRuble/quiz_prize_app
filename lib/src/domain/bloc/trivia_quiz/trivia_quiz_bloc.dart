@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
@@ -31,6 +30,7 @@ class TriviaQuizBloc {
     return TriviaQuizBloc(
       triviaRepository: TriviaRepository(
         client: http.Client(),
+        alwaysMockData: kDebugMode,
       ),
       storage: ref.watch(GameStorage.instance),
       triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
@@ -39,6 +39,9 @@ class TriviaQuizBloc {
   });
 
   late final quizzes = AutoDisposeProvider<List<Quiz>>((ref) {
+    ref.onDispose(() {
+      quizzesIterator = null;
+    });
     return storage.attach(
       GameCard.quizzes,
       (value) => ref.state = value,
@@ -94,7 +97,7 @@ class TriviaQuizBloc {
 
   /// Get a new quiz.
   ///
-  /// Generates errors if no quizzes are found.
+  /// Generates errors if no quiz are found.
   Future<Quiz> getQuiz() async {
     final cachedQuizzes = storage.get(GameCard.quizzes);
 
@@ -112,7 +115,6 @@ class TriviaQuizBloc {
       final quiz = quizzesIterator!.current;
 
       if (_suitQuizByFilter(quiz)) {
-        print('Новое ${quiz.question}');
         return quiz;
       }
     }
@@ -152,7 +154,6 @@ class TriviaQuizBloc {
 
   Future<Quiz> checkMyAnswer(String answer) async {
     var quiz = quizzesIterator!.current;
-    print('Проверка ответа ${quiz.question}');
     quiz = quiz.copyWith(yourAnswer: answer); // ignore: parameter_assignments
 
     unawaited(_triviaStatsBloc._savePoints(quiz.correctlySolved!));
@@ -163,14 +164,13 @@ class TriviaQuizBloc {
   Future<void> _moveQuizAsPlayed(Quiz quiz) async {
     final quizzes = storage.get(GameCard.quizzes);
 
-    // final removedIndex = quizzes.indexWhere(
-    //   (q) =>
-    //       q.correctAnswer == quiz.correctAnswer &&
-    //       q.question == quiz.question, // todo: uuid
-    // );
+    final removedIndex = quizzes.indexWhere(
+      (q) =>
+          q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
+    );
     await storage.set<List<Quiz>>(
       GameCard.quizzes,
-      quizzes..remove(quiz),
+      quizzes..removeAt(removedIndex),
     );
 
     final quizzesPlayed = storage.get(GameCard.quizzesPlayed);
