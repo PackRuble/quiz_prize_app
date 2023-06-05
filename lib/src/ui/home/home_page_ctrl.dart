@@ -50,6 +50,5 @@ class HomePageCtrl {
 
   Future<void> reloadCategories() async {
     _updFetchedCategories(const AsyncLoading());
-    await fetchCategories();
   }
 }
