@@ -113,10 +113,11 @@ class __$$_CategoryDTOCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_CategoryDTO implements _CategoryDTO {
+class _$_CategoryDTO extends _CategoryDTO {
   const _$_CategoryDTO(
       {@JsonKey(name: 'id') required this.id,
-      @JsonKey(name: 'name') required this.name});
+      @JsonKey(name: 'name') required this.name})
+      : super._();
 
   factory _$_CategoryDTO.fromJson(Map<String, dynamic> json) =>
       _$$_CategoryDTOFromJson(json);
@@ -164,10 +165,11 @@ class _$_CategoryDTO implements _CategoryDTO {
   }
 }
 
-abstract class _CategoryDTO implements CategoryDTO {
+abstract class _CategoryDTO extends CategoryDTO {
   const factory _CategoryDTO(
       {@JsonKey(name: 'id') required final int id,
       @JsonKey(name: 'name') required final String name}) = _$_CategoryDTO;
+  const _CategoryDTO._() : super._();
 
   factory _CategoryDTO.fromJson(Map<String, dynamic> json) =
       _$_CategoryDTO.fromJson;

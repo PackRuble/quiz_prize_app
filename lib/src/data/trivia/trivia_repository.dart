@@ -66,7 +66,6 @@ extension GetCategories on TriviaRepository {
 
     if (alwaysMockData) {
       log('-> mock request');
-      log('-> change url by: https://opentdb.com/api_category.php');
 
       response = http.Response(_categoriesMockRaw, 200);
     } else {
@@ -205,10 +204,14 @@ extension GetQuizzes on TriviaRepository {
   }) =>
       {
         'amount': amount.toString(),
-        'category': category.id.toString(),
+        'category': category.param,
         'difficulty': difficulty.param,
         'type': type.param,
       };
+}
+
+extension on CategoryDTO {
+  String get param => isAny ? '' : id.toString();
 }
 
 extension on TriviaQuizDifficulty {

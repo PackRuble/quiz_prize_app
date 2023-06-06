@@ -95,7 +95,7 @@ class TriviaQuizBloc {
     final difficulty = _ref.read(quizDifficulty);
     final type = _ref.read(quizType);
 
-    if ((quiz.category == category.name) &&
+    if ((quiz.category == category.name || category.isAny) &&
         (quiz.difficulty == difficulty ||
             difficulty == TriviaQuizDifficulty.any) &&
         (quiz.type == type || type == TriviaQuizType.any)) {
@@ -117,6 +117,8 @@ class TriviaQuizBloc {
     log('$TriviaQuizBloc.getQuiz called');
 
     final cachedQuizzes = storage.get(GameCard.quizzes);
+    // await storage.remove(GameCard.quizzes);
+    // throw '';
 
     Completer<void>? completer;
     // silently increase the quiz cache if their number is below the allowed level
