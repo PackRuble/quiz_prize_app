@@ -124,6 +124,7 @@ class StatsPage extends ConsumerWidget {
                 ],
               ),
             ),
+            const PlayedQuizzes(),
           ],
         ),
       ),
@@ -143,6 +144,47 @@ class CardWidget extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: child,
+      ),
+    );
+  }
+}
+
+class PlayedQuizzes extends ConsumerWidget {
+  const PlayedQuizzes({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsBloc = ref.watch(TriviaStatsBloc.instance);
+    final quizzesPlayed = ref.watch(statsBloc.quizzesPlayed);
+
+    return CardWidget(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: quizzesPlayed
+            .map(
+              (quiz) => SizedBox(
+                width: double.infinity,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(quiz.question),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children:
+                              quiz.answers.map((e) => Text('→ $e')).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
