@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -261,6 +262,35 @@ class TriviaStatsBloc {
       storage: ref.watch(GameStorage.instance),
     );
   });
+
+  late final statsOnDifficulty = AutoDisposeProvider<
+      Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
+    (ref) => _calculateStatsOnDifficulty(),
+  );
+
+  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
+      _calculateStatsOnDifficulty() {
+    final quizzes = _storage.get(GameCard.quizzesPlayed);
+
+    final result = {
+      for (final value in [
+        ...TriviaQuizDifficulty.values
+      ]..remove(TriviaQuizDifficulty.any))
+        value: (0, 0)
+    };
+
+    for (final q in quizzes) {
+      var (int correctly, int uncorrectly) = result[q.difficulty]!;
+
+      if (q.correctlySolved!) {
+        result[q.difficulty] = (++correctly, uncorrectly);
+      } else {
+        result[q.difficulty] = (correctly, ++uncorrectly);
+      }
+    }
+
+    return result;
+  }
 
   late final winning = AutoDisposeProvider<int>((ref) {
     return _storage.attach(
