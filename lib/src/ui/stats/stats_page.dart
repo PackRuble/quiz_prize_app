@@ -9,6 +9,7 @@ import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/shared/app_bar_custom.dart';
 
+import '../const/app_colors.dart';
 import 'stats_page_ctrl.dart';
 
 class StatsPage extends ConsumerWidget {
@@ -175,8 +176,27 @@ class PlayedQuizzes extends ConsumerWidget {
                         Text(quiz.question),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children:
-                              quiz.answers.map((e) => Text('→ $e')).toList(),
+                          children: quiz.answers
+                              .map(
+                                (answer) => Text(
+                                  '→ $answer',
+                                  style: switch (quiz.correctlySolved) {
+                                    true when answer == quiz.yourAnswer =>
+                                      TextStyle(
+                                          backgroundColor:
+                                              AppColors.correctAnswer),
+                                    false when answer == quiz.yourAnswer =>
+                                      TextStyle(
+                                          backgroundColor:
+                                              AppColors.correctAnswer),
+                                    false when answer == quiz.correctAnswer =>
+                                      TextStyle(
+                                          backgroundColor: AppColors.myAnswer),
+                                    _ => null
+                                  },
+                                ),
+                              )
+                              .toList(),
                         ),
                       ],
                     ),
