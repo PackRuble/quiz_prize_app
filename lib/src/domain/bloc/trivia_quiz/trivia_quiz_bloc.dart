@@ -249,6 +249,8 @@ class TriviaQuizBloc {
   }
 }
 
+typedef _CategoryName = String;
+
 class TriviaStatsBloc {
   @visibleForTesting
   TriviaStatsBloc({
@@ -289,6 +291,36 @@ class TriviaStatsBloc {
 
     return result;
   }
+
+  // ***************************************************************************
+  // counting quizzes played by their category
+
+  late final statsOnCategory =
+      AutoDisposeProvider<Map<_CategoryName, (int correctly, int uncorrectly)>>(
+    (ref) => _calculateStatsOnCategory(),
+  );
+
+  Map<_CategoryName, (int correctly, int uncorrectly)>
+      _calculateStatsOnCategory() {
+    final quizzes = _storage.get(GameCard.quizzesPlayed);
+
+    final result = <_CategoryName, (int correctly, int uncorrectly)>{};
+
+    for (final q in quizzes) {
+      var (int correctly, int uncorrectly) = result[q.category] ?? (0, 0);
+
+      if (q.correctlySolved!) {
+        result[q.category] = (++correctly, uncorrectly);
+      } else {
+        result[q.category] = (correctly, ++uncorrectly);
+      }
+    }
+
+    return result;
+  }
+
+  // ***************************************************************************
+  // others
 
   late final winning = AutoDisposeProvider<int>((ref) {
     return _storage.attach(
