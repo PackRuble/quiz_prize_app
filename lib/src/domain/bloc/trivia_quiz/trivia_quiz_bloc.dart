@@ -13,23 +13,23 @@ import 'model/quiz.model.dart';
 
 /// Contains business logic for obtaining quizzes and categories. Also, caches data.
 class TriviaQuizBloc {
-  @visibleForTesting
-  TriviaQuizBloc({
+  TriviaQuizBloc._({
     required TriviaRepository triviaRepository,
     required TriviaStatsBloc triviaStatsBloc,
-    required this.storage,
+    required GameStorage storage,
     required AutoDisposeProviderRef<TriviaQuizBloc> ref,
-  })  : _ref = ref,
+  })  : _storage = storage,
+        _ref = ref,
         _triviaRepository = triviaRepository,
         _triviaStatsBloc = triviaStatsBloc;
 
   final TriviaRepository _triviaRepository;
   final TriviaStatsBloc _triviaStatsBloc;
-  final GameStorage storage;
+  final GameStorage _storage;
   final AutoDisposeProviderRef<TriviaQuizBloc> _ref;
 
   static final instance = AutoDisposeProvider<TriviaQuizBloc>((ref) {
-    return TriviaQuizBloc(
+    return TriviaQuizBloc._(
       triviaRepository: TriviaRepository(
         client: http.Client(),
         alwaysMockData: kDebugMode,
@@ -40,11 +40,14 @@ class TriviaQuizBloc {
     );
   });
 
+  // ***************************************************************************
+  // providers for watching
+
   late final quizzes = AutoDisposeProvider<List<Quiz>>((ref) {
     ref.onDispose(() {
       quizzesIterator = null;
     });
-    return storage.attach(
+    return _storage.attach(
       GameCard.quizzes,
       (value) => ref.state = value,
       detacher: ref.onDispose,
@@ -52,7 +55,7 @@ class TriviaQuizBloc {
   });
 
   late final quizDifficulty = AutoDisposeProvider<TriviaQuizDifficulty>((ref) {
-    return storage.attach(
+    return _storage.attach(
       GameCard.quizDifficulty,
       (value) => ref.state = value,
       detacher: ref.onDispose,
@@ -60,7 +63,7 @@ class TriviaQuizBloc {
   });
 
   late final quizType = AutoDisposeProvider<TriviaQuizType>((ref) {
-    return storage.attach(
+    return _storage.attach(
       GameCard.quizType,
       (value) => ref.state = value,
       detacher: ref.onDispose,
@@ -68,12 +71,32 @@ class TriviaQuizBloc {
   });
 
   late final quizCategory = AutoDisposeProvider<CategoryDTO>((ref) {
-    return storage.attach(
+    return _storage.attach(
       GameCard.quizCategory,
       (value) => ref.state = value,
       detacher: ref.onDispose,
     );
   });
+
+  // ***************************************************************************
+  // quizzes difficulty processing
+
+  /// Set the difficulty of quizzes you want.
+  Future<void> setQuizDifficulty(TriviaQuizDifficulty difficulty) async {
+    await _storage.set<TriviaQuizDifficulty>(
+        GameCard.quizDifficulty, difficulty);
+  }
+
+  // ***************************************************************************
+  // quizzes type processing
+
+  /// Set the type of quizzes you want.
+  Future<void> setQuizType(TriviaQuizType type) async {
+    await _storage.set<TriviaQuizType>(GameCard.quizType, type);
+  }
+
+  // ***************************************************************************
+  // quizzes categories processing
 
   /// Get all sorts of categories of quizzes.
   Future<List<CategoryDTO>> fetchCategories() async {
@@ -82,13 +105,16 @@ class TriviaQuizBloc {
 
   /// Set the quiz category as the current selection.
   Future<void> setCategory(CategoryDTO category) async {
-    await storage.set<CategoryDTO>(GameCard.quizCategory, category);
+    await _storage.set<CategoryDTO>(GameCard.quizCategory, category);
   }
+
+  // ***************************************************************************
+  // quiz processing
 
   static const _minCountCachedQuizzes = 10;
 
   bool _enoughCachedQuizzes() =>
-      storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
+      _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
 
   bool _suitQuizByFilter(Quiz quiz) {
     final category = _ref.read(quizCategory);
@@ -116,7 +142,7 @@ class TriviaQuizBloc {
   Future<Quiz> getQuiz() async {
     log('$TriviaQuizBloc.getQuiz called');
 
-    final cachedQuizzes = storage.get(GameCard.quizzes);
+    final cachedQuizzes = _storage.get(GameCard.quizzes);
     // await storage.remove(GameCard.quizzes);
     // throw '';
 
@@ -145,6 +171,9 @@ class TriviaQuizBloc {
     await (completer?.future ?? _increaseCachedQuizzes());
 
     log('-> getting quizzes again');
+    if (kDebugMode) {
+      throw 'The number of suitable quizzes is limited to a constant';
+    }
     return getQuiz();
   }
 
@@ -154,13 +183,11 @@ class TriviaQuizBloc {
     final fetched = await _fetchQuizzes();
 
     // we leave unsuitable quizzes for future times
-    await storage.set<List<Quiz>>(GameCard.quizzes, [
+    await _storage.set<List<Quiz>>(GameCard.quizzes, [
       ...fetched,
-      ...storage.get(GameCard.quizzes),
+      ..._storage.get(GameCard.quizzes),
     ]);
   }
-
-  // ***************************************************************************
 
   static const _countFetchQuizzes = 6;
 
@@ -186,19 +213,19 @@ class TriviaQuizBloc {
   }
 
   Future<void> _moveQuizAsPlayed(Quiz quiz) async {
-    final quizzes = storage.get(GameCard.quizzes);
+    final quizzes = _storage.get(GameCard.quizzes);
 
     final removedIndex = quizzes.indexWhere(
       (q) =>
           q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
     );
-    await storage.set<List<Quiz>>(
+    await _storage.set<List<Quiz>>(
       GameCard.quizzes,
       quizzes..removeAt(removedIndex),
     );
 
-    final quizzesPlayed = storage.get(GameCard.quizzesPlayed);
-    await storage.set<List<Quiz>>(
+    final quizzesPlayed = _storage.get(GameCard.quizzesPlayed);
+    await _storage.set<List<Quiz>>(
       GameCard.quizzesPlayed,
       [...quizzesPlayed, quiz],
     );

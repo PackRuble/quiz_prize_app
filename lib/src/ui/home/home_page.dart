@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
-import 'package:trivia_app/src/data/local_storage/game_storage.dart';
+import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/game/game_page.dart';
@@ -62,6 +62,11 @@ class HomePage extends HookConsumerWidget {
                     fit: BoxFit.scaleDown,
                     child: _DifficultyButton(),
                   ),
+                  const SizedBox(height: 12),
+                  const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _QuizTypeSelector(),
+                  ),
                   const Spacer(flex: 3),
                   const _ShieldsBar(),
                   const _InfoWidget(),
@@ -99,6 +104,33 @@ class _ChapterButton extends ConsumerWidget {
       );
 }
 
+class _QuizTypeSelector extends ConsumerWidget {
+  const _QuizTypeSelector({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bloc = ref.watch(TriviaQuizBloc.instance);
+    final type = ref.watch(bloc.quizType);
+
+    return SegmentedButton<TriviaQuizType>(
+      segments: TriviaQuizType.values
+          .map(
+            (e) => ButtonSegment<TriviaQuizType>(
+              value: e,
+              label: Text(e.name),
+            ),
+          )
+          .toList(),
+      selected: {type},
+      onSelectionChanged: (selected) {
+        unawaited(bloc.setQuizType(selected.single));
+      },
+    );
+  }
+}
+
 class _DifficultyButton extends ConsumerWidget {
   const _DifficultyButton({
     super.key,
@@ -107,7 +139,6 @@ class _DifficultyButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bloc = ref.watch(TriviaQuizBloc.instance);
-
     final difficulty = ref.watch(bloc.quizDifficulty);
 
     return SegmentedButton<TriviaQuizDifficulty>(
@@ -121,7 +152,7 @@ class _DifficultyButton extends ConsumerWidget {
           .toList(),
       selected: {difficulty},
       onSelectionChanged: (selected) {
-        unawaited(bloc.storage.set(GameCard.quizDifficulty, selected.single));
+        unawaited(bloc.setQuizDifficulty(selected.single));
       },
     );
   }
@@ -190,7 +221,7 @@ class _FetchedCategories extends ConsumerWidget {
           leading: 'Current:',
           title: current.name,
           selected: true,
-          onTap: () {},
+          onTap: null,
           trailing: IconButton(
             icon: const Icon(Icons.cloud_sync_rounded),
             onPressed: pageCtrl.reloadCategories,
