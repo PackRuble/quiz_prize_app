@@ -263,6 +263,9 @@ class TriviaStatsBloc {
     );
   });
 
+  // ***************************************************************************
+  // counting quizzes played by their difficulty
+
   late final statsOnDifficulty = AutoDisposeProvider<
       Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
     (ref) => _calculateStatsOnDifficulty(),
@@ -272,15 +275,10 @@ class TriviaStatsBloc {
       _calculateStatsOnDifficulty() {
     final quizzes = _storage.get(GameCard.quizzesPlayed);
 
-    final result = {
-      for (final value in [
-        ...TriviaQuizDifficulty.values
-      ]..remove(TriviaQuizDifficulty.any))
-        value: (0, 0)
-    };
+    final result = <TriviaQuizDifficulty, (int correctly, int uncorrectly)>{};
 
     for (final q in quizzes) {
-      var (int correctly, int uncorrectly) = result[q.difficulty]!;
+      var (int correctly, int uncorrectly) = result[q.difficulty] ?? (0, 0);
 
       if (q.correctlySolved!) {
         result[q.difficulty] = (++correctly, uncorrectly);
