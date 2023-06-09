@@ -15,6 +15,9 @@ class StatsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final pageController = ref.watch(StatsPageCtrl.instance);
+    final quizzesPlayedCount =
+        ref.watch(pageController.triviaStatsBloc.quizzesPlayed).length;
 
     return Scaffold(
       appBar: AppBarCustom(
@@ -24,14 +27,16 @@ class StatsPage extends ConsumerWidget {
           Text('Statistics', style: textTheme.headlineSmall),
         ],
       ),
-      body: const CustomScrollView(
+      body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: GeneralStatsBlock()),
-          DifficultyBlockSliver(),
-          CategoriesBlockSliver(),
-          SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
-          PlayedQuizzesSliver(),
-          SliverToBoxAdapter(child: SizedBox(height: 64)),
+          const SliverToBoxAdapter(child: GeneralStatsBlock()),
+          if (quizzesPlayedCount > 0) ...[
+            const DifficultyBlockSliver(),
+            const CategoriesBlockSliver(),
+            const SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
+            const PlayedQuizzesSliver(),
+            const SliverToBoxAdapter(child: SizedBox(height: 64)),
+          ]
         ],
       ),
     );
@@ -91,11 +96,50 @@ class GeneralStatsBlock extends ConsumerWidget {
             ),
           ),
           FilledButton.tonal(
-            onPressed: () {},
+            onPressed: () async {
+              await showDialogConfirmResetStats(
+                context,
+                () {
+                  pageController.triviaStatsBloc.resetStats();
+                  Navigator.of(context).pop();
+                },
+              );
+            },
             child: const Text('Reset stats'),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> showDialogConfirmResetStats(
+    BuildContext context,
+    VoidCallback onOk,
+  ) async {
+    return showAdaptiveDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog.adaptive(
+          title: const Text('Reset statistics?'),
+          content: const Text(
+            'All played quizzes will be deleted, all indicators will be reset.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: Navigator.of(context).pop,
+              child: Text(
+                MaterialLocalizations.of(context).cancelButtonLabel,
+              ),
+            ),
+            TextButton(
+              onPressed: onOk,
+              child: Text(
+                MaterialLocalizations.of(context).okButtonLabel,
+              ),
+            )
+          ],
+        );
+      },
     );
   }
 }

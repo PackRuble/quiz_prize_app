@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -270,13 +269,11 @@ class TriviaStatsBloc {
 
   late final statsOnDifficulty = AutoDisposeProvider<
       Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
-    (ref) => _calculateStatsOnDifficulty(),
+    (ref) => _calculateStatsOnDifficulty(ref.watch(quizzesPlayed)),
   );
 
   Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
-      _calculateStatsOnDifficulty() {
-    final quizzes = _storage.get(GameCard.quizzesPlayed);
-
+      _calculateStatsOnDifficulty(List<Quiz> quizzes) {
     final result = <TriviaQuizDifficulty, (int correctly, int uncorrectly)>{};
 
     for (final q in quizzes) {
@@ -297,13 +294,11 @@ class TriviaStatsBloc {
 
   late final statsOnCategory =
       AutoDisposeProvider<Map<_CategoryName, (int correctly, int uncorrectly)>>(
-    (ref) => _calculateStatsOnCategory(),
+    (ref) => _calculateStatsOnCategory(ref.watch(quizzesPlayed)),
   );
 
   Map<_CategoryName, (int correctly, int uncorrectly)>
-      _calculateStatsOnCategory() {
-    final quizzes = _storage.get(GameCard.quizzesPlayed);
-
+      _calculateStatsOnCategory(List<Quiz> quizzes) {
     final result = <_CategoryName, (int correctly, int uncorrectly)>{};
 
     for (final q in quizzes) {
@@ -321,6 +316,14 @@ class TriviaStatsBloc {
 
   // ***************************************************************************
   // others
+
+  late final quizzesPlayed = AutoDisposeProvider<List<Quiz>>((ref) {
+    return _storage.attach(
+      GameCard.quizzesPlayed,
+      (value) => ref.state = value,
+      detacher: ref.onDispose,
+    );
+  });
 
   late final winning = AutoDisposeProvider<int>((ref) {
     return _storage.attach(
@@ -348,5 +351,11 @@ class TriviaStatsBloc {
             GameCard.losing,
             _storage.get(GameCard.losing) + 1,
           );
+  }
+
+  Future<void> resetStats() async {
+    await _storage.remove(GameCard.winning);
+    await _storage.remove(GameCard.losing);
+    await _storage.remove(GameCard.quizzesPlayed);
   }
 }
