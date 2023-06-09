@@ -30,13 +30,54 @@ class StatsPage extends ConsumerWidget {
       body: CustomScrollView(
         slivers: [
           const SliverToBoxAdapter(child: GeneralStatsBlock()),
-          if (quizzesPlayedCount > 0) ...[
-            const DifficultyBlockSliver(),
-            const CategoriesBlockSliver(),
-            const SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
-            const PlayedQuizzesSliver(),
-            const SliverToBoxAdapter(child: SizedBox(height: 64)),
+          if (quizzesPlayedCount > 0) ...const [
+            DifficultyBlockSliver(),
+            CategoriesBlockSliver(),
+            SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
+            SliverToBoxAdapter(child: HintToColoredAnswers()),
+            PlayedQuizzesSliver(),
+            SliverToBoxAdapter(child: SizedBox(height: 64)),
           ]
+        ],
+      ),
+    );
+  }
+}
+
+class HintToColoredAnswers extends ConsumerWidget {
+  const HintToColoredAnswers({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget buildHint(String text, Color color) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.circle_rounded,
+            size: 12,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: textTheme.labelMedium,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return CardPad(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Flexible(child: buildHint('correct answer', AppColors.correctAnswer)),
+          Flexible(child: buildHint('my answer', AppColors.myAnswer)),
         ],
       ),
     );
@@ -170,7 +211,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
                     child: Text(
                       '⬇${entry.value.$2}',
                       style: textTheme.labelLarge?.copyWith(
-                        color: Colors.red.shade900,
+                        color: AppColors.unCorrectCounterText,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -182,7 +223,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
                       '⬆${entry.value.$1}',
                       textAlign: TextAlign.right,
                       style: textTheme.labelLarge?.copyWith(
-                        color: Colors.green.shade900,
+                        color: AppColors.correctCounterText,
                       ),
                     ),
                   ),
