@@ -33,99 +33,107 @@ class StatsPage extends ConsumerWidget {
       ),
       body: SizedBox(
         width: double.infinity,
-        child: ListView(
-          children: [
-            const CardWidget(
-              child: Column(
-                children: [
-                  Text('Total score: 21'),
-                  Text('Quizzes Won: 23'),
-                  Text('Wrong answer: 54'),
-                ],
+        child: CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(
+              child: CardWidget(
+                child: Column(
+                  children: [
+                    Text('Total score: 21'),
+                    Text('Quizzes Won: 23'),
+                    Text('Wrong answer: 54'),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FilledButton.tonal(
-                    onPressed: () {},
-                    child: Text('Reset stats'),
-                  ),
-                ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FilledButton.tonal(
+                      onPressed: () {},
+                      child: Text('Reset stats'),
+                    ),
+                  ],
+                ),
               ),
             ),
-            CardWidget(
-              child: Column(
-                children: [
-                  for (final entry in statsOnDifficulty.entries)
-                    Row(
-                      children: [
-                        Expanded(child: Text(entry.key.name)),
-                        // const Spacer(),
-                        SizedBox(
-                          width: 48,
-                          child: Text(
-                            '⬇${entry.value.$2}',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.red.shade900,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 48,
-                          child: Text(
-                            '⬆${entry.value.$1}',
-                            textAlign: TextAlign.right,
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.green.shade900,
+            SliverToBoxAdapter(
+              child: CardWidget(
+                child: Column(
+                  children: [
+                    for (final entry in statsOnDifficulty.entries)
+                      Row(
+                        children: [
+                          Expanded(child: Text(entry.key.name)),
+                          // const Spacer(),
+                          SizedBox(
+                            width: 48,
+                            child: Text(
+                              '⬇${entry.value.$2}',
+                              style: textTheme.labelLarge?.copyWith(
+                                color: Colors.red.shade900,
+                              ),
+                              textAlign: TextAlign.right,
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                ],
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 48,
+                            child: Text(
+                              '⬆${entry.value.$1}',
+                              textAlign: TextAlign.right,
+                              style: textTheme.labelLarge?.copyWith(
+                                color: Colors.green.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                  ],
+                ),
               ),
             ),
-            CardWidget(
-              child: Column(
-                children: [
-                  for (final entry in statsOnCategory.entries)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: Text(entry.key)),
-                        // const Spacer(),
-                        SizedBox(
-                          width: 48,
-                          child: Text(
-                            '⬇${entry.value.$2}',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.red.shade900,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 48,
-                          child: Text(
-                            '⬆${entry.value.$1}',
-                            textAlign: TextAlign.right,
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.green.shade900,
+            SliverToBoxAdapter(
+              child: CardWidget(
+                child: Column(
+                  children: [
+                    for (final entry in statsOnCategory.entries)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: Text(entry.key)),
+                          // const Spacer(),
+                          SizedBox(
+                            width: 48,
+                            child: Text(
+                              '⬇${entry.value.$2}',
+                              style: textTheme.labelLarge?.copyWith(
+                                color: Colors.red.shade900,
+                              ),
+                              textAlign: TextAlign.right,
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                ],
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 48,
+                            child: Text(
+                              '⬆${entry.value.$1}',
+                              textAlign: TextAlign.right,
+                              style: textTheme.labelLarge?.copyWith(
+                                color: Colors.green.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                  ],
+                ),
               ),
             ),
-            const PlayedQuizzes(),
+            const PlayedQuizzesSliver(),
           ],
         ),
       ),
@@ -150,61 +158,50 @@ class CardWidget extends StatelessWidget {
   }
 }
 
-class PlayedQuizzes extends ConsumerWidget {
-  const PlayedQuizzes({
+class PlayedQuizzesSliver extends ConsumerWidget {
+  const PlayedQuizzesSliver({
     super.key,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
     final statsBloc = ref.watch(TriviaStatsBloc.instance);
     final quizzesPlayed = ref.watch(statsBloc.quizzesPlayed);
 
-    return CardWidget(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: quizzesPlayed
-            .map(
-              (quiz) => SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(quiz.question),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: quiz.answers
-                              .map(
-                                (answer) => Text(
-                                  '→ $answer',
-                                  style: switch (quiz.correctlySolved) {
-                                    true when answer == quiz.yourAnswer =>
-                                      TextStyle(
-                                          backgroundColor:
-                                              AppColors.correctAnswer),
-                                    false when answer == quiz.yourAnswer =>
-                                      TextStyle(
-                                          backgroundColor:
-                                              AppColors.correctAnswer),
-                                    false when answer == quiz.correctAnswer =>
-                                      TextStyle(
-                                          backgroundColor: AppColors.myAnswer),
-                                    _ => null
-                                  },
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        childCount: quizzesPlayed.length,
+        (context, index) {
+          final quiz = quizzesPlayed[index];
+
+          return CardWidget(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quiz.question,
+                  style: textTheme.labelLarge,
                 ),
-              ),
-            )
-            .toList(),
+                ...[
+                  for (var answer in quiz.answers)
+                    Text(
+                      '→ $answer',
+                      style: switch (quiz.correctlySolved) {
+                        true when answer == quiz.yourAnswer =>
+                          TextStyle(backgroundColor: AppColors.correctAnswer),
+                        false when answer == quiz.yourAnswer =>
+                          TextStyle(backgroundColor: AppColors.correctAnswer),
+                        false when answer == quiz.correctAnswer =>
+                          TextStyle(backgroundColor: AppColors.myAnswer),
+                        _ => null
+                      },
+                    ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
