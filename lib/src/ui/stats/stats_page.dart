@@ -14,7 +14,6 @@ class StatsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsBloc = ref.watch(TriviaStatsBloc.instance);
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -25,49 +24,84 @@ class StatsPage extends ConsumerWidget {
           Text('Statistics', style: textTheme.headlineSmall),
         ],
       ),
-      body: SizedBox(
-        width: double.infinity,
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(
-              child: CardPad(
-                child: Column(
-                  children: [
-                    Text('Total score: 21'),
-                    Text('Quizzes Won: 23'),
-                    Text('Wrong answer: 54'),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FilledButton.tonal(
-                      onPressed: () {},
-                      child: const Text('Reset stats'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const BlockDifficultySliver(),
-            const BlockCategoriesSliver(),
-            const SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
-            const PlayedQuizzesSliver(),
-            const SliverToBoxAdapter(child: SizedBox(height: 64)),
-          ],
-        ),
+      body: const CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: GeneralStatsBlock()),
+          DifficultyBlockSliver(),
+          CategoriesBlockSliver(),
+          SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
+          PlayedQuizzesSliver(),
+          SliverToBoxAdapter(child: SizedBox(height: 64)),
+        ],
       ),
     );
   }
 }
 
-class BlockDifficultySliver extends ConsumerWidget {
-  const BlockDifficultySliver({
+class GeneralStatsBlock extends ConsumerWidget {
+  const GeneralStatsBlock({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final pageController = ref.watch(StatsPageCtrl.instance);
+
+    final totalCount =
+        ref.watch(pageController.triviaStatsBloc.quizzesPlayed).length;
+    final solvedCount = ref.watch(pageController.triviaStatsBloc.winning);
+    final unsolvedCount = ref.watch(pageController.triviaStatsBloc.losing);
+
+    return CardPad(
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: 'Total score: ',
+                style: textTheme.labelLarge,
+                children: <InlineSpan>[
+                  TextSpan(
+                    text: '$totalCount ',
+                    style: textTheme.titleMedium?.copyWith(
+                      color: Colors.orange[900],
+                    ),
+                  ),
+                  TextSpan(
+                    text: '[',
+                    style: textTheme.titleMedium,
+                  ),
+                  TextSpan(
+                    text: '⬇$unsolvedCount ',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.unCorrectCounterText,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '⬆$solvedCount',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.correctCounterText,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ']',
+                    style: textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          FilledButton.tonal(
+            onPressed: () {},
+            child: const Text('Reset stats'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DifficultyBlockSliver extends ConsumerWidget {
+  const DifficultyBlockSliver({
     super.key,
   });
 
@@ -117,8 +151,8 @@ class BlockDifficultySliver extends ConsumerWidget {
   }
 }
 
-class BlockCategoriesSliver extends ConsumerWidget {
-  const BlockCategoriesSliver({
+class CategoriesBlockSliver extends ConsumerWidget {
+  const CategoriesBlockSliver({
     super.key,
   });
 
