@@ -1,10 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:simple_icons/simple_icons.dart';
-import 'package:trivia_app/extension/hex_color.dart';
-import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/shared/app_bar_custom.dart';
@@ -20,23 +15,22 @@ class StatsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsBloc = ref.watch(TriviaStatsBloc.instance);
-    final Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
-        statsOnDifficulty = ref.watch(statsBloc.statsOnDifficulty);
-    final Map<String, (int correctly, int uncorrectly)> statsOnCategory =
-        ref.watch(statsBloc.statsOnCategory);
-
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: const AppBarCustom(
-        children: [BackButton()],
+      appBar: AppBarCustom(
+        children: [
+          const BackButton(),
+          const SizedBox(width: 8),
+          Text('Statistics', style: textTheme.headlineSmall),
+        ],
       ),
       body: SizedBox(
         width: double.infinity,
         child: CustomScrollView(
           slivers: [
             const SliverToBoxAdapter(
-              child: CardWidget(
+              child: CardPad(
                 child: Column(
                   children: [
                     Text('Total score: 21'),
@@ -54,86 +48,17 @@ class StatsPage extends ConsumerWidget {
                   children: [
                     FilledButton.tonal(
                       onPressed: () {},
-                      child: Text('Reset stats'),
+                      child: const Text('Reset stats'),
                     ),
                   ],
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: CardWidget(
-                child: Column(
-                  children: [
-                    for (final entry in statsOnDifficulty.entries)
-                      Row(
-                        children: [
-                          Expanded(child: Text(entry.key.name)),
-                          // const Spacer(),
-                          SizedBox(
-                            width: 48,
-                            child: Text(
-                              '⬇${entry.value.$2}',
-                              style: textTheme.labelLarge?.copyWith(
-                                color: Colors.red.shade900,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          SizedBox(
-                            width: 48,
-                            child: Text(
-                              '⬆${entry.value.$1}',
-                              textAlign: TextAlign.right,
-                              style: textTheme.labelLarge?.copyWith(
-                                color: Colors.green.shade900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: CardWidget(
-                child: Column(
-                  children: [
-                    for (final entry in statsOnCategory.entries)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: Text(entry.key)),
-                          // const Spacer(),
-                          SizedBox(
-                            width: 48,
-                            child: Text(
-                              '⬇${entry.value.$2}',
-                              style: textTheme.labelLarge?.copyWith(
-                                color: Colors.red.shade900,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 48,
-                            child: Text(
-                              '⬆${entry.value.$1}',
-                              textAlign: TextAlign.right,
-                              style: textTheme.labelLarge?.copyWith(
-                                color: Colors.green.shade900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                  ],
-                ),
-              ),
-            ),
+            const BlockDifficultySliver(),
+            const BlockCategoriesSliver(),
+            const SliverToBoxAdapter(child: Divider(indent: 8, endIndent: 8)),
             const PlayedQuizzesSliver(),
+            const SliverToBoxAdapter(child: SizedBox(height: 64)),
           ],
         ),
       ),
@@ -141,8 +66,111 @@ class StatsPage extends ConsumerWidget {
   }
 }
 
-class CardWidget extends StatelessWidget {
-  const CardWidget({super.key, required this.child});
+class BlockDifficultySliver extends ConsumerWidget {
+  const BlockDifficultySliver({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+
+    final statsBloc = ref.watch(TriviaStatsBloc.instance);
+    final Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
+        statsOnDifficulty = ref.watch(statsBloc.statsOnDifficulty);
+
+    return SliverToBoxAdapter(
+      child: CardPad(
+        child: Column(
+          children: [
+            for (final entry in statsOnDifficulty.entries)
+              Row(
+                children: [
+                  Expanded(child: Text(entry.key.name)),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '⬇${entry.value.$2}',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Colors.red.shade900,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '⬆${entry.value.$1}',
+                      textAlign: TextAlign.right,
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Colors.green.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BlockCategoriesSliver extends ConsumerWidget {
+  const BlockCategoriesSliver({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+
+    final statsBloc = ref.watch(TriviaStatsBloc.instance);
+    final Map<String, (int correctly, int uncorrectly)> statsOnCategory =
+        ref.watch(statsBloc.statsOnCategory);
+
+    return SliverToBoxAdapter(
+      child: CardPad(
+        child: Column(
+          children: [
+            for (final entry in statsOnCategory.entries)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: Text(entry.key)),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '⬇${entry.value.$2}',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: AppColors.unCorrectCounterText,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '⬆${entry.value.$1}',
+                      textAlign: TextAlign.right,
+                      style: textTheme.labelLarge?.copyWith(
+                        color: AppColors.correctCounterText,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CardPad extends StatelessWidget {
+  const CardPad({super.key, required this.child});
 
   final Widget child;
 
@@ -175,7 +203,7 @@ class PlayedQuizzesSliver extends ConsumerWidget {
         (context, index) {
           final quiz = quizzesPlayed[index];
 
-          return CardWidget(
+          return CardPad(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
