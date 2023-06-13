@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trivia_app/src/data/local_storage/app_storage.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
+import 'package:trivia_app/src/domain/app_controller.dart';
 
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 
@@ -7,18 +10,26 @@ class HomePageCtrl {
   HomePageCtrl({
     required Ref ref,
     required TriviaQuizBloc triviaQuizBloc,
+    required AppStorage appStorage,
+    required AppController appController,
   })  : _triviaQuizBloc = triviaQuizBloc,
+        _appStorage = appStorage,
+        _appController = appController,
         _ref = ref;
 
-  static final instance = AutoDisposeProvider<HomePageCtrl>(
+  static final instance = AutoDisposeProvider(
     (ref) => HomePageCtrl(
       ref: ref,
       triviaQuizBloc: ref.watch(TriviaQuizBloc.instance),
+      appController: ref.watch(AppController.instance),
+      appStorage: ref.watch(AppStorage.instance),
     ),
   );
 
   final Ref _ref;
   final TriviaQuizBloc _triviaQuizBloc;
+  final AppStorage _appStorage;
+  final AppController _appController;
 
   AutoDisposeProvider<CategoryDTO> get currentCategory =>
       _triviaQuizBloc.quizCategory;
@@ -35,6 +46,11 @@ class HomePageCtrl {
     });
     return const AsyncLoading();
   });
+
+  AutoDisposeProvider<ThemeMode> get themeMode => _appController.themeMode;
+
+  Future<void> selectThemeMode(ThemeMode mode) async =>
+      _appController.selectThemeMode(mode);
 
   void _updFetchedCategories(AsyncValue<List<CategoryDTO>> value) =>
       _ref.read(fetchedCategories.notifier).update((_) => value);

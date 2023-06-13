@@ -32,10 +32,19 @@ class HomePage extends HookConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   const Spacer(),
-                  Text(
-                    'Trivia Quiz',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displaySmall,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const _ThemeModeSelector(),
+                      Expanded(
+                        child: Text(
+                          'Trivia Quiz',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.displaySmall,
+                        ),
+                      ),
+                      const _ThemeModeSelector(), // todo: add color selector
+                    ],
                   ),
                   const Spacer(),
                   _ChapterButton(
@@ -104,6 +113,36 @@ class _ChapterButton extends ConsumerWidget {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
       );
+}
+
+class _ThemeModeSelector extends ConsumerWidget {
+  const _ThemeModeSelector({
+    super.key,
+  });
+
+  static const themeModes = <ThemeMode, IconData>{
+    ThemeMode.light: Icons.light_mode_rounded,
+    ThemeMode.dark: Icons.dark_mode_rounded,
+    ThemeMode.system: Icons.contrast_rounded,
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pageCtrl = ref.watch(HomePageCtrl.instance);
+    final themeMode = ref.watch(pageCtrl.themeMode);
+
+    void nextMode() {
+      final mode =
+          themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
+
+      unawaited(pageCtrl.selectThemeMode(mode));
+    }
+
+    return IconButton(
+      onPressed: nextMode,
+      icon: Icon(themeModes[themeMode]),
+    );
+  }
 }
 
 class _QuizTypeSelector extends ConsumerWidget {

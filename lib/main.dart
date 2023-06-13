@@ -6,8 +6,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'src/domain/app_controller.dart';
 import 'src/ui/game/game_page.dart';
 import 'src/ui/home/home_page.dart';
+import 'src/ui/stats/stats_page.dart';
 
 void log(
   String name, {
@@ -20,6 +22,12 @@ void log(
 }
 
 void main() async {
+  await runZonedGuarded(body, (error, stack) {
+    log('runZonedGuarded:', error: error, stackTrace: stack);
+  });
+}
+
+Future<void> body() async {
   // логгирование ошибок flutter framework
   FlutterError.onError = (details) {
     log('Flutter Error', error: details.exception, stackTrace: details.stack);
@@ -31,34 +39,46 @@ void main() async {
     return true;
   };
 
+  //todo the extremely important thing to add to the redmi db
+  WidgetsFlutterBinding.ensureInitialized();
   await Cardoteka.init();
 
-  void body() => runApp(
-        const ProviderScope(
-          // overrides: [
-          //   gameStorageProvider.overrideWithValue(gameStorage),
-          // ],
-          child: MyApp(),
-        ),
-      );
-
-  runZonedGuarded(body, (error, stack) {
-    log('runZonedGuarded:', error: error, stackTrace: stack);
-  });
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appController = ref.watch(AppController.instance);
+    final themeMode = ref.watch(appController.themeMode);
+
+    final themeData = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.deepPurple,
+        brightness: switch (themeMode) {
+          ThemeMode.light => Brightness.light,
+          ThemeMode.dark => Brightness.dark,
+          // _ => Theme.of(context).brightness,
+          _ => MediaQuery.of(context).platformBrightness,
+        },
+      ),
+      tooltipTheme: const TooltipThemeData(
+        waitDuration: Duration(seconds: 1),
+      ),
+    );
+
     return MaterialApp(
       title: 'Trivia App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: themeData,
+      themeMode: themeMode,
       initialRoute: HomePage.path,
       builder: (context, child) => ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -72,6 +92,7 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         HomePage.path: (context) => const HomePage(),
         GamePage.path: (context) => const GamePage(),
+        StatsPage.path: (context) => const StatsPage(),
       },
     );
   }
