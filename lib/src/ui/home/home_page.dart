@@ -7,8 +7,9 @@ import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
-import 'package:trivia_app/src/ui/game/game_page.dart';
 
+import '../game/game_page.dart';
+import '../stats/stats_page.dart';
 import 'home_page_ctrl.dart';
 
 class HomePage extends HookConsumerWidget {
@@ -46,8 +47,9 @@ class HomePage extends HookConsumerWidget {
                   const SizedBox(height: 12),
                   _ChapterButton(
                     chapter: 'Statistics',
-                    onTap: () async {
-                      // await Navigator.of(context).pushNamed(GamePage.path);
+                    onTap: () {
+                      unawaited(
+                          Navigator.of(context).pushNamed(StatsPage.path));
                     },
                   ),
                   const SizedBox(height: 12),
@@ -229,18 +231,20 @@ class _FetchedCategories extends ConsumerWidget {
         ),
         const Divider(height: 0.0),
         ...categories.when<List<Widget>>(
-          data: (data) => (data..remove(current))
-              .map(
-                (category) => _CategoryTile(
-                  onTap: () {
-                    unawaited(pageCtrl.selectCategory(category));
-                    Navigator.of(context).pop();
-                  },
-                  selected: false,
-                  title: category.name,
-                ),
-              )
-              .toList(),
+          data: (data) => [CategoryDTO.any, ...data].map(
+            (category) {
+              if (category == current) return const SizedBox.shrink();
+
+              return _CategoryTile(
+                onTap: () {
+                  unawaited(pageCtrl.selectCategory(category));
+                  Navigator.of(context).pop();
+                },
+                selected: false,
+                title: category.name,
+              );
+            },
+          ).toList(),
           error: (error, stackTrace) => [Text('$error')],
           loading: () => [const LinearProgressIndicator()],
         ),
@@ -263,7 +267,7 @@ class _CategoryTile extends ConsumerWidget {
   final Widget? trailing;
   final String title;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
