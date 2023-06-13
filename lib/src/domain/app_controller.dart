@@ -30,5 +30,16 @@ class AppController {
       _appStorage.set<ThemeMode>(AppCard.themeMode, mode);
 
   // ***************************************************************************
-  //
+  // theme color
+
+  late final themeColor = AutoDisposeProvider(
+    (ref) => _appStorage.attach(
+      AppCard.themeColor,
+      (value) => ref.state = value,
+      detacher: ref.onDispose,
+    ),
+  );
+
+  Future<void> selectThemeColor(Color color) async =>
+      _appStorage.set<Color>(AppCard.themeColor, color);
 }

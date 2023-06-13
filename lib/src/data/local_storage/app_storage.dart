@@ -1,5 +1,5 @@
 import 'package:cardoteka/cardoteka.dart';
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show Color, Colors, ThemeMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AppStorage extends Cardoteka with WatcherImpl {
@@ -10,6 +10,7 @@ class AppStorage extends Cardoteka with WatcherImpl {
 
 enum AppCard<T extends Object> implements Card<T> {
   themeMode<ThemeMode>(DataType.string, ThemeMode.system),
+  themeColor<Color>(DataType.int, Colors.deepPurple),
   ;
 
   const AppCard(this.type, this.defaultValue);
@@ -28,6 +29,7 @@ enum AppCard<T extends Object> implements Card<T> {
     cards: values,
     converters: {
       themeMode: EnumAsStringConverter(ThemeMode.values),
+      themeColor: Converters.colorAsInt,
     },
   );
 }

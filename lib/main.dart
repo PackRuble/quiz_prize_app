@@ -57,11 +57,12 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appController = ref.watch(AppController.instance);
     final themeMode = ref.watch(appController.themeMode);
+    final themeColor = ref.watch(appController.themeColor);
 
     final themeData = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.deepPurple,
+        seedColor: themeColor,
         brightness: switch (themeMode) {
           ThemeMode.light => Brightness.light,
           ThemeMode.dark => Brightness.dark,

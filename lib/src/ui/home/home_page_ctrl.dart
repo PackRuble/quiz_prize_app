@@ -52,6 +52,11 @@ class HomePageCtrl {
   Future<void> selectThemeMode(ThemeMode mode) async =>
       _appController.selectThemeMode(mode);
 
+  AutoDisposeProvider<Color> get themeColor => _appController.themeColor;
+
+  Future<void> selectThemeColor(Color color) async =>
+      _appController.selectThemeColor(color);
+
   void _updFetchedCategories(AsyncValue<List<CategoryDTO>> value) =>
       _ref.read(fetchedCategories.notifier).update((_) => value);
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
@@ -35,7 +36,7 @@ class HomePage extends HookConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const _ThemeModeSelector(),
+                      const _ThemeColorSelector(),
                       Expanded(
                         child: Text(
                           'Trivia Quiz',
@@ -141,6 +142,33 @@ class _ThemeModeSelector extends ConsumerWidget {
     return IconButton(
       onPressed: nextMode,
       icon: Icon(themeModes[themeMode]),
+    );
+  }
+}
+
+class _ThemeColorSelector extends ConsumerWidget {
+  const _ThemeColorSelector({
+    super.key,
+  });
+
+  static const colors = Colors.primaries;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pageCtrl = ref.watch(HomePageCtrl.instance);
+    final color = ref.watch(pageCtrl.themeColor);
+
+    void nextMode() {
+      var index = colors.indexWhere((element) => element.value == color.value);
+
+      unawaited(
+        pageCtrl.selectThemeColor(colors[++index % colors.length]),
+      );
+    }
+
+    return IconButton(
+      onPressed: nextMode,
+      icon: Icon(color: color, Icons.circle_rounded),
     );
   }
 }
