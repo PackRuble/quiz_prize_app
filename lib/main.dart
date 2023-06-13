@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'src/domain/app_controller.dart';
 import 'src/ui/game/game_page.dart';
 import 'src/ui/home/home_page.dart';
+import 'src/ui/shared/background.dart';
 import 'src/ui/stats/stats_page.dart';
 
 void log(
@@ -81,15 +82,21 @@ class MyApp extends ConsumerWidget {
       theme: themeData,
       themeMode: themeMode,
       initialRoute: HomePage.path,
-      builder: (context, child) => ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-          },
-        ),
-        child: child!,
-      ),
+      builder: (context, child) {
+        return ResponsiveWindow(
+          child: SafeArea(
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                },
+              ),
+              child: child!,
+            ),
+          ),
+        );
+      },
       routes: <String, WidgetBuilder>{
         HomePage.path: (context) => const HomePage(),
         GamePage.path: (context) => const GamePage(),
