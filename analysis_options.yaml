@@ -1,6 +1,13 @@
 include: package:lint/strict.yaml
 
 analyzer:
+  errors:
+    unused_element: ignore
+
+  exclude:
+    - '**.freezed.dart'
+    - '**.g.dart'
+
   plugins:
     - custom_lint
 

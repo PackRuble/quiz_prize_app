@@ -31,7 +31,7 @@ enum GameCard<T extends Object> implements Card<T> {
   quizDifficulty<TriviaQuizDifficulty>(
       DataType.string, TriviaQuizDifficulty.any),
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
-  quizCategory<CategoryDTO>(DataType.string, CategoryDTO.general),
+  quizCategory<CategoryDTO>(DataType.string, CategoryDTO.any),
   ;
 
   const GameCard(this.type, this.defaultValue);

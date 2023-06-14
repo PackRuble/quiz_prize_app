@@ -8,6 +8,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/ui/game/game_page_ctrl.dart';
 
+import '../shared/app_bar_custom.dart';
+import '../shared/cardpad.dart';
 import '../shared/material_state_custom.dart';
 
 class GamePage extends ConsumerWidget {
@@ -20,15 +22,9 @@ class GamePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return const Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: _AppCardBar(),
-      ),
-      body: Card(
-        child: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: _QuizWidget(),
-        ),
+      appBar: _AppCardBar(),
+      body: CardPad(
+        child: _QuizWidget(),
       ),
     );
   }
@@ -36,8 +32,8 @@ class GamePage extends ConsumerWidget {
 
 class _QuizWidget extends ConsumerWidget {
   const _QuizWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +44,7 @@ class _QuizWidget extends ConsumerWidget {
     return currentQuiz.when(
       data: (quiz) => ListView(
         children: [
-          if (true ?? kDebugMode)
+          if (kDebugMode)
             Consumer(
               builder: (context, ref, child) {
                 return Text(
@@ -235,43 +231,44 @@ class _DifficultyStarWidget extends StatelessWidget {
   }
 }
 
-class _AppCardBar extends ConsumerWidget {
-  const _AppCardBar({super.key});
+class _AppCardBar extends AppBarCustom {
+  const _AppCardBar();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
-    final pageController = ref.watch(GamePageCtrl.instance);
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final textTheme = Theme.of(context).textTheme;
+        final pageController = ref.watch(GamePageCtrl.instance);
 
-    final solvedCount = ref.watch(pageController.triviaStatsBloc.winning);
-    final unsolvedCount = ref.watch(pageController.triviaStatsBloc.losing);
-    final score = solvedCount - unsolvedCount;
+        final solvedCount = ref.watch(pageController.triviaStatsBloc.winning);
+        final unsolvedCount = ref.watch(pageController.triviaStatsBloc.losing);
+        final score = solvedCount - unsolvedCount;
 
-    return Card(
-      child: Row(
-        children: [
-          const BackButton(),
-          Text(
-            'Score: $score',
-            style: textTheme.labelLarge,
-          ),
-          const Spacer(),
-          Text(
-            '⬆$solvedCount',
-            style: textTheme.labelLarge?.copyWith(
-              color: Colors.green.shade900,
+        return AppBarCustom(
+          actions: [
+            Text(
+              'Score: $score',
+              style: textTheme.labelLarge,
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '⬇$unsolvedCount',
-            style: textTheme.labelLarge?.copyWith(
-              color: Colors.red.shade900,
+            const Spacer(),
+            Text(
+              '⬆$solvedCount',
+              style: textTheme.labelLarge?.copyWith(
+                color: Colors.green.shade900,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+            const SizedBox(width: 8),
+            Text(
+              '⬇$unsolvedCount',
+              style: textTheme.labelLarge?.copyWith(
+                color: Colors.red.shade900,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        );
+      },
     );
   }
 }

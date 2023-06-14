@@ -15,6 +15,13 @@ class AppController {
 
   final AppStorage _appStorage;
 
+  // there are some design issues on high resolution mobile devices
+  // const preferredSize = Size(864.0, 684.0);
+  final preferredSize = const Size.fromWidth(864.0);
+
+  bool usePreferredSize(Size size) =>
+      size.width >= preferredSize.width || size.height >= preferredSize.height;
+
   // ***************************************************************************
   // theme mode
 

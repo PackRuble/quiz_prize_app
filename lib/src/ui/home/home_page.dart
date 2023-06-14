@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
@@ -10,6 +9,7 @@ import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 
 import '../game/game_page.dart';
+import '../shared/cardpad.dart';
 import '../stats/stats_page.dart';
 import 'home_page_ctrl.dart';
 
@@ -21,71 +21,61 @@ class HomePage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: SizedBox(
-          width: double.infinity,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                // if that's not enough - use SingleChildScrollView
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const _ThemeColorSelector(),
-                      Expanded(
-                        child: Text(
-                          'Trivia Quiz',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displaySmall,
-                        ),
-                      ),
-                      const _ThemeModeSelector(), // todo: add color selector
-                    ],
+      body: CardPad(
+        child: Column(
+          // if that's not enough - use SingleChildScrollView
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _ThemeColorSelector(),
+                Expanded(
+                  child: Text(
+                    'Trivia Quiz',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
-                  const Spacer(),
-                  _ChapterButton(
-                    chapter: 'Play',
-                    onTap: () async {
-                      await Navigator.of(context).pushNamed(GamePage.path);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _ChapterButton(
-                    chapter: 'Statistics',
-                    onTap: () {
-                      unawaited(
-                          Navigator.of(context).pushNamed(StatsPage.path));
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  const Flexible(
-                    flex: 2,
-                    child: SizedBox(height: 32),
-                  ),
-                  // SizedBox(height: 44)),
-                  const _CategoryButton(),
-                  const SizedBox(height: 12),
-                  const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: _DifficultyButton(),
-                  ),
-                  const SizedBox(height: 12),
-                  const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: _QuizTypeSelector(),
-                  ),
-                  const Spacer(flex: 3),
-                  const _ShieldsBar(),
-                  const _InfoWidget(),
-                ],
-              ),
+                ),
+                const _ThemeModeSelector(), // todo: add color selector
+              ],
             ),
-          ),
+            const Spacer(),
+            _ChapterButton(
+              chapter: 'Play',
+              onTap: () async {
+                await Navigator.of(context).pushNamed(GamePage.path);
+              },
+            ),
+            const SizedBox(height: 12),
+            _ChapterButton(
+              chapter: 'Statistics',
+              onTap: () {
+                unawaited(Navigator.of(context).pushNamed(StatsPage.path));
+              },
+            ),
+            const SizedBox(height: 12),
+            const Flexible(
+              flex: 2,
+              child: SizedBox(height: 32),
+            ),
+            // SizedBox(height: 44)),
+            const _CategoryButton(),
+            const SizedBox(height: 12),
+            const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _DifficultyButton(),
+            ),
+            const SizedBox(height: 12),
+            const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _QuizTypeSelector(),
+            ),
+            const Spacer(flex: 3),
+            const _ShieldsBar(),
+            const _InfoWidget(),
+          ],
         ),
       ),
     );

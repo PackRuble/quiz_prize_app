@@ -5,6 +5,7 @@ import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 import 'package:trivia_app/src/ui/shared/app_bar_custom.dart';
 
 import '../const/app_colors.dart';
+import '../shared/cardpad.dart';
 import 'stats_page_ctrl.dart';
 
 class StatsPage extends ConsumerWidget {
@@ -20,12 +21,8 @@ class StatsPage extends ConsumerWidget {
         ref.watch(pageController.triviaStatsBloc.quizzesPlayed).length;
 
     return Scaffold(
-      appBar: AppBarCustom(
-        children: [
-          const BackButton(),
-          const SizedBox(width: 8),
-          Text('Statistics', style: textTheme.headlineSmall),
-        ],
+      appBar: const AppBarCustom(
+        title: 'Statistics',
       ),
       body: CustomScrollView(
         slivers: [
@@ -283,23 +280,6 @@ class CategoriesBlockSliver extends ConsumerWidget {
               )
           ],
         ),
-      ),
-    );
-  }
-}
-
-class CardPad extends StatelessWidget {
-  const CardPad({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: child,
       ),
     );
   }

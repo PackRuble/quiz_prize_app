@@ -24,7 +24,7 @@ class GamePageCtrl {
 
   late final currentQuiz = AutoDisposeStateProvider<AsyncValue<Quiz>>((ref) {
     ref.listenSelf((_, next) async {
-      if (next is AsyncLoading) {
+      if (next.isLoading) {
         ref.controller.state = await AsyncValue.guard(_triviaQuizBloc.getQuiz);
       }
     });
