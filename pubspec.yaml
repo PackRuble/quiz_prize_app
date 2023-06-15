@@ -25,6 +25,7 @@ dependencies:
   html_unescape: ^2.0.0
   simple_icons: ^7.10.0
   weather_animation: 0.0.2
+  url_launcher: ^6.1.11
 
   cardoteka:
     path: ../../cardoteka

@@ -7,6 +7,7 @@ import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../game/game_page.dart';
 import '../shared/cardpad.dart';
@@ -345,27 +346,34 @@ class _ShieldsBar extends HookConsumerWidget {
     super.key,
   });
 
+  void launch(Uri uri) {
+    unawaited(
+      launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: () {},
+          onPressed: () => launch(Uri.https('t.me', 'rublepack')),
           icon: Icon(
             SimpleIcons.telegram,
             color: ColorHex.fromHex('#26A5E4'), // corporate color
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () =>
+              launch(Uri.https('github.com', 'PackRuble/trivia_app')),
           icon: Icon(
             SimpleIcons.github,
             color: ColorHex.fromHex('#181717'), // corporate color
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () => launch(Uri.https('habr.com', 'ru/users/PackRuble/')),
           icon: Icon(
             SimpleIcons.habr,
             color: ColorHex.fromHex('#65A3BE'), // corporate color
