@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
@@ -21,63 +22,94 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final useScrollNotifier = useState(true);
+    final scrollController = useScrollController();
+    final useScroll = useScrollNotifier.value;
+
+    bool handleScrollNotification(ScrollMetricsNotification notification) {
+      if (notification.metrics.extentAfter == 0.0 &&
+          notification.metrics.extentBefore == 0.0) {
+        useScrollNotifier.value = true;
+      }
+      return true;
+    }
+
+    final children = <Widget>[
+      if (useScroll) const Spacer(),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const _ThemeColorSelector(),
+          Expanded(
+            child: Text(
+              'Trivia Quiz',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
+          ),
+          const _ThemeModeSelector(),
+        ],
+      ),
+      if (useScroll) const Spacer(),
+      const SizedBox(height: 8),
+      _ChapterButton(
+        chapter: 'Play',
+        onTap: () async {
+          await Navigator.of(context).pushNamed(GamePage.path);
+        },
+      ),
+      const SizedBox(height: 12),
+      _ChapterButton(
+        chapter: 'Statistics',
+        onTap: () {
+          unawaited(Navigator.of(context).pushNamed(StatsPage.path));
+        },
+      ),
+      const SizedBox(height: 12),
+      if (useScroll)
+        Flexible(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              WidgetsBinding.instance.addPostFrameCallback((dur) {
+                if (constraints.maxHeight == 0) useScrollNotifier.value = false;
+              });
+
+              return const SizedBox(height: 32);
+            },
+          ),
+        ),
+      const _CategoryButton(),
+      const SizedBox(height: 12),
+      const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: _DifficultyButton(),
+      ),
+      const SizedBox(height: 12),
+      const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: _QuizTypeSelector(),
+      ),
+      if (useScroll) const Spacer(flex: 3),
+      const _ShieldsBar(),
+      const _InfoWidget(),
+    ];
+
+    final child = Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: children,
+    );
+
     return Scaffold(
       body: CardPad(
-        child: Column(
-          // if that's not enough - use SingleChildScrollView
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const _ThemeColorSelector(),
-                Expanded(
-                  child: Text(
-                    'Trivia Quiz',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
+        child: useScroll
+            ? child
+            : NotificationListener<ScrollMetricsNotification>(
+                onNotification: handleScrollNotification,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: child,
                 ),
-                const _ThemeModeSelector(), // todo: add color selector
-              ],
-            ),
-            const Spacer(),
-            _ChapterButton(
-              chapter: 'Play',
-              onTap: () async {
-                await Navigator.of(context).pushNamed(GamePage.path);
-              },
-            ),
-            const SizedBox(height: 12),
-            _ChapterButton(
-              chapter: 'Statistics',
-              onTap: () {
-                unawaited(Navigator.of(context).pushNamed(StatsPage.path));
-              },
-            ),
-            const SizedBox(height: 12),
-            const Flexible(
-              flex: 2,
-              child: SizedBox(height: 32),
-            ),
-            // SizedBox(height: 44)),
-            const _CategoryButton(),
-            const SizedBox(height: 12),
-            const FittedBox(
-              fit: BoxFit.scaleDown,
-              child: _DifficultyButton(),
-            ),
-            const SizedBox(height: 12),
-            const FittedBox(
-              fit: BoxFit.scaleDown,
-              child: _QuizTypeSelector(),
-            ),
-            const Spacer(flex: 3),
-            const _ShieldsBar(),
-            const _InfoWidget(),
-          ],
-        ),
+              ),
       ),
     );
   }
@@ -373,7 +405,7 @@ class _ShieldsBar extends HookConsumerWidget {
           ),
         ),
         IconButton(
-          onPressed: () => launch(Uri.https('habr.com', 'ru/users/PackRuble/')),
+          onPressed: () => launch(Uri.https('habr.com', 'ru/users/PackRuble')),
           icon: Icon(
             SimpleIcons.habr,
             color: ColorHex.fromHex('#65A3BE'), // corporate color
@@ -390,6 +422,35 @@ class _InfoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text('© 2023 by Ruble');
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Column(
+      children: [
+        Text(
+          '© 2023 by Ruble',
+          style: textTheme.labelMedium,
+        ),
+        const SizedBox(width: 150, child: Divider(height: 4)),
+        Text(
+          'Open Trivia Database',
+          style: textTheme.labelSmall,
+        ),
+        InkWell(
+          onTap: () async => launchUrl(
+            Uri.https('opentdb.com'),
+            mode: LaunchMode.externalNonBrowserApplication,
+          ),
+          child: Text(
+            'opentdb.com',
+            style: textTheme.labelSmall?.copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.blue,
+              color: Colors.blue,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
