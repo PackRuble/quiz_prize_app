@@ -196,6 +196,8 @@ class _AnswerSelectButton extends HookConsumerWidget {
         children: [
           Align(
             child: ConfettiWidget(
+              // the key is needed because window size can change which will cause an error
+              key: ValueKey(MediaQuery.of(context).size),
               blastDirectionality: BlastDirectionality.explosive,
               createParticlePath: drawStar,
               pauseEmissionOnLowFrameRate: false,
