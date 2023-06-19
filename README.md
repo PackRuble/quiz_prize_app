@@ -1,16 +1,27 @@
-# trivia_app
+# Trivia App
 
-A simple MVP quiz app to test the capabilities of Cardoteka
+A simple MVP quiz app to test the capabilities of Cardoteka.
 
-## Getting Started
+[//]: # (todo:)
+- start without internet -- screen
 
-This project is a starting point for a Flutter application.
+Made with [Trivia API](https://opentdb.com/api_config.php) and [Dart 3.0](https://dart.dev/resources/dart-3-migration).
 
-A few resources to get you started if this is your first Flutter project:
+## Technologies used
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- [Flutter](https://flutter.dev/) – framework for creating applications. Love;
+- [Riverpod](https://github.com/rrousselGit/riverpod) – application state manager, dependency management (including injection). Personal thanks to _Remi Rousselet_;
+- [Cardoteka](https://github.com/PackRuble/cardoteka) – typed wrapper over [SharedPreferences](https://pub.dev/packages/shared_preferences) for convenient storage of local data (🔐);
+- [freezed](https://pub.dev/packages/freezed) – creation of immutable objects and their simple change;
+- [json_serializable](https://pub.dev/packages/json_serializable) – working with json;
+- [weather_animation](https://github.com/PackRuble/weather_animation) – lovely background animation;
+- [confetti](https://github.com/funwithflutter/flutter_confetti) – beautiful confetti for the correct answer;
+- [lint](https://pub.dev/packages/lint) – set of strict rules for development;
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+and others in [pubspec.yaml](pubspec.yaml)...❤
+
+
+## Notes
+
+- no session token implementation – which means an infinite number of questions that can be repeated.
+
