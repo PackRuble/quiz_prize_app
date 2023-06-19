@@ -40,7 +40,9 @@ sealed class TriviaResult<T> {
   const TriviaResult();
 
   const factory TriviaResult.data(T data) = TriviaResultData;
-  const factory TriviaResult.error(TriviaException exception) =
+  const factory TriviaResult.errorApi(TriviaException exception) =
+      TriviaResultErrorApi;
+  const factory TriviaResult.error(Object error, StackTrace stack) =
       TriviaResultError;
 }
 
@@ -49,9 +51,15 @@ class TriviaResultData<T> extends TriviaResult<T> {
   final T data;
 }
 
-class TriviaResultError<T> extends TriviaResult<T> {
-  const TriviaResultError(this.exception);
+class TriviaResultErrorApi<T> extends TriviaResult<T> {
+  const TriviaResultErrorApi(this.exception);
   final TriviaException exception;
+}
+
+class TriviaResultError<T> extends TriviaResult<T> {
+  const TriviaResultError(this.error, this.stack);
+  final Object error;
+  final StackTrace stack;
 }
 
 /// Use [TriviaRepository] to get list of categories or to fetch a quiz
@@ -151,14 +159,13 @@ extension GetQuizzes on TriviaRepository {
         response = await client.get(uri);
 
         if (response.statusCode != 200) {
-          throw Exception(
-            ['Failed to get quiz. Status code ${response.statusCode}'],
+          return TriviaResult.error(
+            'Failed to get quiz. Status code ${response.statusCode}',
+            StackTrace.current,
           );
         }
       } catch (e, s) {
-        print(e);
-        print(s);
-        throw Exception(e); //todo: impl
+        return TriviaResult.error(e, s);
       }
     }
 
@@ -167,7 +174,7 @@ extension GetQuizzes on TriviaRepository {
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int;
     switch (responseCode) {
       case >= 1 && <= 4:
-        return TriviaResult.error(TriviaException.values[responseCode]);
+        return TriviaResult.errorApi(TriviaException.values[responseCode]);
     }
 
     final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);

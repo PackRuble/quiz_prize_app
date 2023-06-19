@@ -204,11 +204,13 @@ class TriviaQuizBloc {
 
     final fetchedQuizDTO = switch (result) {
       TriviaResultData<List<QuizDTO>>() => result.data,
-      TriviaResultError() => switch (result.exception) {
+      TriviaResultErrorApi() => switch (result.exception) {
           TriviaException.tokenEmptySession =>
             throw const TriviaQuizResult.emptyData(),
           _ => throw TriviaQuizResult.error(result.exception.message),
-        }
+        },
+      TriviaResultError(error: final e) =>
+        throw TriviaQuizResult.error(e.toString()),
     };
 
     return _quizzesFromDTO(fetchedQuizDTO);
