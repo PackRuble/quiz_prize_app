@@ -335,7 +335,7 @@ class _FetchedCategories extends ConsumerWidget {
               );
             },
           ).toList(),
-          error: (error, stackTrace) => [Text('$error')],
+          error: (error, _) => [ListTile(title: Text('$error'))],
           loading: () => [const LinearProgressIndicator()],
         ),
       ],
@@ -411,7 +411,6 @@ class _ShieldsBar extends HookConsumerWidget {
             color: ColorHex.fromHex('#65A3BE'), // corporate color
           ),
         ),
-
       ],
     );
   }

@@ -101,7 +101,11 @@ class TriviaQuizBloc {
 
   /// Get all sorts of categories of quizzes.
   Future<List<CategoryDTO>> fetchCategories() async {
-    return _triviaRepository.getCategories();
+    return switch (await _triviaRepository.getCategories()) {
+      TriviaResultData<List<CategoryDTO>>(data: final list) => list,
+      TriviaResultError(error: final e) => throw Exception(e),
+      _ => throw Exception('$TriviaQuizBloc.fetchCategories() failed'),
+    };
   }
 
   /// Set the quiz category as the current selection.

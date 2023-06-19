@@ -81,7 +81,7 @@ class TriviaRepository {
 extension GetCategories on TriviaRepository {
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
-  Future<List<CategoryDTO>> getCategories() async {
+  Future<TriviaResult<List<CategoryDTO>>> getCategories() async {
     log('$TriviaRepository.getCategories been called');
 
     final uri = Uri.https(TriviaRepository._baseUrl, 'api_category.php');
@@ -97,17 +97,16 @@ extension GetCategories on TriviaRepository {
     } else {
       try {
         response = await client.get(uri);
-
-        if (response.statusCode != 200) {
-          throw Exception(
-            ['Failed to get quiz. Status code ${response.statusCode}'],
-          );
-        }
       } catch (e, s) {
-        print(e);
-        print(s);
-        throw Exception(e);
+        return TriviaResult.error(e, s);
       }
+    }
+
+    if (response.statusCode != 200) {
+      return TriviaResult.error(
+        'Failed to get quiz. Status code ${response.statusCode}',
+        StackTrace.current,
+      );
     }
 
     final body = json.decode(response.body) as Map;
@@ -115,7 +114,7 @@ extension GetCategories on TriviaRepository {
     final categoriesJson =
         (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return categoriesJson.map(CategoryDTO.fromJson).toList();
+    return TriviaResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
 
@@ -157,16 +156,16 @@ extension GetQuizzes on TriviaRepository {
     } else {
       try {
         response = await client.get(uri);
-
-        if (response.statusCode != 200) {
-          return TriviaResult.error(
-            'Failed to get quiz. Status code ${response.statusCode}',
-            StackTrace.current,
-          );
-        }
       } catch (e, s) {
         return TriviaResult.error(e, s);
       }
+    }
+
+    if (response.statusCode != 200) {
+      return TriviaResult.error(
+        'Failed to get quiz. Status code ${response.statusCode}',
+        StackTrace.current,
+      );
     }
 
     final decoded = json.decode(response.body) as Map;
