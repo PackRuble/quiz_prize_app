@@ -1,6 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
+import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_result.dart';
+
+sealed class GamePageState {
+  const GamePageState();
+}
+
+class GamePageStateData extends GamePageState {
+  const GamePageStateData(this.data);
+  final Quiz data;
+}
+
+class GamePageStateLoading extends GamePageState {
+  const GamePageStateLoading();
+}
+
+class GamePageStateEmptyData extends GamePageState {
+  const GamePageStateEmptyData(this.message);
+  final String message;
+}
+
+class GamePageStateError extends GamePageState {
+  const GamePageStateError(this.message);
+  final String message;
+}
 
 class GamePageCtrl {
   GamePageCtrl({
@@ -22,13 +46,21 @@ class GamePageCtrl {
     ),
   );
 
-  late final currentQuiz = AutoDisposeStateProvider<AsyncValue<Quiz>>((ref) {
+  late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
     ref.listenSelf((_, next) async {
-      if (next.isLoading) {
-        ref.controller.state = await AsyncValue.guard(_triviaQuizBloc.getQuiz);
+      if (next is GamePageStateLoading) {
+        final quizResult = await _triviaQuizBloc.getQuiz();
+
+        ref.controller.state = switch (quizResult) {
+          TriviaQuizResultData(data: final quiz) => GamePageStateData(quiz),
+          TriviaQuizResultEmptyData(message: final message) =>
+            GamePageStateEmptyData(message),
+          TriviaQuizResultError(message: final message) =>
+            GamePageStateError(message),
+        };
       }
     });
-    return const AsyncLoading();
+    return const GamePageStateLoading();
   });
 
   late final amountQuizzes = AutoDisposeProvider<int>(
@@ -37,7 +69,7 @@ class GamePageCtrl {
   Future<void> checkAnswer(String answer) async {
     final quiz = await _triviaQuizBloc.checkMyAnswer(answer);
 
-    _ref.read(currentQuiz.notifier).update((_) => AsyncValue.data(quiz));
+    _ref.read(currentQuiz.notifier).update((_) => GamePageStateData(quiz));
   }
 
   Future<void> onNextQuiz() async {

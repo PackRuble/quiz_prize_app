@@ -10,6 +10,7 @@ import 'package:trivia_app/src/data/trivia/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
 import 'model/quiz.model.dart';
+import 'trivia_quiz_result.dart';
 
 /// Contains business logic for obtaining quizzes and categories. Also, caches data.
 class TriviaQuizBloc {
@@ -138,8 +139,8 @@ class TriviaQuizBloc {
 
   /// Get a new quiz.
   ///
-  /// Generates errors if no quiz are found.
-  Future<Quiz> getQuiz() async {
+  /// Will return [TriviaQuizResult] depending on the query result.
+  Future<TriviaQuizResult> getQuiz() async {
     log('$TriviaQuizBloc.getQuiz called');
 
     final cachedQuizzes = _storage.get(GameCard.quizzes);
@@ -162,7 +163,7 @@ class TriviaQuizBloc {
       final quiz = quizzesIterator!.current;
 
       if (_suitQuizByFilter(quiz)) {
-        return quiz;
+        return TriviaQuizResult.data(quiz);
       }
     }
 
@@ -172,14 +173,15 @@ class TriviaQuizBloc {
 
     log('-> getting quizzes again');
     if (kDebugMode) {
-      throw 'The number of suitable quizzes is limited to a constant';
+      return const TriviaQuizResult.error(
+        'Debug: The number of suitable quizzes is limited to a constant',
+      );
     }
     return getQuiz();
   }
 
   Future<void> _increaseCachedQuizzes() async {
     log('-> get new quizzes and save them to the storage');
-    // todo if the quizzes are over on the server
     final fetched = await _fetchQuizzes();
 
     // we leave unsuitable quizzes for future times
@@ -193,12 +195,21 @@ class TriviaQuizBloc {
 
   /// Get quizzes from [TriviaRepository.getQuizzes].
   Future<List<Quiz>> _fetchQuizzes() async {
-    final fetchedQuizDTO = await _triviaRepository.getQuizzes(
+    final result = await _triviaRepository.getQuizzes(
       category: _ref.read(quizCategory),
       difficulty: _ref.read(quizDifficulty),
       type: _ref.read(quizType),
       amount: _countFetchQuizzes,
     );
+
+    final fetchedQuizDTO = switch (result) {
+      TriviaResultData<List<QuizDTO>>() => result.data,
+      TriviaResultError() => switch (result.exception) {
+          TriviaException.tokenEmptySession =>
+            throw const TriviaQuizResult.emptyData(),
+          _ => throw TriviaQuizResult.error(result.exception.message),
+        }
+    };
 
     return _quizzesFromDTO(fetchedQuizDTO);
   }

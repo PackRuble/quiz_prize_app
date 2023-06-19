@@ -36,6 +36,24 @@ enum TriviaException implements Exception {
   final String message;
 }
 
+sealed class TriviaResult<T> {
+  const TriviaResult();
+
+  const factory TriviaResult.data(T data) = TriviaResultData;
+  const factory TriviaResult.error(TriviaException exception) =
+      TriviaResultError;
+}
+
+class TriviaResultData<T> extends TriviaResult<T> {
+  const TriviaResultData(this.data);
+  final T data;
+}
+
+class TriviaResultError<T> extends TriviaResult<T> {
+  const TriviaResultError(this.exception);
+  final TriviaException exception;
+}
+
 /// Use [TriviaRepository] to get list of categories or to fetch a quiz
 class TriviaRepository {
   const TriviaRepository({
@@ -103,7 +121,7 @@ extension GetQuizzes on TriviaRepository {
   /// - if status code from API was not 200. [Exception]
   /// - if response code was not 0. [TriviaException]
   ///
-  Future<List<QuizDTO>> getQuizzes({
+  Future<TriviaResult<List<QuizDTO>>> getQuizzes({
     required CategoryDTO category,
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
@@ -149,12 +167,12 @@ extension GetQuizzes on TriviaRepository {
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int;
     switch (responseCode) {
       case >= 1 && <= 4:
-        throw TriviaException.values[responseCode];
+        return TriviaResult.error(TriviaException.values[responseCode]);
     }
 
     final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
-    return quizzes.map(QuizDTO.fromJson).toList();
+    return TriviaResult.data(quizzes.map(QuizDTO.fromJson).toList());
   }
 
   List<Map<String, dynamic>> _sanitizeQuizzes(List data) => data

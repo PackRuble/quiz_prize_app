@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
+import 'package:trivia_app/src/ui/const/app_colors.dart';
 import 'package:trivia_app/src/ui/game/game_page_ctrl.dart';
 
 import '../shared/app_bar_custom.dart';
@@ -41,66 +42,102 @@ class _QuizWidget extends ConsumerWidget {
     final pageController = ref.watch(GamePageCtrl.instance);
     final currentQuiz = ref.watch(pageController.currentQuiz);
 
-    return currentQuiz.when(
-      data: (quiz) => ListView(
-        children: [
-          if (kDebugMode)
-            Consumer(
-              builder: (context, ref, child) {
-                return Text(
-                  'Available questions: ${ref.watch(pageController.amountQuizzes)}',
-                );
-              },
+    return switch (currentQuiz) {
+      GamePageStateData(data: final quiz) => ListView(
+          children: [
+            if (kDebugMode)
+              Consumer(
+                builder: (context, ref, child) {
+                  return Text(
+                    'Available questions: ${ref.watch(pageController.amountQuizzes)}',
+                  );
+                },
+              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: Text(
+                    quiz.category,
+                    style: textTheme.titleSmall,
+                  ),
+                ),
+                _DifficultyStarWidget(difficulty: quiz.difficulty),
+              ],
             ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+            const Divider(),
+            Text(
+              quiz.question,
+              textAlign: TextAlign.center,
+              style: textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 20),
+            for (final answer in quiz.answers)
+              _AnswerSelectButton(
+                isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
+                isCorrect: switch (quiz.correctlySolved) {
+                  true when answer == quiz.yourAnswer => true,
+                  false when answer == quiz.yourAnswer => false,
+                  false when answer == quiz.correctAnswer => true,
+                  _ => null,
+                },
+                blocked: quiz.correctlySolved != null,
+                answer: answer,
+                onTap: () async => pageController.checkAnswer(answer),
+              ),
+            const SizedBox(height: 30),
+            if (quiz.correctlySolved != null)
+              ElevatedButton.icon(
+                icon: const Icon(Icons.arrow_forward),
+                onPressed: pageController.onNextQuiz,
+                label: const Text('Next question'),
+              ),
+            if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
+          ],
+        ),
+      GamePageStateLoading() =>
+        const Center(child: CircularProgressIndicator()),
+      GamePageStateEmptyData(message: final message) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Expanded(
+              Flexible(
                 child: Text(
-                  quiz.category,
-                  style: textTheme.titleSmall,
+                  message,
+                  style: textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
                 ),
               ),
-              _DifficultyStarWidget(difficulty: quiz.difficulty),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Flexible(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      child: const Text(
+                        'Reset token',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Change category',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const Divider(),
-          Text(
-            quiz.question,
-            textAlign: TextAlign.center,
-            style: textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-          for (final answer in quiz.answers)
-            _AnswerSelectButton(
-              isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
-              isCorrect: switch (quiz.correctlySolved) {
-                true when answer == quiz.yourAnswer => true,
-                false when answer == quiz.yourAnswer => false,
-                false when answer == quiz.correctAnswer => true,
-                _ => null,
-              },
-              blocked: quiz.correctlySolved != null,
-              answer: answer,
-              onTap: () async => pageController.checkAnswer(answer),
-            ),
-          const SizedBox(height: 30),
-          if (quiz.correctlySolved != null)
-            ElevatedButton.icon(
-              icon: const Icon(Icons.arrow_forward),
-              onPressed: pageController.onNextQuiz,
-              label: const Text('Next question'),
-            ),
-          if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
-        ],
-      ),
-      error: (error, stackTrace) {
-        FlutterError.reportError(
-            FlutterErrorDetails(exception: error, stack: stackTrace));
-        return Center(child: Text('$error'));
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-    );
+        ),
+      GamePageStateError(message: final message) =>
+        Center(child: Text(message)),
+    };
   }
 }
 
@@ -255,14 +292,14 @@ class _AppCardBar extends AppBarCustom {
             Text(
               '⬆$solvedCount',
               style: textTheme.labelLarge?.copyWith(
-                color: Colors.green.shade900,
+                color: AppColors.correctCounterText,
               ),
             ),
             const SizedBox(width: 8),
             Text(
               '⬇$unsolvedCount',
               style: textTheme.labelLarge?.copyWith(
-                color: Colors.red.shade900,
+                color: AppColors.unCorrectCounterText,
               ),
             ),
             const SizedBox(width: 8),

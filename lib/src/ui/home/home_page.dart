@@ -411,7 +411,7 @@ class _ShieldsBar extends HookConsumerWidget {
             color: ColorHex.fromHex('#65A3BE'), // corporate color
           ),
         ),
-        // todo: add others
+
       ],
     );
   }
