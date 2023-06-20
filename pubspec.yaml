@@ -1,6 +1,15 @@
 name: trivia_app
-description: A simple MVP quiz app to test the capabilities of Cardoteka
+description: >-
+  A simple MVP quiz app to test the capabilities of Cardoteka.
+  Enjoy solving quizzes and viewing statistics.
+  That's all there is to it.
 publish_to: 'none'
+repository: https://github.com/PackRuble/trivia_app
+homepage: https://t.me/+AkGV73kZi_Q1YTMy
+topics:
+  - cardoteka
+  - trivia
+  - quiz
 
 version: 1.0.0+1
 
@@ -38,6 +47,8 @@ dev_dependencies:
   freezed: 2.3.5
   json_serializable: 6.7.0
   build_runner: 2.4.5
+
+screenshots: # todo: add
 
 flutter:
   uses-material-design: true
