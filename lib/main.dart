@@ -4,8 +4,7 @@ import 'package:cardoteka/cardoteka.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'src/domain/app_controller.dart';
 import 'src/ui/game/game_page.dart';
 import 'src/ui/home/home_page.dart';
@@ -40,7 +39,7 @@ Future<void> body() async {
     return true;
   };
 
-  //todo the extremely important thing to add to the redmi db
+  // todo the extremely important thing to add to the redmi db
   WidgetsFlutterBinding.ensureInitialized();
   await Cardoteka.init();
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/app_storage.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/domain/app_controller.dart';

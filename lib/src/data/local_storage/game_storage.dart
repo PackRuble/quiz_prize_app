@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:cardoteka/cardoteka.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia_quiz/model/quiz.model.dart';
