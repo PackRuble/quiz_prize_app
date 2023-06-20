@@ -148,8 +148,6 @@ class TriviaQuizBloc {
     log('$TriviaQuizBloc.getQuiz called');
 
     final cachedQuizzes = _storage.get(GameCard.quizzes);
-    // await storage.remove(GameCard.quizzes);
-    // throw '';
 
     Completer<void>? completer;
     // silently increase the quiz cache if their number is below the allowed level
@@ -195,7 +193,7 @@ class TriviaQuizBloc {
     ]);
   }
 
-  static const _countFetchQuizzes = 6;
+  static const _countFetchQuizzes = 50;
 
   /// Get quizzes from [TriviaRepository.getQuizzes].
   Future<List<Quiz>> _fetchQuizzes() async {
@@ -203,6 +201,7 @@ class TriviaQuizBloc {
       category: _ref.read(quizCategory),
       difficulty: _ref.read(quizDifficulty),
       type: _ref.read(quizType),
+      // ignore: avoid_redundant_argument_values
       amount: _countFetchQuizzes,
     );
 
