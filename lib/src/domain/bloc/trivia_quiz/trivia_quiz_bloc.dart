@@ -174,7 +174,7 @@ class TriviaQuizBloc {
     await (completer?.future ?? _increaseCachedQuizzes());
 
     log('-> getting quizzes again');
-    if (kDebugMode) {
+    if (kDebugMode && cachedQuizzes.isNotEmpty) {
       return const TriviaQuizResult.error(
         'Debug: The number of suitable quizzes is limited to a constant',
       );
