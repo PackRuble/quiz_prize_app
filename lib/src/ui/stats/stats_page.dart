@@ -319,7 +319,7 @@ class PlayedQuizzesSliver extends ConsumerWidget {
                 ...[
                   for (var answer in quiz.answers)
                     Text(
-                      '→ $answer',
+                      '-> $answer',
                       style: switch (quiz.correctlySolved) {
                         true when answer == quiz.yourAnswer =>
                           TextStyle(backgroundColor: AppColors.correctAnswer),
