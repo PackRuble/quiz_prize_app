@@ -12,37 +12,23 @@ import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'model/quiz.model.dart';
 import 'trivia_quiz_result.dart';
 
-/// Contains business logic for obtaining quizzes and categories. Also, caches data.
-class TriviaQuizBloc {
-  TriviaQuizBloc._({
-    required TriviaRepository triviaRepository,
-    required TriviaStatsBloc triviaStatsBloc,
-    required GameStorage storage,
-    required AutoDisposeProviderRef<TriviaQuizBloc> ref,
-  })  : _storage = storage,
-        _ref = ref,
-        _triviaRepository = triviaRepository,
-        _triviaStatsBloc = triviaStatsBloc;
+class TriviaQuizProvider extends TriviaQuizBloc {
+  TriviaQuizProvider({
+    required super.triviaRepository,
+    required super.triviaStatsBloc,
+    required super.storage,
+  });
 
-  final TriviaRepository _triviaRepository;
-  final TriviaStatsBloc _triviaStatsBloc;
-  final GameStorage _storage;
-  final AutoDisposeProviderRef<TriviaQuizBloc> _ref;
-
-  static final instance = AutoDisposeProvider<TriviaQuizBloc>((ref) {
-    return TriviaQuizBloc._(
+  static final instance = AutoDisposeProvider<TriviaQuizProvider>((ref) {
+    return TriviaQuizProvider(
       triviaRepository: TriviaRepository(
         client: http.Client(),
         alwaysMockData: kDebugMode,
       ),
       storage: ref.watch(GameStorage.instance),
       triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
-      ref: ref,
     );
   });
-
-  // ***************************************************************************
-  // providers for watching
 
   late final quizzes = AutoDisposeProvider<List<Quiz>>((ref) {
     ref.onDispose(() {
@@ -78,6 +64,21 @@ class TriviaQuizBloc {
       detacher: ref.onDispose,
     );
   });
+}
+
+/// Contains business logic for obtaining quizzes and categories. Also, caches data.
+class TriviaQuizBloc {
+  TriviaQuizBloc({
+    required TriviaRepository triviaRepository,
+    required TriviaStatsBloc triviaStatsBloc,
+    required GameStorage storage,
+  })  : _storage = storage,
+        _triviaRepository = triviaRepository,
+        _triviaStatsBloc = triviaStatsBloc;
+
+  final TriviaRepository _triviaRepository;
+  final TriviaStatsBloc _triviaStatsBloc;
+  final GameStorage _storage;
 
   // ***************************************************************************
   // quizzes difficulty processing
@@ -122,9 +123,9 @@ class TriviaQuizBloc {
       _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
 
   bool _suitQuizByFilter(Quiz quiz) {
-    final category = _ref.read(quizCategory);
-    final difficulty = _ref.read(quizDifficulty);
-    final type = _ref.read(quizType);
+    final category = _storage.get(GameCard.quizCategory);
+    final difficulty = _storage.get(GameCard.quizDifficulty);
+    final type = _storage.get(GameCard.quizType);
 
     if ((quiz.category == category.name || category.isAny) &&
         (quiz.difficulty == difficulty ||
@@ -198,9 +199,9 @@ class TriviaQuizBloc {
   /// Get quizzes from [TriviaRepository.getQuizzes].
   Future<List<Quiz>> _fetchQuizzes() async {
     final result = await _triviaRepository.getQuizzes(
-      category: _ref.read(quizCategory),
-      difficulty: _ref.read(quizDifficulty),
-      type: _ref.read(quizType),
+      category: _storage.get(GameCard.quizCategory),
+      difficulty: _storage.get(GameCard.quizDifficulty),
+      type: _storage.get(GameCard.quizType),
       // ignore: avoid_redundant_argument_values
       amount: _countFetchQuizzes,
     );
