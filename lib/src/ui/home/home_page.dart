@@ -203,7 +203,7 @@ class _QuizTypeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bloc = ref.watch(TriviaQuizBloc.instance);
+    final bloc = ref.watch(TriviaQuizProvider.instance);
     final type = ref.watch(bloc.quizType);
 
     return SegmentedButton<TriviaQuizType>(
@@ -230,7 +230,7 @@ class _DifficultyButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bloc = ref.watch(TriviaQuizBloc.instance);
+    final bloc = ref.watch(TriviaQuizProvider.instance);
     final difficulty = ref.watch(bloc.quizDifficulty);
 
     return SegmentedButton<TriviaQuizDifficulty>(

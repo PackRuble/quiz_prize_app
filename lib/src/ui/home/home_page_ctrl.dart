@@ -9,7 +9,7 @@ import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
 class HomePageCtrl {
   HomePageCtrl({
     required Ref ref,
-    required TriviaQuizBloc triviaQuizBloc,
+    required TriviaQuizProvider triviaQuizBloc,
     required AppStorage appStorage,
     required AppController appController,
   })  : _triviaQuizBloc = triviaQuizBloc,
@@ -20,14 +20,14 @@ class HomePageCtrl {
   static final instance = AutoDisposeProvider(
     (ref) => HomePageCtrl(
       ref: ref,
-      triviaQuizBloc: ref.watch(TriviaQuizBloc.instance),
+      triviaQuizBloc: ref.watch(TriviaQuizProvider.instance),
       appController: ref.watch(AppController.instance),
       appStorage: ref.watch(AppStorage.instance),
     ),
   );
 
   final Ref _ref;
-  final TriviaQuizBloc _triviaQuizBloc;
+  final TriviaQuizProvider _triviaQuizBloc;
   final AppStorage _appStorage;
   final AppController _appController;
 
