@@ -29,19 +29,19 @@ class GamePageStateError extends GamePageState {
 class GamePageCtrl {
   GamePageCtrl({
     required Ref ref,
-    required TriviaQuizBloc triviaQuizBloc,
+    required TriviaQuizProvider triviaQuizBloc,
     required this.triviaStatsBloc,
   })  : _triviaQuizBloc = triviaQuizBloc,
         _ref = ref;
 
   final Ref _ref;
-  final TriviaQuizBloc _triviaQuizBloc;
+  final TriviaQuizProvider _triviaQuizBloc;
   final TriviaStatsBloc triviaStatsBloc;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
     (ref) => GamePageCtrl(
       ref: ref,
-      triviaQuizBloc: ref.watch(TriviaQuizBloc.instance),
+      triviaQuizBloc: ref.watch(TriviaQuizProvider.instance),
       triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
     ),
   );
