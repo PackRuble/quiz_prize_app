@@ -15,9 +15,9 @@ class ResponsiveWindow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.of(context).size; //todo
 
-    final appController = ref.watch(AppController.instance);
+    final appController = ref.watch(AppProvider.instance);
     final preferredSize = appController.preferredSize;
     final usePreferredSize = appController.usePreferredSize(size);
 

@@ -5,9 +5,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
-import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../game/game_page.dart';
@@ -44,7 +44,7 @@ class HomePage extends HookConsumerWidget {
             child: Text(
               'Trivia Quiz',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall,
+              style: Theme.of(context).textTheme.displaySmall, // todo shadow
             ),
           ),
           const _ThemeModeSelector(),

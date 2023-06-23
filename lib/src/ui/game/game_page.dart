@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/data/trivia/models.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
 import 'package:trivia_app/src/ui/const/app_colors.dart';
 import 'package:trivia_app/src/ui/game/game_page_ctrl.dart';
 
@@ -43,7 +43,7 @@ class _QuizWidget extends ConsumerWidget {
     final currentQuiz = ref.watch(pageController.currentQuiz);
 
     return switch (currentQuiz) {
-      GamePageStateData(data: final quiz) => ListView(
+      GamePageData(data: final quiz) => ListView(
           children: [
             if (kDebugMode)
               Consumer(
@@ -95,9 +95,8 @@ class _QuizWidget extends ConsumerWidget {
             if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
           ],
         ),
-      GamePageStateLoading() =>
-        const Center(child: CircularProgressIndicator()),
-      GamePageStateEmptyData(message: final message) => Center(
+      GamePageLoading() => const Center(child: CircularProgressIndicator()),
+      GamePageEmptyData(message: final message) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -135,8 +134,7 @@ class _QuizWidget extends ConsumerWidget {
             ],
           ),
         ),
-      GamePageStateError(message: final message) =>
-        Center(child: Text(message)),
+      GamePageError(message: final message) => Center(child: Text(message)),
     };
   }
 }
@@ -280,8 +278,8 @@ class _AppCardBar extends AppBarCustom {
         final textTheme = Theme.of(context).textTheme;
         final pageController = ref.watch(GamePageCtrl.instance);
 
-        final solvedCount = ref.watch(pageController.triviaStatsBloc.winning);
-        final unsolvedCount = ref.watch(pageController.triviaStatsBloc.losing);
+        final solvedCount = ref.watch(pageController.solvedCountProvider);
+        final unsolvedCount = ref.watch(pageController.unSolvedCountProvider);
         final score = solvedCount - unsolvedCount;
 
         return AppBarCustom(

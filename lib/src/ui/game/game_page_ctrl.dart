@@ -1,66 +1,72 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia_quiz/model/quiz.model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_bloc.dart';
-import 'package:trivia_app/src/domain/bloc/trivia_quiz/trivia_quiz_result.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_bloc.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_result.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/stats/trivia_stats_bloc.dart';
 
 sealed class GamePageState {
   const GamePageState();
 }
 
-class GamePageStateData extends GamePageState {
-  const GamePageStateData(this.data);
+class GamePageData extends GamePageState {
+  const GamePageData(this.data);
   final Quiz data;
 }
 
-class GamePageStateLoading extends GamePageState {
-  const GamePageStateLoading();
+class GamePageLoading extends GamePageState {
+  const GamePageLoading();
 }
 
-class GamePageStateEmptyData extends GamePageState {
-  const GamePageStateEmptyData(this.message);
+class GamePageEmptyData extends GamePageState {
+  const GamePageEmptyData(this.message);
   final String message;
 }
 
-class GamePageStateError extends GamePageState {
-  const GamePageStateError(this.message);
+class GamePageError extends GamePageState {
+  const GamePageError(this.message);
   final String message;
 }
 
 class GamePageCtrl {
   GamePageCtrl({
     required Ref ref,
-    required TriviaQuizProvider triviaQuizBloc,
-    required this.triviaStatsBloc,
-  })  : _triviaQuizBloc = triviaQuizBloc,
+    required TriviaQuizProvider triviaQuizProvider,
+    required TriviaStatsProvider triviaStatsProvider,
+  })  : _triviaQuizBloc = triviaQuizProvider,
+        _triviaStatsProvider = triviaStatsProvider,
         _ref = ref;
 
   final Ref _ref;
   final TriviaQuizProvider _triviaQuizBloc;
-  final TriviaStatsBloc triviaStatsBloc;
+  final TriviaStatsProvider _triviaStatsProvider;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
     (ref) => GamePageCtrl(
       ref: ref,
-      triviaQuizBloc: ref.watch(TriviaQuizProvider.instance),
-      triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
+      triviaQuizProvider: ref.watch(TriviaQuizProvider.instance),
+      triviaStatsProvider: ref.watch(TriviaStatsProvider.instance),
     ),
   );
 
+  AutoDisposeProvider<int> get solvedCountProvider =>
+      _triviaStatsProvider.winning;
+  AutoDisposeProvider<int> get unSolvedCountProvider =>
+      _triviaStatsProvider.losing;
+
   late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
     ref.listenSelf((_, next) async {
-      if (next is GamePageStateLoading) {
+      if (next is GamePageLoading) {
         final quizResult = await _triviaQuizBloc.getQuiz();
 
         ref.controller.state = switch (quizResult) {
-          TriviaQuizResultData(data: final quiz) => GamePageStateData(quiz),
-          TriviaQuizResultEmptyData(message: final message) =>
-            GamePageStateEmptyData(message),
-          TriviaQuizResultError(message: final message) =>
-            GamePageStateError(message),
+          TriviaQuizData(data: final quiz) => GamePageData(quiz),
+          TriviaQuizEmptyData(message: final message) =>
+            GamePageEmptyData(message),
+          TriviaQuizError(message: final message) => GamePageError(message),
         };
       }
     });
-    return const GamePageStateLoading();
+    return const GamePageLoading();
   });
 
   late final amountQuizzes = AutoDisposeProvider<int>(
@@ -69,7 +75,7 @@ class GamePageCtrl {
   Future<void> checkAnswer(String answer) async {
     final quiz = await _triviaQuizBloc.checkMyAnswer(answer);
 
-    _ref.read(currentQuiz.notifier).update((_) => GamePageStateData(quiz));
+    _ref.read(currentQuiz.notifier).update((_) => GamePageData(quiz));
   }
 
   Future<void> onNextQuiz() async {
