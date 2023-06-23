@@ -4,12 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/models.dart';
-import 'package:trivia_app/src/data/trivia/quiz/quiz.dto.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
-import 'model/quiz.model.dart';
+import '../model/quiz.model.dart';
+import '../stats/trivia_stats_bloc.dart';
 import 'trivia_quiz_result.dart';
 
 class TriviaQuizProvider extends TriviaQuizBloc {
@@ -26,7 +27,8 @@ class TriviaQuizProvider extends TriviaQuizBloc {
         alwaysMockData: kDebugMode,
       ),
       storage: ref.watch(GameStorage.instance),
-      triviaStatsBloc: ref.watch(TriviaStatsBloc.instance),
+      triviaStatsBloc:
+          ref.watch(TriviaStatsProvider.instance), // Not a bad trick, is it?
     );
   });
 
@@ -103,8 +105,8 @@ class TriviaQuizBloc {
   /// Get all sorts of categories of quizzes.
   Future<List<CategoryDTO>> fetchCategories() async {
     return switch (await _triviaRepository.getCategories()) {
-      TriviaResultData<List<CategoryDTO>>(data: final list) => list,
-      TriviaResultError(error: final e) => throw Exception(e),
+      TriviaRepoData<List<CategoryDTO>>(data: final list) => list,
+      TriviaRepoError(error: final e) => throw Exception(e),
       _ => throw Exception('$TriviaQuizBloc.fetchCategories() failed'),
     };
   }
@@ -207,13 +209,13 @@ class TriviaQuizBloc {
     );
 
     final fetchedQuizDTO = switch (result) {
-      TriviaResultData<List<QuizDTO>>() => result.data,
-      TriviaResultErrorApi() => switch (result.exception) {
+      TriviaRepoData<List<QuizDTO>>() => result.data,
+      TriviaRepoErrorApi() => switch (result.exception) {
           TriviaException.tokenEmptySession =>
             throw const TriviaQuizResult.emptyData(),
           _ => throw TriviaQuizResult.error(result.exception.message),
         },
-      TriviaResultError(error: final e) =>
+      TriviaRepoError(error: final e) =>
         throw TriviaQuizResult.error(e.toString()),
     };
 
@@ -224,7 +226,7 @@ class TriviaQuizBloc {
     var quiz = quizzesIterator!.current;
     quiz = quiz.copyWith(yourAnswer: answer); // ignore: parameter_assignments
 
-    unawaited(_triviaStatsBloc._savePoints(quiz.correctlySolved!));
+    unawaited(_triviaStatsBloc.savePoints(quiz.correctlySolved!));
     unawaited(_moveQuizAsPlayed(quiz));
     return quiz;
   }
