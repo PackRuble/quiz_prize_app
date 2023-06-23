@@ -36,28 +36,28 @@ enum TriviaException implements Exception {
   final String message;
 }
 
-sealed class TriviaResult<T> {
-  const TriviaResult();
+sealed class TriviaRepoResult<T> {
+  const TriviaRepoResult();
 
-  const factory TriviaResult.data(T data) = TriviaResultData;
-  const factory TriviaResult.errorApi(TriviaException exception) =
-      TriviaResultErrorApi;
-  const factory TriviaResult.error(Object error, StackTrace stack) =
-      TriviaResultError;
+  const factory TriviaRepoResult.data(T data) = TriviaRepoData;
+  const factory TriviaRepoResult.errorApi(TriviaException exception) =
+      TriviaRepoErrorApi;
+  const factory TriviaRepoResult.error(Object error, StackTrace stack) =
+      TriviaRepoError;
 }
 
-class TriviaResultData<T> extends TriviaResult<T> {
-  const TriviaResultData(this.data);
+class TriviaRepoData<T> extends TriviaRepoResult<T> {
+  const TriviaRepoData(this.data);
   final T data;
 }
 
-class TriviaResultErrorApi<T> extends TriviaResult<T> {
-  const TriviaResultErrorApi(this.exception);
+class TriviaRepoErrorApi<T> extends TriviaRepoResult<T> {
+  const TriviaRepoErrorApi(this.exception);
   final TriviaException exception;
 }
 
-class TriviaResultError<T> extends TriviaResult<T> {
-  const TriviaResultError(this.error, this.stack);
+class TriviaRepoError<T> extends TriviaRepoResult<T> {
+  const TriviaRepoError(this.error, this.stack);
   final Object error;
   final StackTrace stack;
 }
@@ -81,7 +81,7 @@ class TriviaRepository {
 extension GetCategories on TriviaRepository {
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
-  Future<TriviaResult<List<CategoryDTO>>> getCategories() async {
+  Future<TriviaRepoResult<List<CategoryDTO>>> getCategories() async {
     log('$TriviaRepository.getCategories been called');
 
     final uri = Uri.https(TriviaRepository._baseUrl, 'api_category.php');
@@ -98,12 +98,12 @@ extension GetCategories on TriviaRepository {
       try {
         response = await client.get(uri);
       } catch (e, s) {
-        return TriviaResult.error(e, s);
+        return TriviaRepoResult.error(e, s);
       }
     }
 
     if (response.statusCode != 200) {
-      return TriviaResult.error(
+      return TriviaRepoResult.error(
         'Failed to get quiz. Status code ${response.statusCode}',
         StackTrace.current,
       );
@@ -114,7 +114,8 @@ extension GetCategories on TriviaRepository {
     final categoriesJson =
         (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return TriviaResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
+    return TriviaRepoResult.data(
+        categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
 
@@ -128,7 +129,7 @@ extension GetQuizzes on TriviaRepository {
   /// - if status code from API was not 200. [Exception]
   /// - if response code was not 0. [TriviaException]
   ///
-  Future<TriviaResult<List<QuizDTO>>> getQuizzes({
+  Future<TriviaRepoResult<List<QuizDTO>>> getQuizzes({
     required CategoryDTO category,
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
@@ -157,12 +158,12 @@ extension GetQuizzes on TriviaRepository {
       try {
         response = await client.get(uri);
       } catch (e, s) {
-        return TriviaResult.error(e, s);
+        return TriviaRepoResult.error(e, s);
       }
     }
 
     if (response.statusCode != 200) {
-      return TriviaResult.error(
+      return TriviaRepoResult.error(
         'Failed to get quiz. Status code ${response.statusCode}',
         StackTrace.current,
       );
@@ -173,12 +174,12 @@ extension GetQuizzes on TriviaRepository {
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int;
     switch (responseCode) {
       case >= 1 && <= 4:
-        return TriviaResult.errorApi(TriviaException.values[responseCode]);
+        return TriviaRepoResult.errorApi(TriviaException.values[responseCode]);
     }
 
     final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
-    return TriviaResult.data(quizzes.map(QuizDTO.fromJson).toList());
+    return TriviaRepoResult.data(quizzes.map(QuizDTO.fromJson).toList());
   }
 
   List<Map<String, dynamic>> _sanitizeQuizzes(List data) => data
