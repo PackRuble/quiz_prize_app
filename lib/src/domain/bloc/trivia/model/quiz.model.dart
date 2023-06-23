@@ -2,7 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:trivia_app/src/data/trivia/models.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
 
 part 'quiz.model.freezed.dart';
 part 'quiz.model.g.dart';
