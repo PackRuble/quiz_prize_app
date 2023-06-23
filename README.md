@@ -20,6 +20,12 @@ Made with [Trivia API](https://opentdb.com/api_config.php) and [Dart 3.0](https:
 
 and others in [pubspec.yaml](pubspec.yaml)...❤
 
+## Architectural delights
+
+- structure our project – _layer-first_
+- BLoC uses
+
+![architecture_flow.png](res/architecture_flow.png)
 
 ## Notes
 
