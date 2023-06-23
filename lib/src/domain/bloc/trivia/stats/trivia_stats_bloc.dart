@@ -1,13 +1,13 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/models.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 
 class TriviaStatsProvider extends TriviaStatsBloc {
   TriviaStatsProvider({required super.storage});
 
-  static final instance = AutoDisposeProvider<TriviaStatsBloc>((ref) {
-    return TriviaStatsBloc(
+  static final instance = AutoDisposeProvider<TriviaStatsProvider>((ref) {
+    return TriviaStatsProvider(
       storage: ref.watch(GameStorage.instance),
     );
   });
@@ -96,7 +96,8 @@ class TriviaStatsBloc {
     return result;
   }
 
-  Future<void> _savePoints(bool isWin) async {
+  /// Use only in the scope `domain`.
+  Future<void> savePoints(bool isWin) async {
     isWin
         ? await _storage.set<int>(
             GameCard.winning,
