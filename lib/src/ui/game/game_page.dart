@@ -18,7 +18,7 @@ class GamePage extends ConsumerWidget {
     super.key,
   });
 
-  static const path = 'game';
+  static const path = '/game';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

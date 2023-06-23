@@ -9,7 +9,7 @@ import 'stats_page_ctrl.dart';
 class StatsPage extends ConsumerWidget {
   const StatsPage({super.key});
 
-  static const path = 'stats';
+  static const path = '/stats';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
