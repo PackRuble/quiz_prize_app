@@ -16,9 +16,11 @@ void log(
   required Object error,
   StackTrace? stackTrace,
 }) {
-  print(name);
-  print(error);
-  print(stackTrace);
+  if (kDebugMode) {
+    print(name);
+    print(error);
+    print(stackTrace);
+  }
 }
 
 void main() async {
@@ -28,12 +30,12 @@ void main() async {
 }
 
 Future<void> body() async {
-  // логгирование ошибок flutter framework
+  // flutter framework error logging
   FlutterError.onError = (details) {
     log('Flutter Error', error: details.exception, stackTrace: details.stack);
   };
 
-  // логгирование ошибок платформы
+  // platform error logging
   PlatformDispatcher.instance.onError = (error, stack) {
     log('PlatformDispatcher Error', error: error, stackTrace: stack);
     return true;
@@ -55,9 +57,9 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentSize = MediaQuery.of(context).size;
+    final currentSize = MediaQuery.sizeOf(context);
 
-    final appController = ref.watch(AppController.instance);
+    final appController = ref.watch(AppProvider.instance);
     final usePreferredSize = appController.usePreferredSize(currentSize);
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
