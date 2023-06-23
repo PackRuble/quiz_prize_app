@@ -4,9 +4,9 @@ import 'dart:developer';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
 
-import 'category/category.dto.dart';
-import 'models.dart';
-import 'quiz/quiz.dto.dart';
+import 'model_dto/category/category.dto.dart';
+import 'model_dto/quiz/quiz.dto.dart';
+import 'model_dto/trivia_models.dart';
 
 enum TriviaException implements Exception {
   success(0, 'Success. Returned results successfully.'),
@@ -36,6 +36,7 @@ enum TriviaException implements Exception {
   final String message;
 }
 
+/// Each method in this [TriviaRepository] returns [TriviaRepoResult]<[T]>.
 sealed class TriviaRepoResult<T> {
   const TriviaRepoResult();
 
@@ -62,7 +63,7 @@ class TriviaRepoError<T> extends TriviaRepoResult<T> {
   final StackTrace stack;
 }
 
-/// Use [TriviaRepository] to get list of categories or to fetch a quiz
+/// Use [TriviaRepository] to get list of categories or to fetch a quiz.
 class TriviaRepository {
   const TriviaRepository({
     required this.client,
