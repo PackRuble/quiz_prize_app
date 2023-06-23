@@ -22,6 +22,8 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final th = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
     final useScrollNotifier = useState(true);
     final scrollController = useScrollController();
     final useScroll = useScrollNotifier.value;
@@ -44,7 +46,15 @@ class HomePage extends HookConsumerWidget {
             child: Text(
               'Trivia Quiz',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall, // todo shadow
+              style: th.textTheme.displaySmall?.copyWith(
+                shadows: [
+                  Shadow(
+                    color: cs.primary,
+                    offset: const Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ), // todo shadow
             ),
           ),
           const _ThemeModeSelector(),
