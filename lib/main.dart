@@ -82,7 +82,7 @@ class MyApp extends ConsumerWidget {
           ThemeMode.light => Brightness.light,
           ThemeMode.dark => Brightness.dark,
           // _ => Theme.of(context).brightness,
-          _ => MediaQuery.of(context).platformBrightness,
+          _ => MediaQuery.platformBrightnessOf(context),
         },
       ),
       tooltipTheme: const TooltipThemeData(

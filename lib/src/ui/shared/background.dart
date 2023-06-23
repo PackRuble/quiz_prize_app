@@ -15,7 +15,7 @@ class ResponsiveWindow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size; //todo
+    final size = MediaQuery.sizeOf(context);
 
     final appController = ref.watch(AppProvider.instance);
     final preferredSize = appController.preferredSize;
@@ -52,7 +52,7 @@ class BackAnimated extends ConsumerWidget {
     final th = Theme.of(context);
     final colorScheme = th.colorScheme;
     final isDark = th.brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return WrapperScene(
       sizeCanvas: size,
