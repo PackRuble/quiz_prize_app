@@ -152,7 +152,7 @@ class TriviaQuizBloc {
 
     final cachedQuizzes = _storage.get(GameCard.quizzes);
 
-    Completer<void>? completer;
+    Completer<TriviaQuizResult?>? completer;
     // silently increase the quiz cache if their number is below the allowed level
     if (!_enoughCachedQuizzes()) {
       log('-> not enough cached quizzes');
@@ -174,7 +174,11 @@ class TriviaQuizBloc {
 
     // quiz not found or list is empty...
     quizzesIterator = null;
-    await (completer?.future ?? _increaseCachedQuizzes());
+    // todo: In a good way, this logic should be rewritten and made more transparent!
+    final delayedResult = await (completer?.future ?? _increaseCachedQuizzes());
+    if (delayedResult != null) {
+      return delayedResult;
+    }
 
     log('-> getting quizzes again');
     if (kDebugMode && cachedQuizzes.isNotEmpty) {
@@ -185,15 +189,22 @@ class TriviaQuizBloc {
     return getQuiz();
   }
 
-  Future<void> _increaseCachedQuizzes() async {
+  Future<TriviaQuizResult?> _increaseCachedQuizzes() async {
     log('-> get new quizzes and save them to the storage');
-    final fetched = await _fetchQuizzes();
+    final List<Quiz> fetched;
+    try {
+      fetched = await _fetchQuizzes();
+    } on TriviaQuizResult catch (result) {
+      return result;
+    }
 
     // we leave unsuitable quizzes for future times
     await _storage.set<List<Quiz>>(GameCard.quizzes, [
       ...fetched,
       ..._storage.get(GameCard.quizzes),
     ]);
+
+    return null;
   }
 
   static const _countFetchQuizzes = 50;
