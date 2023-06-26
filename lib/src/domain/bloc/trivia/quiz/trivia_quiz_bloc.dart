@@ -74,6 +74,7 @@ class TriviaQuizBloc {
     required TriviaRepository triviaRepository,
     required TriviaStatsBloc triviaStatsBloc,
     required GameStorage storage,
+    this.debugMode = kDebugMode,
   })  : _storage = storage,
         _triviaRepository = triviaRepository,
         _triviaStatsBloc = triviaStatsBloc;
@@ -81,6 +82,7 @@ class TriviaQuizBloc {
   final TriviaRepository _triviaRepository;
   final TriviaStatsBloc _triviaStatsBloc;
   final GameStorage _storage;
+  final bool debugMode;
 
   // ***************************************************************************
   // quizzes difficulty processing
@@ -119,7 +121,9 @@ class TriviaQuizBloc {
   // ***************************************************************************
   // quiz processing
 
-  static const _minCountCachedQuizzes = 10;
+  /// Limited so as to make the least number of requests to the server,
+  /// if the number of available quizzes on the selected parameters is minimal.
+  static const _minCountCachedQuizzes = 3;
 
   bool _enoughCachedQuizzes() =>
       _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
@@ -181,7 +185,7 @@ class TriviaQuizBloc {
     }
 
     log('-> getting quizzes again');
-    if (kDebugMode && cachedQuizzes.isNotEmpty) {
+    if (debugMode && cachedQuizzes.isNotEmpty) {
       return const TriviaQuizResult.error(
         'Debug: The number of suitable quizzes is limited to a constant',
       );
@@ -207,28 +211,58 @@ class TriviaQuizBloc {
     return null;
   }
 
-  static const _countFetchQuizzes = 50;
-
   /// Get quizzes from [TriviaRepository.getQuizzes].
+  ///
+  /// May throw an exception [TriviaRepoResult].
   Future<List<Quiz>> _fetchQuizzes() async {
-    final result = await _triviaRepository.getQuizzes(
-      category: _storage.get(GameCard.quizCategory),
-      difficulty: _storage.get(GameCard.quizDifficulty),
-      type: _storage.get(GameCard.quizType),
-      // ignore: avoid_redundant_argument_values
-      amount: _countFetchQuizzes,
-    );
+    final category = _storage.get(GameCard.quizCategory);
+    final difficulty = _storage.get(GameCard.quizDifficulty);
+    final type = _storage.get(GameCard.quizType);
+    log('-> fetchQuizzes params: [`category`=$category] [`difficulty`=$difficulty] [`type`=$type]');
 
-    final fetchedQuizDTO = switch (result) {
-      TriviaRepoData<List<QuizDTO>>() => result.data,
-      TriviaRepoErrorApi() => switch (result.exception) {
-          TriviaException.tokenEmptySession =>
-            throw const TriviaQuizResult.emptyData(),
-          _ => throw TriviaQuizResult.error(result.exception.message),
-        },
-      TriviaRepoError(error: final e) =>
-        throw TriviaQuizResult.error(e.toString()),
-    };
+    // desired number of quizzes to fetch
+    const kCountFetchQuizzes = 47;
+    // 47 ~/= 2; -> 23 -> 11 -> 5 -> 2 -> 1
+    // this still doesn't get rid of the edge cases where the number of available
+    // quizzes on the server will be 4, 6, 7, etc. but it's better than nothing at all ^)
+    const reductionFactor = 2;
+
+    bool tryAgainWithReduce = false;
+    int countFetchQuizzes = kCountFetchQuizzes;
+
+    late final List<QuizDTO> fetchedQuizDTO;
+    do {
+      // attempt to reduce the number of quizzes for a query
+      if (tryAgainWithReduce) {
+        log('-> next fetch attempt with [`countFetchQuizzes`=$countFetchQuizzes]');
+        countFetchQuizzes ~/= reductionFactor;
+      }
+
+      final result = await _triviaRepository.getQuizzes(
+        category: category,
+        difficulty: difficulty,
+        type: type,
+        amount: countFetchQuizzes,
+      );
+
+      switch (result) {
+        case TriviaRepoData<List<QuizDTO>>():
+          fetchedQuizDTO = result.data;
+          tryAgainWithReduce = false;
+        case TriviaRepoErrorApi():
+          switch (result.exception) {
+            case TriviaException.tokenEmptySession:
+              throw const TriviaQuizResult.emptyData();
+            case TriviaException.noResults:
+              // it is worth trying to query with less [countFetchQuizzes]
+              tryAgainWithReduce = true;
+            case _:
+              throw TriviaQuizResult.error(result.exception.message);
+          }
+        case TriviaRepoError(error: final e):
+          throw TriviaQuizResult.error(e.toString());
+      }
+    } while (tryAgainWithReduce && countFetchQuizzes > 1);
 
     return _quizzesFromDTO(fetchedQuizDTO);
   }
