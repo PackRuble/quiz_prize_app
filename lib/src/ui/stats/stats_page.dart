@@ -169,7 +169,7 @@ class GeneralStatsBlock extends ConsumerWidget {
               child: Text(
                 MaterialLocalizations.of(context).okButtonLabel,
               ),
-            )
+            ),
           ],
         );
       },

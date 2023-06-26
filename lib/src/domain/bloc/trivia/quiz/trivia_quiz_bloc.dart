@@ -25,7 +25,7 @@ class TriviaQuizProvider extends TriviaQuizBloc {
     return TriviaQuizProvider(
       triviaRepository: TriviaRepository(
         client: http.Client(),
-        alwaysMockData: false ?? kDebugMode,
+        alwaysMockData: kDebugMode,
       ),
       storage: ref.watch(GameStorage.instance),
       triviaStatsBloc:

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../game/game_page.dart';
 import '../shared/cardpad.dart';
+import '../shared/debug_menu.dart';
 import '../stats/stats_page.dart';
 import 'home_page_ctrl.dart';
 
@@ -54,7 +55,7 @@ class HomePage extends HookConsumerWidget {
                     blurRadius: 4,
                   ),
                 ],
-              ), // todo shadow
+              ),
             ),
           ),
           const _ThemeModeSelector(),
@@ -64,16 +65,18 @@ class HomePage extends HookConsumerWidget {
       const SizedBox(height: 8),
       _ChapterButton(
         chapter: 'Play',
-        onTap: () async {
-          await Navigator.of(context).pushNamed(GamePage.path);
-        },
+        onTap: () => unawaited(Navigator.of(context).pushNamed(GamePage.path)),
       ),
       const SizedBox(height: 12),
       _ChapterButton(
         chapter: 'Statistics',
-        onTap: () {
-          unawaited(Navigator.of(context).pushNamed(StatsPage.path));
-        },
+        onTap: () => unawaited(Navigator.of(context).pushNamed(StatsPage.path)),
+        onLongTap: () => unawaited(
+          showAdaptiveDialog(
+            context: context,
+            builder: (context) => const DebugDialog(),
+          ),
+        ),
       ),
       const SizedBox(height: 12),
       if (useScroll)
@@ -129,10 +132,12 @@ class _ChapterButton extends ConsumerWidget {
   const _ChapterButton({
     super.key,
     required this.onTap,
+    this.onLongTap,
     required this.chapter,
   });
 
   final VoidCallback onTap;
+  final VoidCallback? onLongTap;
   final String chapter;
 
   @override
@@ -141,6 +146,7 @@ class _ChapterButton extends ConsumerWidget {
           padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
         ),
         onPressed: onTap,
+        onLongPress: onLongTap,
         child: Text(
           chapter,
           textAlign: TextAlign.center,
