@@ -66,7 +66,7 @@ class _QuizWidget extends ConsumerWidget {
               ],
             ),
             const Divider(),
-            Text(
+            SelectableText(
               quiz.question,
               textAlign: TextAlign.center,
               style: textTheme.headlineSmall,
@@ -212,7 +212,7 @@ class _AnswerSelectButton extends HookConsumerWidget {
                     MaterialStateColorOrNull.resolveWith(resolveFg),
               ),
               onPressed: blocked ? null : onTap,
-              child: Text(
+              child: SelectableText(
                 answer,
                 textAlign: TextAlign.center,
               ),
