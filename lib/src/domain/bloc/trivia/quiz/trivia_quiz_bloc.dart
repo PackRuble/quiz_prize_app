@@ -203,10 +203,13 @@ class TriviaQuizBloc {
     }
 
     // we leave unsuitable quizzes for future times
-    await _storage.set<List<Quiz>>(GameCard.quizzes, [
-      ...fetched,
-      ..._storage.get(GameCard.quizzes),
-    ]);
+    await _storage.set<List<Quiz>>(
+      GameCard.quizzes,
+      [
+        ..._storage.get(GameCard.quizzes),
+        ...fetched,
+      ]..shuffle(),
+    );
 
     return null;
   }
