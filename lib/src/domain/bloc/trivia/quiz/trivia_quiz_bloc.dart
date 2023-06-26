@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +25,7 @@ class TriviaQuizProvider extends TriviaQuizBloc {
     return TriviaQuizProvider(
       triviaRepository: TriviaRepository(
         client: http.Client(),
-        alwaysMockData: kDebugMode,
+        alwaysMockData: false ?? kDebugMode,
       ),
       storage: ref.watch(GameStorage.instance),
       triviaStatsBloc:
@@ -107,8 +108,14 @@ class TriviaQuizBloc {
   /// Get all sorts of categories of quizzes.
   Future<List<CategoryDTO>> fetchCategories() async {
     return switch (await _triviaRepository.getCategories()) {
-      TriviaRepoData<List<CategoryDTO>>(data: final list) => list,
-      TriviaRepoError(error: final e) => throw Exception(e),
+      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
+          await _storage.set(GameCard.allCategories, list);
+          return list;
+        }.call(),
+      TriviaRepoError(error: final e) =>
+        e is SocketException || e is TimeoutException
+            ? _storage.get(GameCard.allCategories)
+            : throw Exception(e),
       _ => throw Exception('$TriviaQuizBloc.fetchCategories() failed'),
     };
   }

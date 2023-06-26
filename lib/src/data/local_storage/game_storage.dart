@@ -32,6 +32,7 @@ enum GameCard<T extends Object> implements Card<T> {
       DataType.string, TriviaQuizDifficulty.any),
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
   quizCategory<CategoryDTO>(DataType.string, CategoryDTO.any),
+  allCategories<List<CategoryDTO>>(DataType.stringList, [CategoryDTO.any]),
   ;
 
   const GameCard(this.type, this.defaultValue);
@@ -64,6 +65,7 @@ enum GameCard<T extends Object> implements Card<T> {
       quizDifficulty: EnumAsStringConverter(TriviaQuizDifficulty.values),
       quizType: _QuizTypeConverter(),
       quizCategory: _QuizCategoryConverter(),
+      allCategories: _AllCategoriesConverter(),
     },
   );
 }
@@ -96,6 +98,17 @@ class _QuizzesConverter extends ListConverter<Quiz> {
 
   @override
   String objTo(Quiz obj) => jsonEncode(obj.toJson());
+}
+
+class _AllCategoriesConverter extends ListConverter<CategoryDTO> {
+  const _AllCategoriesConverter();
+
+  @override
+  CategoryDTO objFrom(String element) =>
+      CategoryDTO.fromJson(jsonDecode(element) as Map<String, dynamic>);
+
+  @override
+  String objTo(CategoryDTO obj) => jsonEncode(obj.toJson());
 }
 
 class _QuizCategoryConverter extends Converter<CategoryDTO, String> {
