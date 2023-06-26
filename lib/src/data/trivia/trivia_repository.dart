@@ -152,7 +152,6 @@ extension GetQuizzes on TriviaRepository {
     final http.Response response;
     if (alwaysMockData) {
       log('-> mock request');
-      log('-> change url by: https://opentdb.com/api.php?amount=50');
 
       response = http.Response(_quizzesMockRaw, 200);
     } else {
