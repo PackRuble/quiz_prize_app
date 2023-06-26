@@ -4,6 +4,7 @@ import 'package:cardoteka/cardoteka.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'src/domain/app_controller.dart';
 import 'src/ui/game/game_page.dart';
@@ -93,6 +94,8 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Trivia App',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      localeResolutionCallback: (locale, _) => locale ?? const Locale('en'),
       theme: themeData,
       themeMode: themeMode,
       initialRoute: HomePage.path,
