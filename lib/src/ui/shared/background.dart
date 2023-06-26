@@ -58,9 +58,9 @@ class BackAnimated extends ConsumerWidget {
       sizeCanvas: size,
       colors: [
         th.colorScheme.primary,
-        isDark ? Colors.white30 : Colors.white70,
-        Colors.orange.shade100,
-        isDark ? Colors.white24 : Colors.white60,
+        isDark ? Colors.grey.shade900 : Colors.grey.shade300,
+        th.colorScheme.secondary,
+        isDark ? Colors.grey.shade800 : Colors.grey.shade200,
         th.colorScheme.secondary,
       ],
       children: [
