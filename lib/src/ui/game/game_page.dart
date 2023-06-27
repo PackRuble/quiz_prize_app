@@ -112,7 +112,8 @@ class _QuizWidget extends ConsumerWidget {
                 children: [
                   Flexible(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      // todo: since there is no method to reset the token, we just pop
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Reset token',
                         textAlign: TextAlign.center,

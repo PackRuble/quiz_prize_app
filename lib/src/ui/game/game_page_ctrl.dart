@@ -41,11 +41,17 @@ class GamePageCtrl {
   final TriviaStatsProvider _triviaStatsProvider;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
-    (ref) => GamePageCtrl(
-      ref: ref,
-      triviaQuizProvider: ref.watch(TriviaQuizProvider.instance),
-      triviaStatsProvider: ref.watch(TriviaStatsProvider.instance),
-    ),
+    (ref) {
+      final triviaQuizProvider = ref.watch(TriviaQuizProvider.instance);
+      // this allows the iterator to be properly cleaned up
+      ref.watch(triviaQuizProvider.quizzes);
+
+      return GamePageCtrl(
+        ref: ref,
+        triviaQuizProvider: triviaQuizProvider,
+        triviaStatsProvider: ref.watch(TriviaStatsProvider.instance),
+      );
+    },
   );
 
   AutoDisposeProvider<int> get solvedCountProvider =>

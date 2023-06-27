@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:developer';
+import 'dart:developer' show log;
 
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
@@ -67,11 +67,11 @@ class TriviaRepoError<T> extends TriviaRepoResult<T> {
 class TriviaRepository {
   const TriviaRepository({
     required this.client,
-    this.alwaysMockData = false,
+    this.useMockData = false,
   });
 
   final http.Client client;
-  final bool alwaysMockData;
+  final bool useMockData;
 
   static const _baseUrl = 'opentdb.com';
   static const _responseCodeKey = 'response_code';
@@ -91,7 +91,7 @@ extension GetCategories on TriviaRepository {
 
     final http.Response response;
 
-    if (alwaysMockData) {
+    if (useMockData) {
       log('-> mock request');
 
       response = http.Response(_categoriesMockRaw, 200);
@@ -150,7 +150,7 @@ extension GetQuizzes on TriviaRepository {
     log('-> by url: $uri');
 
     final http.Response response;
-    if (alwaysMockData) {
+    if (useMockData) {
       log('-> mock request');
 
       response = http.Response(_quizzesMockRaw, 200);

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
@@ -18,6 +18,7 @@ class TriviaQuizProvider extends TriviaQuizBloc {
   TriviaQuizProvider({
     required super.triviaRepository,
     required super.triviaStatsBloc,
+    super.debugMode,
     required super.storage,
   });
 
@@ -25,8 +26,9 @@ class TriviaQuizProvider extends TriviaQuizBloc {
     return TriviaQuizProvider(
       triviaRepository: TriviaRepository(
         client: http.Client(),
-        alwaysMockData: kDebugMode,
+        useMockData: kDebugMode,
       ),
+      debugMode: kDebugMode,
       storage: ref.watch(GameStorage.instance),
       triviaStatsBloc:
           ref.watch(TriviaStatsProvider.instance), // Not a bad trick, is it?
@@ -75,7 +77,7 @@ class TriviaQuizBloc {
     required TriviaRepository triviaRepository,
     required TriviaStatsBloc triviaStatsBloc,
     required GameStorage storage,
-    this.debugMode = kDebugMode,
+    this.debugMode = false,
   })  : _storage = storage,
         _triviaRepository = triviaRepository,
         _triviaStatsBloc = triviaStatsBloc;
@@ -150,6 +152,7 @@ class TriviaQuizBloc {
     return false;
   }
 
+  // must be disposed of when not in use
   Iterator<Quiz>? quizzesIterator;
 
   // todo: feature: make a request before the quizzes are over
@@ -228,7 +231,7 @@ class TriviaQuizBloc {
     final category = _storage.get(GameCard.quizCategory);
     final difficulty = _storage.get(GameCard.quizDifficulty);
     final type = _storage.get(GameCard.quizType);
-    log('-> fetchQuizzes params: [`category`=$category] [`difficulty`=$difficulty] [`type`=$type]');
+    log('-> fetchQuizzes params: [`category`=$category],[`difficulty`=$difficulty],[`type`=$type]');
 
     // desired number of quizzes to fetch
     const kCountFetchQuizzes = 47;
@@ -240,12 +243,14 @@ class TriviaQuizBloc {
     bool tryAgainWithReduce = false;
     int countFetchQuizzes = kCountFetchQuizzes;
 
-    late final List<QuizDTO> fetchedQuizDTO;
+    log('-> const count [`kCountFetchQuizzes`=$kCountFetchQuizzes]');
+
+    List<QuizDTO>? fetchedQuizDTO;
     do {
       // attempt to reduce the number of quizzes for a query
       if (tryAgainWithReduce) {
-        log('-> next fetch attempt with [`countFetchQuizzes`=$countFetchQuizzes]');
         countFetchQuizzes ~/= reductionFactor;
+        log('-> next fetch attempt with [`countFetchQuizzes`=$countFetchQuizzes]');
       }
 
       final result = await _triviaRepository.getQuizzes(
@@ -256,13 +261,11 @@ class TriviaQuizBloc {
       );
 
       switch (result) {
-        case TriviaRepoData<List<QuizDTO>>():
-          fetchedQuizDTO = result.data;
+        case TriviaRepoData<List<QuizDTO>>(data: final data):
+          fetchedQuizDTO = data;
           tryAgainWithReduce = false;
-        case TriviaRepoErrorApi():
-          switch (result.exception) {
-            case TriviaException.tokenEmptySession:
-              throw const TriviaQuizResult.emptyData();
+        case TriviaRepoErrorApi(exception: final exception):
+          switch (exception) {
             case TriviaException.noResults:
               // it is worth trying to query with less [countFetchQuizzes]
               tryAgainWithReduce = true;
@@ -272,7 +275,11 @@ class TriviaQuizBloc {
         case TriviaRepoError(error: final e):
           throw TriviaQuizResult.error(e.toString());
       }
-    } while (tryAgainWithReduce && countFetchQuizzes > 1);
+    } while (countFetchQuizzes > 1 && tryAgainWithReduce);
+
+    if (fetchedQuizDTO == null) {
+      throw const TriviaQuizResult.emptyData();
+    }
 
     return _quizzesFromDTO(fetchedQuizDTO);
   }
