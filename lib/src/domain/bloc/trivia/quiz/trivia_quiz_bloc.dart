@@ -301,7 +301,7 @@ class TriviaQuizBloc {
     final quizzesPlayed = _storage.get(GameCard.quizzesPlayed);
     await _storage.set<List<Quiz>>(
       GameCard.quizzesPlayed,
-      [...quizzesPlayed, quiz],
+      [quiz, ...quizzesPlayed],
     );
   }
 
