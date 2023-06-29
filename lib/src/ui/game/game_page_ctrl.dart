@@ -44,7 +44,8 @@ class GamePageCtrl {
     (ref) {
       final triviaQuizProvider = ref.watch(TriviaQuizProvider.instance);
       // this allows the iterator to be properly cleaned up
-      ref.watch(triviaQuizProvider.quizzes);
+      // so we're just listen, no rebuilding
+      ref.listen(triviaQuizProvider.quizzes, (_, __) {});
 
       return GamePageCtrl(
         ref: ref,
