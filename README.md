@@ -1,9 +1,8 @@
 # Trivia App
 
-A simple MVP quiz app to test the capabilities of Cardoteka.
+![](res/banner.png)
 
-[//]: # (todo:)
-- start without internet -- screen
+A simple MVP quiz app to test the capabilities of Cardoteka.
 
 Made with [Trivia API](https://opentdb.com/api_config.php) and [Dart 3.0](https://dart.dev/resources/dart-3-migration).
 

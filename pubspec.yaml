@@ -51,7 +51,9 @@ dev_dependencies:
   json_serializable: 6.7.0
   build_runner: 2.4.5
 
-screenshots: # todo: add
+screenshots:
+  - description: 'Banner'
+    path: res/banner.png
 
 flutter:
   uses-material-design: true
