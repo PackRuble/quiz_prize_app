@@ -404,7 +404,7 @@ class _ShieldsBar extends HookConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: () => launch(Uri.https('t.me', 'rublepack')),
+          onPressed: () => launch(Uri.https('t.me', '+GFFZ8Lk1Bz5kMTEy')),
           icon: Icon(
             SimpleIcons.telegram,
             color: ColorHex.fromHex('#26A5E4'), // corporate color
