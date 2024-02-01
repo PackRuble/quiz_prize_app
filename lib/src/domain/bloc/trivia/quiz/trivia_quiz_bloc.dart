@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
@@ -30,14 +31,14 @@ class TriviaQuizProvider extends TriviaQuizBloc {
       ),
       debugMode: kDebugMode,
       storage: ref.watch(GameStorage.instance),
-      triviaStatsBloc:
-          ref.watch(TriviaStatsProvider.instance), // Not a bad trick, is it?
+      // Not a bad trick, is it?
+      triviaStatsBloc: ref.watch(TriviaStatsProvider.instance),
     );
   });
 
   late final quizzes = AutoDisposeProvider<List<Quiz>>((ref) {
     ref.onDispose(() {
-      quizzesIterator = null;
+      _quizzesIterator = null;
     });
     return _storage.attach(
       GameCard.quizzes,
@@ -63,7 +64,8 @@ class TriviaQuizProvider extends TriviaQuizBloc {
   });
 
   late final quizCategory = AutoDisposeProvider<CategoryDTO>((ref) {
-    return _storage.attach(
+    final GameStorage storage = ref.watch(GameStorage.instance);
+    return storage.attach(
       GameCard.quizCategory,
       (value) => ref.state = value,
       detacher: ref.onDispose,
@@ -153,7 +155,7 @@ class TriviaQuizBloc {
   }
 
   // must be disposed of when not in use
-  Iterator<Quiz>? quizzesIterator;
+  Iterator<Quiz>? _quizzesIterator;
 
   // todo: feature: make a request before the quizzes are over
   // Quiz? nextQuiz;
@@ -171,15 +173,15 @@ class TriviaQuizBloc {
     if (!_enoughCachedQuizzes()) {
       log('-> not enough cached quizzes');
 
-      quizzesIterator = null;
+      _quizzesIterator = null;
       completer = Completer();
       completer.complete(_increaseCachedQuizzes());
     }
 
     // looking for a quiz that matches the filters
-    quizzesIterator ??= cachedQuizzes.iterator;
-    while (quizzesIterator!.moveNext()) {
-      final quiz = quizzesIterator!.current;
+    _quizzesIterator ??= cachedQuizzes.iterator;
+    while (_quizzesIterator!.moveNext()) {
+      final quiz = _quizzesIterator!.current;
 
       if (_suitQuizByFilter(quiz)) {
         return TriviaQuizResult.data(quiz);
@@ -187,7 +189,7 @@ class TriviaQuizBloc {
     }
 
     // quiz not found or list is empty...
-    quizzesIterator = null;
+    _quizzesIterator = null;
     // todo: In a good way, this logic should be rewritten and made more transparent!
     final delayedResult = await (completer?.future ?? _increaseCachedQuizzes());
     if (delayedResult != null) {
@@ -285,7 +287,7 @@ class TriviaQuizBloc {
   }
 
   Future<Quiz> checkMyAnswer(String answer) async {
-    var quiz = quizzesIterator!.current;
+    var quiz = _quizzesIterator!.current;
     quiz = quiz.copyWith(yourAnswer: answer); // ignore: parameter_assignments
 
     unawaited(_triviaStatsBloc.savePoints(quiz.correctlySolved!));

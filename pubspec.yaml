@@ -22,8 +22,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  cardoteka: # todo change
-    path: ../../cardoteka
+  cardoteka: ^1.0.1
 
   flutter_hooks: ^0.18.6
   hooks_riverpod: ^2.3.6

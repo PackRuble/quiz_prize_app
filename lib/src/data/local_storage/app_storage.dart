@@ -3,9 +3,10 @@ import 'package:flutter/material.dart' show Color, Colors, ThemeMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AppStorage extends Cardoteka with WatcherImpl {
-  AppStorage._() : super(config: AppCard._config);
+  AppStorage({required super.config});
 
-  static final instance = Provider<AppStorage>((ref) => AppStorage._());
+  static final instance =
+      Provider((ref) => AppStorage(config: AppCard._config));
 }
 
 enum AppCard<T extends Object> implements Card<T> {
@@ -24,7 +25,7 @@ enum AppCard<T extends Object> implements Card<T> {
   @override
   final DataType type;
 
-  static const _config = CardConfig(
+  static const _config = CardotekaConfig(
     name: 'AppCard',
     cards: values,
     converters: {
