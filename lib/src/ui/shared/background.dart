@@ -69,8 +69,7 @@ class BackAnimated extends ConsumerWidget {
           snowConfig: SnowConfig(
             widgetSnowflake: Icon(
               Icons.cruelty_free,
-              color:
-                  isDark ? colorScheme.primaryContainer : colorScheme.primary,
+              color: isDark ? colorScheme.primaryContainer : colorScheme.primary,
             ),
             areaXStart: 0,
             areaYStart: 0,

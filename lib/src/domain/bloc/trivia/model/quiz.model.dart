@@ -36,8 +36,7 @@ class Quiz with _$Quiz {
 
   /// If you gave the correct answer, true will be returned, else false.
   /// If there hasn't been a response yet, return null.
-  bool? get correctlySolved =>
-      yourAnswer == null ? null : yourAnswer == correctAnswer;
+  bool? get correctlySolved => yourAnswer == null ? null : yourAnswer == correctAnswer;
 
   factory Quiz.fromJson(Map<String, dynamic> json) => _$QuizFromJson(json);
 }

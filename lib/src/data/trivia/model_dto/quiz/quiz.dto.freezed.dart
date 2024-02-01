@@ -64,8 +64,7 @@ abstract class $QuizDTOCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$QuizDTOCopyWithImpl<$Res, $Val extends QuizDTO>
-    implements $QuizDTOCopyWith<$Res> {
+class _$QuizDTOCopyWithImpl<$Res, $Val extends QuizDTO> implements $QuizDTOCopyWith<$Res> {
   _$QuizDTOCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -114,8 +113,7 @@ class _$QuizDTOCopyWithImpl<$Res, $Val extends QuizDTO>
 
 /// @nodoc
 abstract class _$$_QuizDTOCopyWith<$Res> implements $QuizDTOCopyWith<$Res> {
-  factory _$$_QuizDTOCopyWith(
-          _$_QuizDTO value, $Res Function(_$_QuizDTO) then) =
+  factory _$$_QuizDTOCopyWith(_$_QuizDTO value, $Res Function(_$_QuizDTO) then) =
       __$$_QuizDTOCopyWithImpl<$Res>;
   @override
   @useResult
@@ -129,8 +127,7 @@ abstract class _$$_QuizDTOCopyWith<$Res> implements $QuizDTOCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_QuizDTOCopyWithImpl<$Res>
-    extends _$QuizDTOCopyWithImpl<$Res, _$_QuizDTO>
+class __$$_QuizDTOCopyWithImpl<$Res> extends _$QuizDTOCopyWithImpl<$Res, _$_QuizDTO>
     implements _$$_QuizDTOCopyWith<$Res> {
   __$$_QuizDTOCopyWithImpl(_$_QuizDTO _value, $Res Function(_$_QuizDTO) _then)
       : super(_value, _then);
@@ -178,22 +175,15 @@ class __$$_QuizDTOCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_QuizDTO implements _QuizDTO {
   const _$_QuizDTO(
-      {@JsonKey(name: 'category')
-          required this.category,
-      @JsonKey(name: 'type')
-          required this.type,
-      @JsonKey(name: 'difficulty')
-          required this.difficulty,
-      @JsonKey(name: 'question')
-          required this.question,
-      @JsonKey(name: 'correct_answer')
-          required this.correctAnswer,
-      @JsonKey(name: 'incorrect_answers')
-          required final List<String> incorrectAnswers})
+      {@JsonKey(name: 'category') required this.category,
+      @JsonKey(name: 'type') required this.type,
+      @JsonKey(name: 'difficulty') required this.difficulty,
+      @JsonKey(name: 'question') required this.question,
+      @JsonKey(name: 'correct_answer') required this.correctAnswer,
+      @JsonKey(name: 'incorrect_answers') required final List<String> incorrectAnswers})
       : _incorrectAnswers = incorrectAnswers;
 
-  factory _$_QuizDTO.fromJson(Map<String, dynamic> json) =>
-      _$$_QuizDTOFromJson(json);
+  factory _$_QuizDTO.fromJson(Map<String, dynamic> json) => _$$_QuizDTOFromJson(json);
 
   /// The name of category
   @override
@@ -227,8 +217,7 @@ class _$_QuizDTO implements _QuizDTO {
   @override
   @JsonKey(name: 'incorrect_answers')
   List<String> get incorrectAnswers {
-    if (_incorrectAnswers is EqualUnmodifiableListView)
-      return _incorrectAnswers;
+    if (_incorrectAnswers is EqualUnmodifiableListView) return _incorrectAnswers;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_incorrectAnswers);
   }
@@ -243,28 +232,18 @@ class _$_QuizDTO implements _QuizDTO {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_QuizDTO &&
-            (identical(other.category, category) ||
-                other.category == category) &&
+            (identical(other.category, category) || other.category == category) &&
             (identical(other.type, type) || other.type == type) &&
-            (identical(other.difficulty, difficulty) ||
-                other.difficulty == difficulty) &&
-            (identical(other.question, question) ||
-                other.question == question) &&
+            (identical(other.difficulty, difficulty) || other.difficulty == difficulty) &&
+            (identical(other.question, question) || other.question == question) &&
             (identical(other.correctAnswer, correctAnswer) ||
                 other.correctAnswer == correctAnswer) &&
-            const DeepCollectionEquality()
-                .equals(other._incorrectAnswers, _incorrectAnswers));
+            const DeepCollectionEquality().equals(other._incorrectAnswers, _incorrectAnswers));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      category,
-      type,
-      difficulty,
-      question,
-      correctAnswer,
+  int get hashCode => Object.hash(runtimeType, category, type, difficulty, question, correctAnswer,
       const DeepCollectionEquality().hash(_incorrectAnswers));
 
   @JsonKey(ignore: true)
@@ -283,18 +262,13 @@ class _$_QuizDTO implements _QuizDTO {
 
 abstract class _QuizDTO implements QuizDTO {
   const factory _QuizDTO(
-      {@JsonKey(name: 'category')
-          required final String category,
-      @JsonKey(name: 'type')
-          required final TriviaQuizType type,
-      @JsonKey(name: 'difficulty')
-          required final TriviaQuizDifficulty difficulty,
-      @JsonKey(name: 'question')
-          required final String question,
-      @JsonKey(name: 'correct_answer')
-          required final String correctAnswer,
-      @JsonKey(name: 'incorrect_answers')
-          required final List<String> incorrectAnswers}) = _$_QuizDTO;
+          {@JsonKey(name: 'category') required final String category,
+          @JsonKey(name: 'type') required final TriviaQuizType type,
+          @JsonKey(name: 'difficulty') required final TriviaQuizDifficulty difficulty,
+          @JsonKey(name: 'question') required final String question,
+          @JsonKey(name: 'correct_answer') required final String correctAnswer,
+          @JsonKey(name: 'incorrect_answers') required final List<String> incorrectAnswers}) =
+      _$_QuizDTO;
 
   factory _QuizDTO.fromJson(Map<String, dynamic> json) = _$_QuizDTO.fromJson;
 
@@ -330,6 +304,5 @@ abstract class _QuizDTO implements QuizDTO {
   List<String> get incorrectAnswers;
   @override
   @JsonKey(ignore: true)
-  _$$_QuizDTOCopyWith<_$_QuizDTO> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$_QuizDTOCopyWith<_$_QuizDTO> get copyWith => throw _privateConstructorUsedError;
 }

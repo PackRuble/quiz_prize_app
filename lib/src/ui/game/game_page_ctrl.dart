@@ -55,10 +55,8 @@ class GamePageCtrl {
     },
   );
 
-  AutoDisposeProvider<int> get solvedCountProvider =>
-      _triviaStatsProvider.winning;
-  AutoDisposeProvider<int> get unSolvedCountProvider =>
-      _triviaStatsProvider.losing;
+  AutoDisposeProvider<int> get solvedCountProvider => _triviaStatsProvider.winning;
+  AutoDisposeProvider<int> get unSolvedCountProvider => _triviaStatsProvider.losing;
 
   late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
     ref.listenSelf((_, next) async {
@@ -67,8 +65,7 @@ class GamePageCtrl {
 
         ref.controller.state = switch (quizResult) {
           TriviaQuizData(data: final quiz) => GamePageData(quiz),
-          TriviaQuizEmptyData(message: final message) =>
-            GamePageEmptyData(message),
+          TriviaQuizEmptyData(message: final message) => GamePageEmptyData(message),
           TriviaQuizError(message: final message) => GamePageError(message),
         };
       }
@@ -76,8 +73,8 @@ class GamePageCtrl {
     return const GamePageLoading();
   });
 
-  late final amountQuizzes = AutoDisposeProvider<int>(
-      (ref) => ref.watch(_triviaQuizBloc.quizzes).length);
+  late final amountQuizzes =
+      AutoDisposeProvider<int>((ref) => ref.watch(_triviaQuizBloc.quizzes).length);
 
   Future<void> checkAnswer(String answer) async {
     final quiz = await _triviaQuizBloc.checkMyAnswer(answer);

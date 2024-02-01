@@ -9,13 +9,11 @@ part of 'quiz.model.dart';
 _$_Quiz _$$_QuizFromJson(Map<String, dynamic> json) => _$_Quiz(
       category: json['category'] as String,
       type: $enumDecode(_$TriviaQuizTypeEnumMap, json['type']),
-      difficulty:
-          $enumDecode(_$TriviaQuizDifficultyEnumMap, json['difficulty']),
+      difficulty: $enumDecode(_$TriviaQuizDifficultyEnumMap, json['difficulty']),
       question: json['question'] as String,
       correctAnswer: json['correctAnswer'] as String,
       yourAnswer: json['yourAnswer'] as String? ?? null,
-      answers:
-          (json['answers'] as List<dynamic>).map((e) => e as String).toList(),
+      answers: (json['answers'] as List<dynamic>).map((e) => e as String).toList(),
     );
 
 Map<String, dynamic> _$$_QuizToJson(_$_Quiz instance) => <String, dynamic>{

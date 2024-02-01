@@ -10,6 +10,7 @@ class StatsPageCtrl {
   })  : _triviaStatsProvider = triviaStatsProvider,
         _ref = ref;
 
+  // ignore: unused_field
   final Ref _ref;
   final TriviaStatsProvider _triviaStatsProvider;
 
@@ -20,17 +21,15 @@ class StatsPageCtrl {
     ),
   );
 
-  AutoDisposeProvider<List<Quiz>> get quizzesPlayed =>
-      _triviaStatsProvider.quizzesPlayed;
+  AutoDisposeProvider<List<Quiz>> get quizzesPlayed => _triviaStatsProvider.quizzesPlayed;
   AutoDisposeProvider<int> get solvedCount => _triviaStatsProvider.winning;
   AutoDisposeProvider<int> get unsolvedCount => _triviaStatsProvider.losing;
 
-  AutoDisposeProvider<
-          Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>
+  AutoDisposeProvider<Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>
       get statsOnDifficulty => _triviaStatsProvider.statsOnDifficulty;
 
-  AutoDisposeProvider<Map<String, (int correctly, int uncorrectly)>>
-      get statsOnCategory => _triviaStatsProvider.statsOnCategory;
+  AutoDisposeProvider<Map<String, (int correctly, int uncorrectly)>> get statsOnCategory =>
+      _triviaStatsProvider.statsOnCategory;
 
   Future<void> resetStatistics() async => _triviaStatsProvider.resetStats();
 }

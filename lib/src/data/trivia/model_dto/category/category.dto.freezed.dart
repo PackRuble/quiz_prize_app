@@ -31,14 +31,12 @@ mixin _$CategoryDTO {
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $CategoryDTOCopyWith<CategoryDTO> get copyWith =>
-      throw _privateConstructorUsedError;
+  $CategoryDTOCopyWith<CategoryDTO> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $CategoryDTOCopyWith<$Res> {
-  factory $CategoryDTOCopyWith(
-          CategoryDTO value, $Res Function(CategoryDTO) then) =
+  factory $CategoryDTOCopyWith(CategoryDTO value, $Res Function(CategoryDTO) then) =
       _$CategoryDTOCopyWithImpl<$Res, CategoryDTO>;
   @useResult
   $Res call({@JsonKey(name: 'id') int id, @JsonKey(name: 'name') String name});
@@ -74,10 +72,8 @@ class _$CategoryDTOCopyWithImpl<$Res, $Val extends CategoryDTO>
 }
 
 /// @nodoc
-abstract class _$$_CategoryDTOCopyWith<$Res>
-    implements $CategoryDTOCopyWith<$Res> {
-  factory _$$_CategoryDTOCopyWith(
-          _$_CategoryDTO value, $Res Function(_$_CategoryDTO) then) =
+abstract class _$$_CategoryDTOCopyWith<$Res> implements $CategoryDTOCopyWith<$Res> {
+  factory _$$_CategoryDTOCopyWith(_$_CategoryDTO value, $Res Function(_$_CategoryDTO) then) =
       __$$_CategoryDTOCopyWithImpl<$Res>;
   @override
   @useResult
@@ -85,11 +81,9 @@ abstract class _$$_CategoryDTOCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_CategoryDTOCopyWithImpl<$Res>
-    extends _$CategoryDTOCopyWithImpl<$Res, _$_CategoryDTO>
+class __$$_CategoryDTOCopyWithImpl<$Res> extends _$CategoryDTOCopyWithImpl<$Res, _$_CategoryDTO>
     implements _$$_CategoryDTOCopyWith<$Res> {
-  __$$_CategoryDTOCopyWithImpl(
-      _$_CategoryDTO _value, $Res Function(_$_CategoryDTO) _then)
+  __$$_CategoryDTOCopyWithImpl(_$_CategoryDTO _value, $Res Function(_$_CategoryDTO) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -115,12 +109,10 @@ class __$$_CategoryDTOCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_CategoryDTO extends _CategoryDTO {
   const _$_CategoryDTO(
-      {@JsonKey(name: 'id') required this.id,
-      @JsonKey(name: 'name') required this.name})
+      {@JsonKey(name: 'id') required this.id, @JsonKey(name: 'name') required this.name})
       : super._();
 
-  factory _$_CategoryDTO.fromJson(Map<String, dynamic> json) =>
-      _$$_CategoryDTOFromJson(json);
+  factory _$_CategoryDTO.fromJson(Map<String, dynamic> json) => _$$_CategoryDTOFromJson(json);
 
   /// The id of category.
   @override
@@ -171,8 +163,7 @@ abstract class _CategoryDTO extends CategoryDTO {
       @JsonKey(name: 'name') required final String name}) = _$_CategoryDTO;
   const _CategoryDTO._() : super._();
 
-  factory _CategoryDTO.fromJson(Map<String, dynamic> json) =
-      _$_CategoryDTO.fromJson;
+  factory _CategoryDTO.fromJson(Map<String, dynamic> json) = _$_CategoryDTO.fromJson;
 
   @override
 
@@ -187,6 +178,5 @@ abstract class _CategoryDTO extends CategoryDTO {
   String get name;
   @override
   @JsonKey(ignore: true)
-  _$$_CategoryDTOCopyWith<_$_CategoryDTO> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$_CategoryDTOCopyWith<_$_CategoryDTO> get copyWith => throw _privateConstructorUsedError;
 }

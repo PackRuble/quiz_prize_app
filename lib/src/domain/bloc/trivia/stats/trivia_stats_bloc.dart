@@ -12,8 +12,8 @@ class TriviaStatsProvider extends TriviaStatsBloc {
     );
   });
 
-  late final statsOnDifficulty = AutoDisposeProvider<
-      Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
+  late final statsOnDifficulty =
+      AutoDisposeProvider<Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
     (ref) => _calculateStatsOnDifficulty(ref.watch(quizzesPlayed)),
   );
 
@@ -59,8 +59,9 @@ class TriviaStatsBloc {
   // ***************************************************************************
   // counting quizzes played by their difficulty
 
-  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
-      _calculateStatsOnDifficulty(List<Quiz> quizzes) {
+  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)> _calculateStatsOnDifficulty(
+    List<Quiz> quizzes,
+  ) {
     final result = <TriviaQuizDifficulty, (int correctly, int uncorrectly)>{};
 
     for (final q in quizzes) {
@@ -79,8 +80,9 @@ class TriviaStatsBloc {
   // ***************************************************************************
   // counting quizzes played by their category
 
-  Map<_CategoryName, (int correctly, int uncorrectly)>
-      _calculateStatsOnCategory(List<Quiz> quizzes) {
+  Map<_CategoryName, (int correctly, int uncorrectly)> _calculateStatsOnCategory(
+    List<Quiz> quizzes,
+  ) {
     final result = <_CategoryName, (int correctly, int uncorrectly)>{};
 
     for (final q in quizzes) {

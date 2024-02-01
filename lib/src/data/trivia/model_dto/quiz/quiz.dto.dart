@@ -26,10 +26,8 @@ class QuizDTO with _$QuizDTO {
     @JsonKey(name: 'correct_answer') required final String correctAnswer,
 
     /// Contains 3 wrong answers.
-    @JsonKey(name: 'incorrect_answers')
-    required final List<String> incorrectAnswers,
+    @JsonKey(name: 'incorrect_answers') required final List<String> incorrectAnswers,
   }) = _QuizDTO;
 
-  factory QuizDTO.fromJson(Map<String, dynamic> json) =>
-      _$QuizDTOFromJson(json);
+  factory QuizDTO.fromJson(Map<String, dynamic> json) => _$QuizDTOFromJson(json);
 }

@@ -30,8 +30,7 @@ class HomePage extends HookConsumerWidget {
     final useScroll = useScrollNotifier.value;
 
     bool handleScrollNotification(ScrollMetricsNotification notification) {
-      if (notification.metrics.extentAfter == 0.0 &&
-          notification.metrics.extentBefore == 0.0) {
+      if (notification.metrics.extentAfter == 0.0 && notification.metrics.extentBefore == 0.0) {
         useScrollNotifier.value = true;
       }
       return true;
@@ -172,8 +171,7 @@ class _ThemeModeSelector extends ConsumerWidget {
     final themeMode = ref.watch(pageCtrl.themeMode);
 
     void nextMode() {
-      final mode =
-          themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
+      final mode = themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
 
       unawaited(pageCtrl.selectThemeMode(mode));
     }
@@ -413,8 +411,7 @@ class _ShieldsBar extends HookConsumerWidget {
           ),
         ),
         IconButton(
-          onPressed: () =>
-              launch(Uri.https('github.com', 'PackRuble/trivia_app')),
+          onPressed: () => launch(Uri.https('github.com', 'PackRuble/trivia_app')),
           icon: Icon(
             SimpleIcons.github,
             color: ColorHex.fromHex('#181717'), // corporate color

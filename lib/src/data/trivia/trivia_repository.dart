@@ -41,10 +41,8 @@ sealed class TriviaRepoResult<T> {
   const TriviaRepoResult();
 
   const factory TriviaRepoResult.data(T data) = TriviaRepoData;
-  const factory TriviaRepoResult.errorApi(TriviaException exception) =
-      TriviaRepoErrorApi;
-  const factory TriviaRepoResult.error(Object error, StackTrace stack) =
-      TriviaRepoError;
+  const factory TriviaRepoResult.errorApi(TriviaException exception) = TriviaRepoErrorApi;
+  const factory TriviaRepoResult.error(Object error, StackTrace stack) = TriviaRepoError;
 }
 
 class TriviaRepoData<T> extends TriviaRepoResult<T> {
@@ -112,11 +110,9 @@ extension GetCategories on TriviaRepository {
 
     final body = json.decode(response.body) as Map;
 
-    final categoriesJson =
-        (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
+    final categoriesJson = (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return TriviaRepoResult.data(
-        categoriesJson.map(CategoryDTO.fromJson).toList());
+    return TriviaRepoResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
 

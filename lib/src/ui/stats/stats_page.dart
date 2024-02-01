@@ -30,7 +30,7 @@ class StatsPage extends ConsumerWidget {
             SliverToBoxAdapter(child: HintToColoredAnswers()),
             PlayedQuizzesSliver(),
             SliverToBoxAdapter(child: SizedBox(height: 64)),
-          ]
+          ],
         ],
       ),
     );
@@ -193,10 +193,8 @@ class DifficultyBlockSliver extends ConsumerWidget {
       child: CardPad(
         child: Column(
           children: [
-            for (final MapEntry(
-                  key: difficulty,
-                  value: (int correctly, int uncorrectly)
-                ) in statsOnDifficulty.entries)
+            for (final MapEntry(key: difficulty, value: (int correctly, int uncorrectly))
+                in statsOnDifficulty.entries)
               Row(
                 children: [
                   Expanded(child: Text(difficulty.name)),
@@ -222,7 +220,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
                     ),
                   ),
                 ],
-              )
+              ),
           ],
         ),
       ),
@@ -246,10 +244,8 @@ class CategoriesBlockSliver extends ConsumerWidget {
       child: CardPad(
         child: Column(
           children: [
-            for (final MapEntry(
-                  key: categoryName,
-                  value: (int correctly, int uncorrectly)
-                ) in statsOnCategory.entries)
+            for (final MapEntry(key: categoryName, value: (int correctly, int uncorrectly))
+                in statsOnCategory.entries)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -276,7 +272,7 @@ class CategoriesBlockSliver extends ConsumerWidget {
                     ),
                   ),
                 ],
-              )
+              ),
           ],
         ),
       ),
@@ -311,7 +307,7 @@ class PlayedQuizzesSliver extends ConsumerWidget {
                   style: textTheme.labelLarge,
                 ),
                 ...[
-                  for (var answer in quiz.answers)
+                  for (final answer in quiz.answers)
                     Text(
                       '-> $answer',
                       style: switch (quiz.correctlySolved) {

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// More info - [MaterialStateColor].
-abstract class MaterialStateColorOrNull extends Color
-    implements MaterialStateProperty<Color?> {
+abstract class MaterialStateColorOrNull extends Color implements MaterialStateProperty<Color?> {
   const MaterialStateColorOrNull(super.defaultValue);
 
-  static MaterialStateColorOrNull resolveWith(
-          MaterialPropertyResolver<Color?> callback) =>
+  static MaterialStateColorOrNull resolveWith(MaterialPropertyResolver<Color?> callback) =>
       _MaterialStateColorOrNull(callback);
 
   @override
@@ -14,8 +12,7 @@ abstract class MaterialStateColorOrNull extends Color
 }
 
 class _MaterialStateColorOrNull extends MaterialStateColorOrNull {
-  _MaterialStateColorOrNull(this._resolve)
-      : super(_resolve.call(_defaultStates)?.value ?? 0);
+  _MaterialStateColorOrNull(this._resolve) : super(_resolve.call(_defaultStates)?.value ?? 0);
 
   final MaterialPropertyResolver<Color?> _resolve;
 

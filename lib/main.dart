@@ -65,9 +65,7 @@ class MyApp extends ConsumerWidget {
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
     final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
-        usePreferredSize
-            ? {for (var pl in TargetPlatform.values) pl: transitions}
-            : {};
+        usePreferredSize ? {for (final pl in TargetPlatform.values) pl: transitions} : {};
 
     final themeMode = ref.watch(appController.themeMode);
     final themeColor = ref.watch(appController.themeColor);

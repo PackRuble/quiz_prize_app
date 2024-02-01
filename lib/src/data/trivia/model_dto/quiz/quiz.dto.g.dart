@@ -9,17 +9,14 @@ part of 'quiz.dto.dart';
 _$_QuizDTO _$$_QuizDTOFromJson(Map<String, dynamic> json) => _$_QuizDTO(
       category: json['category'] as String,
       type: $enumDecode(_$TriviaQuizTypeEnumMap, json['type']),
-      difficulty:
-          $enumDecode(_$TriviaQuizDifficultyEnumMap, json['difficulty']),
+      difficulty: $enumDecode(_$TriviaQuizDifficultyEnumMap, json['difficulty']),
       question: json['question'] as String,
       correctAnswer: json['correct_answer'] as String,
-      incorrectAnswers: (json['incorrect_answers'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      incorrectAnswers:
+          (json['incorrect_answers'] as List<dynamic>).map((e) => e as String).toList(),
     );
 
-Map<String, dynamic> _$$_QuizDTOToJson(_$_QuizDTO instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$$_QuizDTOToJson(_$_QuizDTO instance) => <String, dynamic>{
       'category': instance.category,
       'type': _$TriviaQuizTypeEnumMap[instance.type]!,
       'difficulty': _$TriviaQuizDifficultyEnumMap[instance.difficulty]!,

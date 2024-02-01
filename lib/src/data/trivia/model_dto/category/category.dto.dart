@@ -16,8 +16,7 @@ class CategoryDTO with _$CategoryDTO {
     @JsonKey(name: 'name') required final String name,
   }) = _CategoryDTO;
 
-  factory CategoryDTO.fromJson(Map<String, dynamic> json) =>
-      _$CategoryDTOFromJson(json);
+  factory CategoryDTO.fromJson(Map<String, dynamic> json) => _$CategoryDTOFromJson(json);
 
   static const CategoryDTO any = CategoryDTO(
     id: 0,

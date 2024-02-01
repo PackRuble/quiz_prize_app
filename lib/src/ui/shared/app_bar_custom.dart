@@ -34,8 +34,7 @@ class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {
             children: [
               if (withBackButton) const BackButton(),
               const SizedBox(width: 8),
-              if (title != null)
-                Text('Statistics', style: textTheme.headlineSmall),
+              if (title != null) Text('Statistics', style: textTheme.headlineSmall),
               ...actions,
             ],
           ),

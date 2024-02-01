@@ -5,8 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 class AppStorage extends Cardoteka with WatcherImpl {
   AppStorage({required super.config});
 
-  static final instance =
-      Provider((ref) => AppStorage(config: AppCard._config));
+  static final instance = Provider((ref) => AppStorage(config: AppCard._config));
 }
 
 enum AppCard<T extends Object> implements Card<T> {

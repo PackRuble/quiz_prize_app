@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
@@ -94,8 +93,7 @@ class TriviaQuizBloc {
 
   /// Set the difficulty of quizzes you want.
   Future<void> setQuizDifficulty(TriviaQuizDifficulty difficulty) async {
-    await _storage.set<TriviaQuizDifficulty>(
-        GameCard.quizDifficulty, difficulty);
+    await _storage.set<TriviaQuizDifficulty>(GameCard.quizDifficulty, difficulty);
   }
 
   // ***************************************************************************
@@ -116,10 +114,9 @@ class TriviaQuizBloc {
           await _storage.set(GameCard.allCategories, list);
           return list;
         }.call(),
-      TriviaRepoError(error: final e) =>
-        e is SocketException || e is TimeoutException
-            ? _storage.get(GameCard.allCategories)
-            : throw Exception(e),
+      TriviaRepoError(error: final e) => e is SocketException || e is TimeoutException
+          ? _storage.get(GameCard.allCategories)
+          : throw Exception(e),
       _ => throw Exception('$TriviaQuizBloc.fetchCategories() failed'),
     };
   }
@@ -136,8 +133,7 @@ class TriviaQuizBloc {
   /// if the number of available quizzes on the selected parameters is minimal.
   static const _minCountCachedQuizzes = 3;
 
-  bool _enoughCachedQuizzes() =>
-      _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
+  bool _enoughCachedQuizzes() => _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
 
   bool _suitQuizByFilter(Quiz quiz) {
     final category = _storage.get(GameCard.quizCategory);
@@ -145,8 +141,7 @@ class TriviaQuizBloc {
     final type = _storage.get(GameCard.quizType);
 
     if ((quiz.category == category.name || category.isAny) &&
-        (quiz.difficulty == difficulty ||
-            difficulty == TriviaQuizDifficulty.any) &&
+        (quiz.difficulty == difficulty || difficulty == TriviaQuizDifficulty.any) &&
         (quiz.type == type || type == TriviaQuizType.any)) {
       return true;
     }
@@ -299,8 +294,7 @@ class TriviaQuizBloc {
     final quizzes = _storage.get(GameCard.quizzes);
 
     final removedIndex = quizzes.indexWhere(
-      (q) =>
-          q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
+      (q) => q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
     );
     await _storage.set<List<Quiz>>(
       GameCard.quizzes,
@@ -323,8 +317,7 @@ class TriviaQuizBloc {
             difficulty: quizDTO.difficulty,
             question: quizDTO.question,
             correctAnswer: quizDTO.correctAnswer,
-            answers: [quizDTO.correctAnswer, ...quizDTO.incorrectAnswers]
-              ..shuffle(),
+            answers: [quizDTO.correctAnswer, ...quizDTO.incorrectAnswers]..shuffle(),
           ),
         )
         .toList();

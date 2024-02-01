@@ -25,13 +25,11 @@ class HomePageCtrl {
   final TriviaQuizProvider _triviaQuizProvider;
   final AppProvider _appProvider;
 
-  AutoDisposeProvider<CategoryDTO> get currentCategory =>
-      _triviaQuizProvider.quizCategory;
+  AutoDisposeProvider<CategoryDTO> get currentCategory => _triviaQuizProvider.quizCategory;
 
   /// We want to keep the result of the request for the entire life cycle of the
   /// application.
-  late final fetchedCategories =
-      StateProvider<AsyncValue<List<CategoryDTO>>>((ref) {
+  late final fetchedCategories = StateProvider<AsyncValue<List<CategoryDTO>>>((ref) {
     ref.listenSelf((_, next) {
       // initialization method
       if (next.isLoading) {
@@ -43,13 +41,11 @@ class HomePageCtrl {
 
   AutoDisposeProvider<ThemeMode> get themeMode => _appProvider.themeMode;
 
-  Future<void> selectThemeMode(ThemeMode mode) async =>
-      _appProvider.selectThemeMode(mode);
+  Future<void> selectThemeMode(ThemeMode mode) async => _appProvider.selectThemeMode(mode);
 
   AutoDisposeProvider<Color> get themeColor => _appProvider.themeColor;
 
-  Future<void> selectThemeColor(Color color) async =>
-      _appProvider.selectThemeColor(color);
+  Future<void> selectThemeColor(Color color) async => _appProvider.selectThemeColor(color);
 
   void _updFetchedCategories(AsyncValue<List<CategoryDTO>> value) =>
       _ref.read(fetchedCategories.notifier).update((_) => value);

@@ -12,8 +12,7 @@ class GameStorage extends Cardoteka with WatcherImpl {
 
   /// Using the riverpod state manager to create a single storage instance.
   /// Putting the provider inside the class for an explicit singleton analogy.
-  static final instance =
-      Provider((ref) => GameStorage(config: GameCard._config));
+  static final instance = Provider((ref) => GameStorage(config: GameCard._config));
 }
 
 /// [Card]s related to the process of the game.
@@ -29,8 +28,7 @@ enum GameCard<T extends Object> implements Card<T> {
   quizzesPlayed<List<Quiz>>(DataType.stringList, []),
   winning<int>(DataType.int, 0),
   losing<int>(DataType.int, 0),
-  quizDifficulty<TriviaQuizDifficulty>(
-      DataType.string, TriviaQuizDifficulty.any),
+  quizDifficulty<TriviaQuizDifficulty>(DataType.string, TriviaQuizDifficulty.any),
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
   quizCategory<CategoryDTO>(DataType.string, CategoryDTO.any),
   allCategories<List<CategoryDTO>>(DataType.stringList, [CategoryDTO.any]),
@@ -94,8 +92,7 @@ class _QuizzesConverter extends ListConverter<Quiz> {
   const _QuizzesConverter();
 
   @override
-  Quiz objFrom(String element) =>
-      Quiz.fromJson(jsonDecode(element) as Map<String, dynamic>);
+  Quiz objFrom(String element) => Quiz.fromJson(jsonDecode(element) as Map<String, dynamic>);
 
   @override
   String objTo(Quiz obj) => jsonEncode(obj.toJson());

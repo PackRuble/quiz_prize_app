@@ -48,8 +48,7 @@ mixin _$Quiz {
 
 /// @nodoc
 abstract class $QuizCopyWith<$Res> {
-  factory $QuizCopyWith(Quiz value, $Res Function(Quiz) then) =
-      _$QuizCopyWithImpl<$Res, Quiz>;
+  factory $QuizCopyWith(Quiz value, $Res Function(Quiz) then) = _$QuizCopyWithImpl<$Res, Quiz>;
   @useResult
   $Res call(
       {String category,
@@ -62,8 +61,7 @@ abstract class $QuizCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$QuizCopyWithImpl<$Res, $Val extends Quiz>
-    implements $QuizCopyWith<$Res> {
+class _$QuizCopyWithImpl<$Res, $Val extends Quiz> implements $QuizCopyWith<$Res> {
   _$QuizCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -134,8 +132,7 @@ abstract class _$$_QuizCopyWith<$Res> implements $QuizCopyWith<$Res> {
 /// @nodoc
 class __$$_QuizCopyWithImpl<$Res> extends _$QuizCopyWithImpl<$Res, _$_Quiz>
     implements _$$_QuizCopyWith<$Res> {
-  __$$_QuizCopyWithImpl(_$_Quiz _value, $Res Function(_$_Quiz) _then)
-      : super(_value, _then);
+  __$$_QuizCopyWithImpl(_$_Quiz _value, $Res Function(_$_Quiz) _then) : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -257,37 +254,25 @@ class _$_Quiz extends _Quiz with DiagnosticableTreeMixin {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_Quiz &&
-            (identical(other.category, category) ||
-                other.category == category) &&
+            (identical(other.category, category) || other.category == category) &&
             (identical(other.type, type) || other.type == type) &&
-            (identical(other.difficulty, difficulty) ||
-                other.difficulty == difficulty) &&
-            (identical(other.question, question) ||
-                other.question == question) &&
+            (identical(other.difficulty, difficulty) || other.difficulty == difficulty) &&
+            (identical(other.question, question) || other.question == question) &&
             (identical(other.correctAnswer, correctAnswer) ||
                 other.correctAnswer == correctAnswer) &&
-            (identical(other.yourAnswer, yourAnswer) ||
-                other.yourAnswer == yourAnswer) &&
+            (identical(other.yourAnswer, yourAnswer) || other.yourAnswer == yourAnswer) &&
             const DeepCollectionEquality().equals(other._answers, _answers));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      category,
-      type,
-      difficulty,
-      question,
-      correctAnswer,
-      yourAnswer,
-      const DeepCollectionEquality().hash(_answers));
+  int get hashCode => Object.hash(runtimeType, category, type, difficulty, question, correctAnswer,
+      yourAnswer, const DeepCollectionEquality().hash(_answers));
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_QuizCopyWith<_$_Quiz> get copyWith =>
-      __$$_QuizCopyWithImpl<_$_Quiz>(this, _$identity);
+  _$$_QuizCopyWith<_$_Quiz> get copyWith => __$$_QuizCopyWithImpl<_$_Quiz>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {

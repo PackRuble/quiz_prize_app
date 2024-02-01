@@ -207,10 +207,8 @@ class _AnswerSelectButton extends HookConsumerWidget {
             width: double.infinity,
             child: FilledButton.tonal(
               style: ButtonStyle(
-                backgroundColor:
-                    MaterialStateColorOrNull.resolveWith(resolveBg),
-                foregroundColor:
-                    MaterialStateColorOrNull.resolveWith(resolveFg),
+                backgroundColor: MaterialStateColorOrNull.resolveWith(resolveBg),
+                foregroundColor: MaterialStateColorOrNull.resolveWith(resolveFg),
               ),
               onPressed: blocked ? null : onTap,
               child: SelectableText(
@@ -240,10 +238,11 @@ class _AnswerSelectButton extends HookConsumerWidget {
     path.moveTo(size.width, halfWidth);
 
     for (double step = 0; step < fullAngle; step += degreesPerStep) {
-      path.lineTo(halfWidth + externalRadius * cos(step),
-          halfWidth + externalRadius * sin(step));
-      path.lineTo(halfWidth + internalRadius * cos(step + halfDegreesPerStep),
-          halfWidth + internalRadius * sin(step + halfDegreesPerStep));
+      path.lineTo(halfWidth + externalRadius * cos(step), halfWidth + externalRadius * sin(step));
+      path.lineTo(
+        halfWidth + internalRadius * cos(step + halfDegreesPerStep),
+        halfWidth + internalRadius * sin(step + halfDegreesPerStep),
+      );
     }
     path.close();
     return path;
