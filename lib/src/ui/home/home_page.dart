@@ -221,14 +221,13 @@ class _QuizTypeSelector extends ConsumerWidget {
     final type = ref.watch(bloc.quizType);
 
     return SegmentedButton<TriviaQuizType>(
-      segments: TriviaQuizType.values
-          .map(
-            (e) => ButtonSegment<TriviaQuizType>(
-              value: e,
-              label: Text(e.name),
-            ),
-          )
-          .toList(),
+      segments: [
+        for (final type in TriviaQuizType.values)
+          ButtonSegment<TriviaQuizType>(
+            value: type,
+            label: Text(type.name),
+          ),
+      ],
       selected: {type},
       onSelectionChanged: (selected) {
         unawaited(bloc.setQuizType(selected.single));
@@ -248,14 +247,13 @@ class _DifficultyButton extends ConsumerWidget {
     final difficulty = ref.watch(bloc.quizDifficulty);
 
     return SegmentedButton<TriviaQuizDifficulty>(
-      segments: TriviaQuizDifficulty.values
-          .map(
-            (e) => ButtonSegment<TriviaQuizDifficulty>(
-              value: e,
-              label: Text(e.name),
-            ),
-          )
-          .toList(),
+      segments: [
+        for (final difficulty in TriviaQuizDifficulty.values)
+          ButtonSegment<TriviaQuizDifficulty>(
+            value: difficulty,
+            label: Text(difficulty.name),
+          ),
+      ],
       selected: {difficulty},
       onSelectionChanged: (selected) {
         unawaited(bloc.setQuizDifficulty(selected.single));
@@ -274,13 +272,24 @@ class _CategoryButton extends ConsumerWidget {
     final pageCtrl = ref.watch(HomePageCtrl.instance);
     final current = ref.watch(pageCtrl.currentCategory);
 
+    Future<void> onClick() async {
+      await showModalBottomSheet(
+        constraints: const BoxConstraints.expand(
+          width: double.infinity,
+        ),
+        showDragHandle: true,
+        context: context,
+        builder: (_) => const _FetchedCategories(),
+      );
+    }
+
     return FilledButton.tonal(
       style: const ButtonStyle(
         splashFactory: NoSplash.splashFactory,
         overlayColor: MaterialStatePropertyAll(Colors.transparent),
         padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
       ),
-      onPressed: () {},
+      onPressed: onClick,
       child: Column(
         children: [
           Text(
@@ -289,20 +298,11 @@ class _CategoryButton extends ConsumerWidget {
           ),
           const SizedBox(width: 200, child: Divider(height: 4)),
           TextButton(
+            onPressed: onClick,
             child: const Text(
               'Select category',
               textAlign: TextAlign.center,
             ),
-            onPressed: () async {
-              await showModalBottomSheet(
-                constraints: const BoxConstraints.expand(
-                  width: double.infinity,
-                ),
-                showDragHandle: true,
-                context: context,
-                builder: (_) => const _FetchedCategories(),
-              );
-            },
           ),
         ],
       ),
@@ -335,20 +335,20 @@ class _FetchedCategories extends ConsumerWidget {
         ),
         const Divider(height: 0.0),
         ...categories.when<List<Widget>>(
-          data: (data) => [CategoryDTO.any, ...data].map(
-            (category) {
-              if (category == current) return const SizedBox.shrink();
-
-              return _CategoryTile(
-                onTap: () {
-                  unawaited(pageCtrl.selectCategory(category));
-                  Navigator.of(context).pop();
-                },
-                selected: false,
-                title: category.name,
-              );
-            },
-          ).toList(),
+          data: (data) => [
+            for (final category in [CategoryDTO.any, ...data])
+              if (category == current)
+                const SizedBox.shrink()
+              else
+                _CategoryTile(
+                  onTap: () {
+                    unawaited(pageCtrl.selectCategory(category));
+                    Navigator.of(context).pop();
+                  },
+                  selected: false,
+                  title: category.name,
+                ),
+          ],
           error: (error, _) => [ListTile(title: Text('$error'))],
           loading: () => [const LinearProgressIndicator()],
         ),
@@ -440,7 +440,7 @@ class _InfoWidget extends StatelessWidget {
     return Column(
       children: [
         Text(
-          '© 2023 by Ruble',
+          '© 2023-2024 by Ruble',
           style: textTheme.labelMedium,
         ),
         const SizedBox(width: 150, child: Divider(height: 4)),
