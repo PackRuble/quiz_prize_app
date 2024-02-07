@@ -210,10 +210,11 @@ class _AnswerSelectButton extends HookConsumerWidget {
                 backgroundColor: MaterialStateColorOrNull.resolveWith(resolveBg),
                 foregroundColor: MaterialStateColorOrNull.resolveWith(resolveFg),
               ),
-              onPressed: blocked ? null : onTap,
+              onPressed: onPressed,
               child: SelectableText(
                 answer,
                 textAlign: TextAlign.center,
+                onTap: onPressed,
               ),
             ),
           ),
@@ -221,6 +222,8 @@ class _AnswerSelectButton extends HookConsumerWidget {
       ),
     );
   }
+
+  VoidCallback? get onPressed => blocked ? null : onTap;
 
   /// A custom Path to paint stars.
   Path drawStar(Size size) {
