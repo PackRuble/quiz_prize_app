@@ -1,7 +1,8 @@
+// ignore_for_file: avoid_public_notifier_properties
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show immutable, kDebugMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
@@ -14,194 +15,137 @@ import '../model/quiz.model.dart';
 import '../stats/trivia_stats_bloc.dart';
 import 'trivia_quiz_result.dart';
 
-class TriviaQuizProvider extends TriviaQuizBloc {
-  TriviaQuizProvider({
-    required super.triviaRepository,
-    required super.triviaStatsBloc,
-    super.debugMode,
-    required super.storage,
+@immutable
+class QuizConfig {
+  const QuizConfig({
+    required this.quizCategory,
+    required this.quizDifficulty,
+    required this.quizType,
   });
 
-  static final instance = AutoDisposeProvider<TriviaQuizProvider>((ref) {
-    return TriviaQuizProvider(
-      triviaRepository: TriviaRepository(
-        client: http.Client(),
-        useMockData: kDebugMode,
-      ),
-      debugMode: kDebugMode,
-      storage: ref.watch(GameStorage.instance),
-      // Not a bad trick, is it?
-      triviaStatsBloc: ref.watch(TriviaStatsProvider.instance),
-    );
-  });
+  final CategoryDTO quizCategory;
+  final TriviaQuizDifficulty quizDifficulty;
+  final TriviaQuizType quizType;
 
-  late final quizzes = AutoDisposeProvider<List<Quiz>>((ref) {
-    ref.onDispose(() {
-      _quizzesIterator = null;
-    });
-    return _storage.attach(
-      GameCard.quizzes,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
+  QuizConfig copyWith({
+    CategoryDTO? quizCategory,
+    TriviaQuizDifficulty? quizDifficulty,
+    TriviaQuizType? quizType,
+  }) {
+    return QuizConfig(
+      quizCategory: quizCategory ?? this.quizCategory,
+      quizDifficulty: quizDifficulty ?? this.quizDifficulty,
+      quizType: quizType ?? this.quizType,
     );
-  });
-
-  late final quizDifficulty = AutoDisposeProvider<TriviaQuizDifficulty>((ref) {
-    return _storage.attach(
-      GameCard.quizDifficulty,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-    );
-  });
-
-  late final quizType = AutoDisposeProvider<TriviaQuizType>((ref) {
-    return _storage.attach(
-      GameCard.quizType,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-    );
-  });
-
-  late final quizCategory = AutoDisposeProvider<CategoryDTO>((ref) {
-    final GameStorage storage = ref.watch(GameStorage.instance);
-    return storage.attach(
-      GameCard.quizCategory,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-    );
-  });
+  }
 }
 
-/// Contains business logic for obtaining quizzes and categories. Also, caches data.
-class TriviaQuizBloc {
-  TriviaQuizBloc({
-    required TriviaRepository triviaRepository,
-    required TriviaStatsBloc triviaStatsBloc,
-    required GameStorage storage,
-    this.debugMode = false,
-  })  : _storage = storage,
-        _triviaRepository = triviaRepository,
-        _triviaStatsBloc = triviaStatsBloc;
+class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
+  static final instance =
+      AutoDisposeNotifierProvider<QuizConfigNotifier, QuizConfig>(
+    QuizConfigNotifier.new,
+  );
 
-  final TriviaRepository _triviaRepository;
-  final TriviaStatsBloc _triviaStatsBloc;
-  final GameStorage _storage;
-  final bool debugMode;
+  late GameStorage _storage;
 
-  // ***************************************************************************
-  // quizzes difficulty processing
+  @override
+  QuizConfig build() {
+    _storage = ref.watch(GameStorage.instance);
+
+    return QuizConfig(
+      quizCategory: _storage.attach(
+        GameCard.quizCategory,
+        (value) => state = state.copyWith(quizCategory: value),
+        detacher: ref.onDispose,
+      ),
+      quizDifficulty: _storage.attach(
+        GameCard.quizDifficulty,
+        (value) => state = state.copyWith(quizDifficulty: value),
+        detacher: ref.onDispose,
+      ),
+      quizType: _storage.attach(
+        GameCard.quizType,
+        (value) => state = state.copyWith(quizType: value),
+        detacher: ref.onDispose,
+      ),
+    );
+  }
+
+  /// Determines if the quiz matches the current quiz configuration
+  bool matchQuizByFilter(Quiz quiz) {
+    final category = state.quizCategory;
+    final difficulty = state.quizDifficulty;
+    final type = state.quizType;
+
+    if ((quiz.category == category.name || category.isAny) &&
+        (quiz.difficulty == difficulty ||
+            difficulty == TriviaQuizDifficulty.any) &&
+        (quiz.type == type || type == TriviaQuizType.any)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   /// Set the difficulty of quizzes you want.
   Future<void> setQuizDifficulty(TriviaQuizDifficulty difficulty) async {
-    await _storage.set<TriviaQuizDifficulty>(GameCard.quizDifficulty, difficulty);
+    await _storage.set<TriviaQuizDifficulty>(
+        GameCard.quizDifficulty, difficulty);
   }
-
-  // ***************************************************************************
-  // quizzes type processing
 
   /// Set the type of quizzes you want.
   Future<void> setQuizType(TriviaQuizType type) async {
     await _storage.set<TriviaQuizType>(GameCard.quizType, type);
   }
 
-  // ***************************************************************************
-  // quizzes categories processing
-
-  /// Get all sorts of categories of quizzes.
-  Future<List<CategoryDTO>> fetchCategories() async {
-    return switch (await _triviaRepository.getCategories()) {
-      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
-          await _storage.set(GameCard.allCategories, list);
-          return list;
-        }.call(),
-      TriviaRepoError(error: final e) => e is SocketException || e is TimeoutException
-          ? _storage.get(GameCard.allCategories)
-          : throw Exception(e),
-      _ => throw Exception('$TriviaQuizBloc.fetchCategories() failed'),
-    };
-  }
-
   /// Set the quiz category as the current selection.
   Future<void> setCategory(CategoryDTO category) async {
     await _storage.set<CategoryDTO>(GameCard.quizCategory, category);
   }
+}
 
-  // ***************************************************************************
-  // quiz processing
+/// Notifier contains a state of cached quizzes.
+///
+/// Has methods for retrieving quizzes from the Internet and storing them in storage.
+class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
+  CachedQuizzesNotifier({this.debugMode = false});
+
+  static final instance =
+      AutoDisposeNotifierProvider<CachedQuizzesNotifier, List<Quiz>>(() {
+    return CachedQuizzesNotifier(
+      debugMode: kDebugMode,
+    );
+  });
+
+  late GameStorage _storage;
+  late TriviaRepository _triviaRepository;
+  final bool debugMode;
+
+  @override
+  List<Quiz> build() {
+    _storage = ref.watch(GameStorage.instance);
+    _triviaRepository = TriviaRepository(
+      client: http.Client(),
+      useMockData: debugMode,
+    );
+
+    // The `attach` method provides a reactive state change while storing
+    // the new value in storage
+    return _storage.attach(
+      GameCard.quizzes,
+      (value) => state = value,
+      detacher: ref.onDispose,
+    );
+  }
 
   /// Limited so as to make the least number of requests to the server,
   /// if the number of available quizzes on the selected parameters is minimal.
   static const _minCountCachedQuizzes = 3;
 
-  bool _enoughCachedQuizzes() => _storage.get(GameCard.quizzes).length > _minCountCachedQuizzes;
-
-  bool _suitQuizByFilter(Quiz quiz) {
-    final category = _storage.get(GameCard.quizCategory);
-    final difficulty = _storage.get(GameCard.quizDifficulty);
-    final type = _storage.get(GameCard.quizType);
-
-    if ((quiz.category == category.name || category.isAny) &&
-        (quiz.difficulty == difficulty || difficulty == TriviaQuizDifficulty.any) &&
-        (quiz.type == type || type == TriviaQuizType.any)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  // must be disposed of when not in use
-  Iterator<Quiz>? _quizzesIterator;
-
-  // todo: feature: make a request before the quizzes are over
-  // Quiz? nextQuiz;
-
-  /// Get a new quiz.
-  ///
-  /// Will return [TriviaQuizResult] depending on the query result.
-  Future<TriviaQuizResult> getQuiz() async {
-    log('$TriviaQuizBloc.getQuiz called');
-
-    final cachedQuizzes = _storage.get(GameCard.quizzes);
-
-    Completer<TriviaQuizResult?>? completer;
-    // silently increase the quiz cache if their number is below the allowed level
-    if (!_enoughCachedQuizzes()) {
-      log('-> not enough cached quizzes');
-
-      _quizzesIterator = null;
-      completer = Completer();
-      completer.complete(_increaseCachedQuizzes());
-    }
-
-    // looking for a quiz that matches the filters
-    _quizzesIterator ??= cachedQuizzes.iterator;
-    while (_quizzesIterator!.moveNext()) {
-      final quiz = _quizzesIterator!.current;
-
-      if (_suitQuizByFilter(quiz)) {
-        return TriviaQuizResult.data(quiz);
-      }
-    }
-
-    // quiz not found or list is empty...
-    _quizzesIterator = null;
-    // todo: In a good way, this logic should be rewritten and made more transparent!
-    final delayedResult = await (completer?.future ?? _increaseCachedQuizzes());
-    if (delayedResult != null) {
-      return delayedResult;
-    }
-
-    log('-> getting quizzes again');
-    if (debugMode && cachedQuizzes.isNotEmpty) {
-      return const TriviaQuizResult.error(
-        'Debug: The number of suitable quizzes is limited to a constant',
-      );
-    }
-    return getQuiz();
-  }
+  bool _enoughCachedQuizzes() => state.length > _minCountCachedQuizzes;
 
   Future<TriviaQuizResult?> _increaseCachedQuizzes() async {
-    log('-> get new quizzes and save them to the storage');
+    log('$this-> get new quizzes and save them to the storage');
     final List<Quiz> fetched;
     try {
       fetched = await _fetchQuizzes();
@@ -212,10 +156,7 @@ class TriviaQuizBloc {
     // we leave unsuitable quizzes for future times
     await _storage.set<List<Quiz>>(
       GameCard.quizzes,
-      [
-        ..._storage.get(GameCard.quizzes),
-        ...fetched,
-      ]..shuffle(),
+      [...state, ...fetched]..shuffle(),
     );
 
     return null;
@@ -228,7 +169,7 @@ class TriviaQuizBloc {
     final category = _storage.get(GameCard.quizCategory);
     final difficulty = _storage.get(GameCard.quizDifficulty);
     final type = _storage.get(GameCard.quizType);
-    log('-> fetchQuizzes params: [`category`=$category],[`difficulty`=$difficulty],[`type`=$type]');
+    log('$this-> fetchQuizzes params: [`category`=$category],[`difficulty`=$difficulty],[`type`=$type]');
 
     // desired number of quizzes to fetch
     const kCountFetchQuizzes = 47;
@@ -240,7 +181,7 @@ class TriviaQuizBloc {
     bool tryAgainWithReduce = false;
     int countFetchQuizzes = kCountFetchQuizzes;
 
-    log('-> const count [`kCountFetchQuizzes`=$kCountFetchQuizzes]');
+    log('$this-> const count [`kCountFetchQuizzes`=$kCountFetchQuizzes]');
 
     List<QuizDTO>? fetchedQuizDTO;
     do {
@@ -278,23 +219,31 @@ class TriviaQuizBloc {
       throw const TriviaQuizResult.emptyData();
     }
 
-    return _quizzesFromDTO(fetchedQuizDTO);
+    return Quiz.quizzesFromDTO(fetchedQuizDTO);
   }
 
-  Future<Quiz> checkMyAnswer(String answer) async {
-    var quiz = _quizzesIterator!.current;
-    quiz = quiz.copyWith(yourAnswer: answer); // ignore: parameter_assignments
-
-    unawaited(_triviaStatsBloc.savePoints(quiz.correctlySolved!));
-    unawaited(_moveQuizAsPlayed(quiz));
-    return quiz;
+  /// Get all sorts of categories of quizzes.
+  Future<List<CategoryDTO>> fetchCategories() async {
+    return switch (await _triviaRepository.getCategories()) {
+      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
+          await _storage.set(GameCard.allCategories, list);
+          return list;
+        }.call(),
+      TriviaRepoError(error: final e) =>
+        e is SocketException || e is TimeoutException
+            ? _storage.get(GameCard.allCategories)
+            : throw Exception(e),
+      _ => throw Exception('$this.fetchCategories() failed'),
+    };
   }
 
-  Future<void> _moveQuizAsPlayed(Quiz quiz) async {
-    final quizzes = _storage.get(GameCard.quizzes);
+  // todo(08.02.2024): move in TriviaStatsBloc + create dependencies
+  Future<void> moveQuizAsPlayed(Quiz quiz) async {
+    final quizzes = state;
 
     final removedIndex = quizzes.indexWhere(
-      (q) => q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
+      (q) =>
+          q.correctAnswer == quiz.correctAnswer && q.question == quiz.question,
     );
     await _storage.set<List<Quiz>>(
       GameCard.quizzes,
@@ -307,19 +256,97 @@ class TriviaQuizBloc {
       [quiz, ...quizzesPlayed],
     );
   }
+}
 
-  List<Quiz> _quizzesFromDTO(List<QuizDTO> dto) {
-    return dto
-        .map(
-          (quizDTO) => Quiz(
-            category: quizDTO.category,
-            type: quizDTO.type,
-            difficulty: quizDTO.difficulty,
-            question: quizDTO.question,
-            correctAnswer: quizDTO.correctAnswer,
-            answers: [quizDTO.correctAnswer, ...quizDTO.incorrectAnswers]..shuffle(),
-          ),
-        )
-        .toList();
+/// Notifier is a certain state machine for the game process and methods
+/// for managing this state.
+// todo(08.02.2024): This class should contains current quiz-state (or maybe Iterator<Quiz>).
+//  This will require significant changes.
+class QuizGameNotifier extends AutoDisposeNotifier<void> {
+  QuizGameNotifier({this.debugMode = false});
+
+  static final instance =
+      AutoDisposeNotifierProvider<QuizGameNotifier, void>(() {
+    return QuizGameNotifier(debugMode: kDebugMode);
+  });
+
+  late TriviaStatsBloc _triviaStatsBloc;
+  late List<Quiz> _quizzes;
+  late CachedQuizzesNotifier _quizzesNotifier;
+  late QuizConfigNotifier _quizConfigNotifier;
+  final bool debugMode;
+
+  // internal state
+  Iterator<Quiz>? _quizzesIterator;
+
+  @override
+  void build() {
+    _triviaStatsBloc = ref.watch(TriviaStatsProvider.instance);
+    _quizzes = ref.watch(CachedQuizzesNotifier.instance);
+    _quizzesNotifier = ref.watch(CachedQuizzesNotifier.instance.notifier);
+
+    ref.onDispose(() {
+      _quizzesIterator = null;
+    });
+
+    return;
+  }
+
+  // todo: feature: make a request before the quizzes are over
+  // Quiz? nextQuiz;
+
+  /// Get a new quiz. Recursive retrieval method.
+  ///
+  /// Will return [TriviaQuizResult] depending on the query result.
+  Future<TriviaQuizResult> getQuiz() async {
+    log('$this-> called method for getting quizzes');
+
+    final cachedQuizzes = _quizzes;
+
+    Completer<TriviaQuizResult?>? completer;
+    // silently increase the quiz cache if their number is below the allowed level
+    if (!_quizzesNotifier._enoughCachedQuizzes()) {
+      log('$this-> not enough cached quizzes');
+
+      _quizzesIterator = null;
+      completer = Completer();
+      completer.complete(_quizzesNotifier._increaseCachedQuizzes());
+    }
+
+    // looking for a quiz that matches the filters
+    _quizzesIterator ??= cachedQuizzes.iterator;
+    while (_quizzesIterator!.moveNext()) {
+      final quiz = _quizzesIterator!.current;
+
+      if (_quizConfigNotifier.matchQuizByFilter(quiz)) {
+        return TriviaQuizResult.data(quiz);
+      }
+    }
+
+    // quiz not found or list is empty...
+    _quizzesIterator = null;
+    // todo: In a good way, this logic should be rewritten and made more transparent!
+    final delayedResult =
+        await (completer?.future ?? _quizzesNotifier._increaseCachedQuizzes());
+    if (delayedResult != null) {
+      return delayedResult;
+    }
+
+    log('$this-> getting quizzes again');
+    if (debugMode && cachedQuizzes.isNotEmpty) {
+      return const TriviaQuizResult.error(
+        'Debug: The number of suitable quizzes is limited to a constant',
+      );
+    }
+    return getQuiz();
+  }
+
+  Future<Quiz> checkMyAnswer(String answer) async {
+    var quiz = _quizzesIterator!.current;
+    quiz = quiz.copyWith(yourAnswer: answer);
+
+    unawaited(_triviaStatsBloc.savePoints(quiz.correctlySolved!));
+    unawaited(_quizzesNotifier.moveQuizAsPlayed(quiz));
+    return quiz;
   }
 }
