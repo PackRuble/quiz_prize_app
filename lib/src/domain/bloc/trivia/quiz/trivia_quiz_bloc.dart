@@ -52,6 +52,8 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   QuizConfig build() {
     _storage = ref.watch(GameStorage.instance);
 
+    // The `attach` method provides a reactive state change while storing
+    // the new value in storage
     return QuizConfig(
       quizCategory: _storage.attach(
         GameCard.quizCategory,
@@ -119,6 +121,7 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
 
   late GameStorage _storage;
   late TriviaRepository _triviaRepository;
+  late QuizConfigNotifier _quizConfigNotifier;
   final bool debugMode;
 
   @override
@@ -128,6 +131,7 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
       client: http.Client(),
       useMockData: debugMode,
     );
+    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
     // The `attach` method provides a reactive state change while storing
     // the new value in storage
@@ -166,11 +170,6 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
   ///
   /// May throw an exception [TriviaRepoResult].
   Future<List<Quiz>> _fetchQuizzes() async {
-    final category = _storage.get(GameCard.quizCategory);
-    final difficulty = _storage.get(GameCard.quizDifficulty);
-    final type = _storage.get(GameCard.quizType);
-    log('$this-> fetchQuizzes params: [`category`=$category],[`difficulty`=$difficulty],[`type`=$type]');
-
     // desired number of quizzes to fetch
     const kCountFetchQuizzes = 47;
     // 47 ~/= 2; -> 23 -> 11 -> 5 -> 2 -> 1
@@ -191,10 +190,12 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
         log('-> next fetch attempt with [`countFetchQuizzes`=$countFetchQuizzes]');
       }
 
+      final quizConfig = _quizConfigNotifier.state;
+      log('$this-> fetchQuizzes params: [`category`=${quizConfig.quizCategory}],[`difficulty`=${quizConfig.quizDifficulty}],[`type`=${quizConfig.quizDifficulty}]');
       final result = await _triviaRepository.getQuizzes(
-        category: category,
-        difficulty: difficulty,
-        type: type,
+        category: quizConfig.quizCategory,
+        difficulty: quizConfig.quizDifficulty,
+        type: quizConfig.quizType,
         amount: countFetchQuizzes,
       );
 
@@ -284,6 +285,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<void> {
     _triviaStatsBloc = ref.watch(TriviaStatsProvider.instance);
     _quizzes = ref.watch(CachedQuizzesNotifier.instance);
     _quizzesNotifier = ref.watch(CachedQuizzesNotifier.instance.notifier);
+    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
     ref.onDispose(() {
       _quizzesIterator = null;
