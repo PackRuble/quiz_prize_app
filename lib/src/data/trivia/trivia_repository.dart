@@ -28,6 +28,11 @@ enum TriviaException implements Exception {
       4,
       "Token Empty Session. Token has returned all possible questions "
       "for the specified query. Resetting the Token is necessary."),
+
+  rateLimit(
+      5,
+      "Rate Limit Too many requests have occurred. "
+      "Each IP can only access the API once every 5 seconds."),
   ;
 
   const TriviaException(this.code, this.message);
@@ -41,8 +46,10 @@ sealed class TriviaRepoResult<T> {
   const TriviaRepoResult();
 
   const factory TriviaRepoResult.data(T data) = TriviaRepoData;
-  const factory TriviaRepoResult.errorApi(TriviaException exception) = TriviaRepoErrorApi;
-  const factory TriviaRepoResult.error(Object error, StackTrace stack) = TriviaRepoError;
+  const factory TriviaRepoResult.errorApi(TriviaException exception) =
+      TriviaRepoErrorApi;
+  const factory TriviaRepoResult.error(Object error, StackTrace stack) =
+      TriviaRepoError;
 }
 
 class TriviaRepoData<T> extends TriviaRepoResult<T> {
@@ -110,9 +117,11 @@ extension GetCategories on TriviaRepository {
 
     final body = json.decode(response.body) as Map;
 
-    final categoriesJson = (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
+    final categoriesJson =
+        (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return TriviaRepoResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
+    return TriviaRepoResult.data(
+        categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
 
@@ -125,6 +134,18 @@ extension GetQuizzes on TriviaRepository {
   /// This method may throw exception:
   /// - if status code from API was not 200. [Exception]
   /// - if response code was not 0. [TriviaException]
+  ///
+  /// Trivia API is still set up in such a way that it can't just give
+  /// the maximum number of questions remaining. This means that if you ask for 20 quizzes
+  /// and the server can only return 19, the error [TriviaException.noResults] will occur.
+  ///
+  /// I don't know what would have prevented just returning the remaining amount
+  /// from the server. 🤷
+  ///
+  /// Updates
+  ///
+  /// 10.02.2024: On top of that, there is a limit on the number of requests on the current IP.
+  /// Therefore, [TriviaException.rateLimit] was added.
   ///
   Future<TriviaRepoResult<List<QuizDTO>>> getQuizzes({
     required CategoryDTO category,
@@ -159,6 +180,9 @@ extension GetQuizzes on TriviaRepository {
     }
 
     if (response.statusCode != 200) {
+      if (response.statusCode == 429) {
+        return const TriviaRepoResult.errorApi(TriviaException.rateLimit);
+      }
       return TriviaRepoResult.error(
         'Failed to get quiz. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
         StackTrace.current,
@@ -167,15 +191,25 @@ extension GetQuizzes on TriviaRepository {
 
     final decoded = json.decode(response.body) as Map;
 
-    final responseCode = decoded[TriviaRepository._responseCodeKey] as int;
-    switch (responseCode) {
-      case >= 1 && <= 4:
-        return TriviaRepoResult.errorApi(TriviaException.values[responseCode]);
-    }
+    final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
-    final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
+    return switch (responseCode) {
+      null => TriviaRepoResult.error(
+          'Response Code is "null". Status code ${response.statusCode}, message: ${response.reasonPhrase}',
+          StackTrace.current,
+        ),
+      0 => () {
+          final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
-    return TriviaRepoResult.data(quizzes.map(QuizDTO.fromJson).toList());
+          return TriviaRepoResult.data(quizzes.map(QuizDTO.fromJson).toList());
+        }.call(),
+      > 0 when responseCode < TriviaException.values.length =>
+        TriviaRepoResult.errorApi(TriviaException.values[responseCode]),
+      _ => TriviaRepoResult.error(
+          'Response Code is $responseCode. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
+          StackTrace.current,
+        ),
+    };
   }
 
   List<Map<String, dynamic>> _sanitizeQuizzes(List data) => data
