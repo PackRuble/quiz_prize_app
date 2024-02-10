@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_bloc.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
 
 import 'cardpad.dart';
 
@@ -9,8 +9,7 @@ class DebugDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final triviaProvider = ref.watch(TriviaQuizProvider.instance);
-    final cachedQuizzesCount = ref.watch(triviaProvider.quizzes).length;
+    final cachedQuizzesCount = ref.watch(CachedQuizzesNotifier.instance).length;
 
     return AlertDialog.adaptive(
       title: const Text('Debug menu'),

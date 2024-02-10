@@ -6,8 +6,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_bloc.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../game/game_page.dart';
@@ -30,7 +30,8 @@ class HomePage extends HookConsumerWidget {
     final useScroll = useScrollNotifier.value;
 
     bool handleScrollNotification(ScrollMetricsNotification notification) {
-      if (notification.metrics.extentAfter == 0.0 && notification.metrics.extentBefore == 0.0) {
+      if (notification.metrics.extentAfter == 0.0 &&
+          notification.metrics.extentBefore == 0.0) {
         useScrollNotifier.value = true;
       }
       return true;
@@ -171,7 +172,8 @@ class _ThemeModeSelector extends ConsumerWidget {
     final themeMode = ref.watch(pageCtrl.themeMode);
 
     void nextMode() {
-      final mode = themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
+      final mode =
+          themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
 
       unawaited(pageCtrl.selectThemeMode(mode));
     }
@@ -217,8 +219,9 @@ class _QuizTypeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bloc = ref.watch(TriviaQuizProvider.instance);
-    final type = ref.watch(bloc.quizType);
+    final quizType = ref.watch(
+      QuizConfigNotifier.instance.select((quizConfig) => quizConfig.quizType),
+    );
 
     return SegmentedButton<TriviaQuizType>(
       segments: [
@@ -228,9 +231,11 @@ class _QuizTypeSelector extends ConsumerWidget {
             label: Text(type.name),
           ),
       ],
-      selected: {type},
-      onSelectionChanged: (selected) {
-        unawaited(bloc.setQuizType(selected.single));
+      selected: {quizType},
+      onSelectionChanged: (selected) async {
+        await ref
+            .read(QuizConfigNotifier.instance.notifier)
+            .setQuizType(selected.single);
       },
     );
   }
@@ -243,8 +248,10 @@ class _DifficultyButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bloc = ref.watch(TriviaQuizProvider.instance);
-    final difficulty = ref.watch(bloc.quizDifficulty);
+    final quizDifficulty = ref.watch(
+      QuizConfigNotifier.instance
+          .select((quizConfig) => quizConfig.quizDifficulty),
+    );
 
     return SegmentedButton<TriviaQuizDifficulty>(
       segments: [
@@ -254,9 +261,11 @@ class _DifficultyButton extends ConsumerWidget {
             label: Text(difficulty.name),
           ),
       ],
-      selected: {difficulty},
-      onSelectionChanged: (selected) {
-        unawaited(bloc.setQuizDifficulty(selected.single));
+      selected: {quizDifficulty},
+      onSelectionChanged: (selected) async {
+        await ref
+            .read(QuizConfigNotifier.instance.notifier)
+            .setQuizDifficulty(selected.single);
       },
     );
   }
@@ -411,7 +420,8 @@ class _ShieldsBar extends HookConsumerWidget {
           ),
         ),
         IconButton(
-          onPressed: () => launch(Uri.https('github.com', 'PackRuble/trivia_app')),
+          onPressed: () =>
+              launch(Uri.https('github.com', 'PackRuble/trivia_app')),
           icon: Icon(
             SimpleIcons.github,
             color: ColorHex.fromHex('#181717'), // corporate color

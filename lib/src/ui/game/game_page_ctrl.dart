@@ -1,7 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_result.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_bloc.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz/trivia_quiz_result.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/stats/trivia_stats_bloc.dart';
 
 sealed class GamePageState {
@@ -30,42 +31,50 @@ class GamePageError extends GamePageState {
 class GamePageCtrl {
   GamePageCtrl({
     required Ref ref,
-    required TriviaQuizProvider triviaQuizProvider,
+    required CachedQuizzesNotifier cachedQuizzesNotifier,
     required TriviaStatsProvider triviaStatsProvider,
-  })  : _triviaQuizBloc = triviaQuizProvider,
+    required QuizGameNotifier quizGameNotifier,
+  })  : _quizGameNotifier = quizGameNotifier,
+        _cachedQuizzesNotifier = cachedQuizzesNotifier,
         _triviaStatsProvider = triviaStatsProvider,
         _ref = ref;
 
   final Ref _ref;
-  final TriviaQuizProvider _triviaQuizBloc;
+  final CachedQuizzesNotifier _cachedQuizzesNotifier;
+  final QuizGameNotifier _quizGameNotifier;
   final TriviaStatsProvider _triviaStatsProvider;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
     (ref) {
-      final triviaQuizProvider = ref.watch(TriviaQuizProvider.instance);
+      final cachedQuizzesNotifier =
+          ref.watch(CachedQuizzesNotifier.instance.notifier);
       // this allows the iterator to be properly cleaned up
       // so we're just listen, no rebuilding
-      ref.listen(triviaQuizProvider.quizzes, (_, __) {});
+      // ref.listen(triviaQuizProvider.quizzes, (_, __) {});
 
       return GamePageCtrl(
         ref: ref,
-        triviaQuizProvider: triviaQuizProvider,
+        cachedQuizzesNotifier: cachedQuizzesNotifier,
         triviaStatsProvider: ref.watch(TriviaStatsProvider.instance),
+        quizGameNotifier: ref.watch(QuizGameNotifier.instance.notifier),
       );
     },
   );
 
-  AutoDisposeProvider<int> get solvedCountProvider => _triviaStatsProvider.winning;
-  AutoDisposeProvider<int> get unSolvedCountProvider => _triviaStatsProvider.losing;
+  AutoDisposeProvider<int> get solvedCountProvider =>
+      _triviaStatsProvider.winning;
+  AutoDisposeProvider<int> get unSolvedCountProvider =>
+      _triviaStatsProvider.losing;
 
   late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
     ref.listenSelf((_, next) async {
       if (next is GamePageLoading) {
-        final quizResult = await _triviaQuizBloc.getQuiz();
+        final quizResult = await _quizGameNotifier.getQuiz();
 
         ref.controller.state = switch (quizResult) {
           TriviaQuizData(data: final quiz) => GamePageData(quiz),
-          TriviaQuizEmptyData(message: final message) => GamePageEmptyData(message),
+          TriviaQuizEmptyData(message: final message) =>
+            GamePageEmptyData(message),
           TriviaQuizError(message: final message) => GamePageError(message),
         };
       }
@@ -73,11 +82,11 @@ class GamePageCtrl {
     return const GamePageLoading();
   });
 
-  late final amountQuizzes =
-      AutoDisposeProvider<int>((ref) => ref.watch(_triviaQuizBloc.quizzes).length);
+  late final amountQuizzes = AutoDisposeProvider<int>(
+      (ref) => _cachedQuizzesNotifier.state.length);
 
   Future<void> checkAnswer(String answer) async {
-    final quiz = await _triviaQuizBloc.checkMyAnswer(answer);
+    final quiz = await _quizGameNotifier.checkMyAnswer(answer);
 
     _ref.read(currentQuiz.notifier).update((_) => GamePageData(quiz));
   }

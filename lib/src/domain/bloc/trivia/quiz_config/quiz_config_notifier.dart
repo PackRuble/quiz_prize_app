@@ -1,8 +1,13 @@
 
+import 'dart:async';
+import 'dart:io';
+
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 
 import 'quiz_config_model.dart';
@@ -14,10 +19,14 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   );
 
   late GameStorage _storage;
+  late TriviaRepository _triviaRepository;
 
   @override
   QuizConfig build() {
     _storage = ref.watch(GameStorage.instance);
+    _triviaRepository = TriviaRepository(
+      client: http.Client(),
+    );
 
     // The `attach` method provides a reactive state change while storing
     // the new value in storage
@@ -70,5 +79,20 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   /// Set the quiz category as the current selection.
   Future<void> setCategory(CategoryDTO category) async {
     await _storage.set<CategoryDTO>(GameCard.quizCategory, category);
+  }
+
+  /// Get all sorts of categories of quizzes.
+  Future<List<CategoryDTO>> fetchCategories() async {
+    return switch (await _triviaRepository.getCategories()) {
+      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
+        await _storage.set(GameCard.allCategories, list);
+        return list;
+      }.call(),
+      TriviaRepoError(error: final e) =>
+      e is SocketException || e is TimeoutException
+          ? _storage.get(GameCard.allCategories)
+          : throw Exception(e),
+      _ => throw Exception('$this.fetchCategories() failed'),
+    };
   }
 }

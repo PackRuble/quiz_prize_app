@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:cardoteka/cardoteka.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/trivia_models.dart';
+import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 
 /// Define our storage class with the necessary mixins and parameters.

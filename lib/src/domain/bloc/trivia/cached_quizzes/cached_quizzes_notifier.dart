@@ -1,12 +1,10 @@
 // ignore_for_file: avoid_public_notifier_properties
 import 'dart:async';
 import 'dart:developer';
-import 'dart:io';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
@@ -23,7 +21,7 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
   static final instance =
       AutoDisposeNotifierProvider<CachedQuizzesNotifier, List<Quiz>>(() {
     return CachedQuizzesNotifier(
-      debugMode: kDebugMode,
+      debugMode: false ?? kDebugMode,
     );
   });
 
@@ -129,21 +127,6 @@ class CachedQuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
     }
 
     return Quiz.quizzesFromDTO(fetchedQuizDTO);
-  }
-
-  /// Get all sorts of categories of quizzes.
-  Future<List<CategoryDTO>> fetchCategories() async {
-    return switch (await _triviaRepository.getCategories()) {
-      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
-          await _storage.set(GameCard.allCategories, list);
-          return list;
-        }.call(),
-      TriviaRepoError(error: final e) =>
-        e is SocketException || e is TimeoutException
-            ? _storage.get(GameCard.allCategories)
-            : throw Exception(e),
-      _ => throw Exception('$this.fetchCategories() failed'),
-    };
   }
 
   // todo(08.02.2024): move in TriviaStatsBloc + create dependencies

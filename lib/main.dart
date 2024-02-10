@@ -43,7 +43,7 @@ Future<void> body() async {
   };
 
   // todo the extremely important thing to add to the redmi db
-  WidgetsFlutterBinding.ensureInitialized();
+  // WidgetsFlutterBinding.ensureInitialized(); // с какой версии в этом нет нужды?
   await Cardoteka.init();
 
   runApp(

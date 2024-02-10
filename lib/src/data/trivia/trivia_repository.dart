@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 import 'model_dto/category/category.dto.dart';
 import 'model_dto/quiz/quiz.dto.dart';
-import 'model_dto/trivia_models.dart';
+import 'model_dto/trivia_config_models.dart';
 
 enum TriviaException implements Exception {
   success(0, 'Success. Returned results successfully.'),
@@ -160,7 +160,7 @@ extension GetQuizzes on TriviaRepository {
 
     if (response.statusCode != 200) {
       return TriviaRepoResult.error(
-        'Failed to get quiz. Status code ${response.statusCode}',
+        'Failed to get quiz. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
         StackTrace.current,
       );
     }

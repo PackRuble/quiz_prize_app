@@ -54,8 +54,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<void> {
   Future<TriviaQuizResult> getQuiz() async {
     log('$this-> called method for getting quizzes');
 
-    final cachedQuizzes = _cachedQuizzesNotifier.state;
-
     Completer<TriviaQuizResult?>? completer;
     // silently increase the quiz cache if their number is below the allowed level
     if (!_cachedQuizzesNotifier.enoughCachedQuizzes()) {
@@ -65,6 +63,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<void> {
       completer = Completer();
       completer.complete(_cachedQuizzesNotifier.increaseCachedQuizzes());
     }
+
+    final cachedQuizzes = List.of(_cachedQuizzesNotifier.state);
 
     // looking for a quiz that matches the filters
     _quizzesIterator ??= cachedQuizzes.iterator;

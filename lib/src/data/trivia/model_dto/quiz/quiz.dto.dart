@@ -2,7 +2,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../trivia_models.dart';
+import '../trivia_config_models.dart';
 
 part 'quiz.dto.freezed.dart';
 part 'quiz.dto.g.dart';
