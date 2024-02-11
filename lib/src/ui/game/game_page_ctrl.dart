@@ -1,5 +1,4 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:riverpod/src/notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_notifier.dart';
@@ -16,7 +15,9 @@ class GamePageData extends GamePageState {
 }
 
 class GamePageLoading extends GamePageState {
-  const GamePageLoading();
+  const GamePageLoading([this.message]);
+
+  final String? message;
 }
 
 class GamePageEmptyData extends GamePageState {
@@ -74,7 +75,7 @@ class GamePageCtrl {
     final quizResult = ref.watch(QuizGameNotifier.instance);
     return switch(quizResult) {
       QuizGameData(:final quiz) => GamePageData(quiz),
-      QuizGameLoading(:final withMessage) => GamePageLoading(),
+      QuizGameLoading(:final withMessage) => GamePageLoading(withMessage),
       QuizGameEmptyData(:final message) => GamePageEmptyData(message),
       QuizGameError(:final message) => GamePageError(message),
     };

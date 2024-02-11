@@ -2,6 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/app_storage.dart';
 
+//
+// class ThemeModeNotifier extends Notifier<ThemeMode> {
+//   static final instance = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+//
+//   late AppStorage _appStorage;
+//
+//   @override
+//   ThemeMode build() {
+//     _appStorage = ref.watch(AppStorage.instance);
+//
+//     return _appStorage.attach(
+//       AppCard.themeMode,
+//       (value) => state = value,
+//       detacher: ref.onDispose,
+//     );
+//   }
+//
+//   Future<void> changeThemeMode(ThemeMode mode) async =>
+//       _appStorage.set<ThemeMode>(AppCard.themeMode, mode);
+// }
+
 class AppProvider extends AppBloc {
   AppProvider._({required super.appStorage});
 
@@ -18,6 +39,14 @@ class AppProvider extends AppBloc {
       detacher: ref.onDispose,
     ),
   );
+
+  // static final themeMode = AutoDisposeProvider(
+  //   (ref) => ref.watch(instance)._appStorage.attach(
+  //         AppCard.themeMode,
+  //         (value) => ref.state = value,
+  //         detacher: ref.onDispose,
+  //       ),
+  // );
 
   late final themeColor = AutoDisposeProvider(
     (ref) => _appStorage.attach(

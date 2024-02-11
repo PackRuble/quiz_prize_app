@@ -95,8 +95,19 @@ class _QuizWidget extends ConsumerWidget {
             if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
           ],
         ),
-      GamePageLoading() => const Center(child: CircularProgressIndicator()),
-      GamePageEmptyData(message: final message) => Center(
+      GamePageLoading(:final message) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              if (message != null) Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(message),
+              ),
+            ],
+          ),
+        ),
+      GamePageEmptyData(:final message) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [

@@ -46,8 +46,8 @@ sealed class TriviaRepoResult<T> {
   const TriviaRepoResult();
 
   const factory TriviaRepoResult.data(T data) = TriviaRepoData;
-  const factory TriviaRepoResult.errorApi(TriviaException exception) =
-      TriviaRepoErrorApi;
+  const factory TriviaRepoResult.exceptionApi(TriviaException exception) =
+      TriviaRepoExceptionApi;
   const factory TriviaRepoResult.error(Object error, StackTrace stack) =
       TriviaRepoError;
 }
@@ -57,8 +57,8 @@ class TriviaRepoData<T> extends TriviaRepoResult<T> {
   final T data;
 }
 
-class TriviaRepoErrorApi<T> extends TriviaRepoResult<T> {
-  const TriviaRepoErrorApi(this.exception);
+class TriviaRepoExceptionApi<T> extends TriviaRepoResult<T> {
+  const TriviaRepoExceptionApi(this.exception);
   final TriviaException exception;
 }
 
@@ -181,7 +181,7 @@ extension GetQuizzes on TriviaRepository {
 
     if (response.statusCode != 200) {
       if (response.statusCode == 429) {
-        return const TriviaRepoResult.errorApi(TriviaException.rateLimit);
+        return const TriviaRepoResult.exceptionApi(TriviaException.rateLimit);
       }
       return TriviaRepoResult.error(
         'Failed to get quiz. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
@@ -204,7 +204,7 @@ extension GetQuizzes on TriviaRepository {
           return TriviaRepoResult.data(quizzes.map(QuizDTO.fromJson).toList());
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
-        TriviaRepoResult.errorApi(TriviaException.values[responseCode]),
+        TriviaRepoResult.exceptionApi(TriviaException.values[responseCode]),
       _ => TriviaRepoResult.error(
           'Response Code is $responseCode. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
           StackTrace.current,
