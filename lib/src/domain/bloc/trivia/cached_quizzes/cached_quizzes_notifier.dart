@@ -1,16 +1,10 @@
 // ignore_for_file: avoid_public_notifier_properties
 import 'dart:async';
-import 'dart:developer';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:trivia_app/internal/debug_flags.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
-import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
 import '../model/quiz.model.dart';
-import '../quiz_config/quiz_config_notifier.dart';
-import '../quiz_game/quiz_game_result.dart';
 
 /// Notifier contains a state of cached quizzes.
 ///
@@ -26,18 +20,12 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
   });
 
   late GameStorage _storage;
-  late TriviaRepository _triviaRepository;
-  late QuizConfigNotifier _quizConfigNotifier;
+
   final bool debugUseMockData;
 
   @override
   List<Quiz> build() {
     _storage = ref.watch(GameStorage.instance);
-    _triviaRepository = TriviaRepository(
-      client: http.Client(),
-      useMockData: debugUseMockData,
-    );
-    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
     // The `attach` method provides a reactive state change while storing
     // the new value in storage

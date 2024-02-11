@@ -51,8 +51,8 @@ class ListBiIterator<E> implements BidirectionalIterator<E> {
       _current = null;
       return false;
     } else {
-      _current = _iterable.elementAt(_index);
       _index--;
+      _current = _iterable.elementAt(_index);
       return true;
     }
   }
