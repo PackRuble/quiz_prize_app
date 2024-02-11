@@ -1,8 +1,9 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod/src/notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_result.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/stats/trivia_stats_bloc.dart';
 
 sealed class GamePageState {
@@ -31,7 +32,7 @@ class GamePageError extends GamePageState {
 class GamePageCtrl {
   GamePageCtrl({
     required Ref ref,
-    required CachedQuizzesNotifier cachedQuizzesNotifier,
+    required QuizzesNotifier cachedQuizzesNotifier,
     required TriviaStatsProvider triviaStatsProvider,
     required QuizGameNotifier quizGameNotifier,
   })  : _quizGameNotifier = quizGameNotifier,
@@ -40,14 +41,14 @@ class GamePageCtrl {
         _ref = ref;
 
   final Ref _ref;
-  final CachedQuizzesNotifier _cachedQuizzesNotifier;
+  final QuizzesNotifier _cachedQuizzesNotifier;
   final QuizGameNotifier _quizGameNotifier;
   final TriviaStatsProvider _triviaStatsProvider;
 
   static final instance = AutoDisposeProvider<GamePageCtrl>(
     (ref) {
       final cachedQuizzesNotifier =
-          ref.watch(CachedQuizzesNotifier.instance.notifier);
+          ref.watch(QuizzesNotifier.instance.notifier);
       // this allows the iterator to be properly cleaned up
       // so we're just listen, no rebuilding
       // ref.listen(triviaQuizProvider.quizzes, (_, __) {});
@@ -66,34 +67,27 @@ class GamePageCtrl {
   AutoDisposeProvider<int> get unSolvedCountProvider =>
       _triviaStatsProvider.losing;
 
-  late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
-    ref.listenSelf((_, next) async {
-      if (next is GamePageLoading) {
-        final quizResult = await _quizGameNotifier.getQuiz();
+  // AutoDisposeNotifierProvider<QuizGameNotifier, QuizGameResult>
+  //     get currentQuiz => QuizGameNotifier.instance;
 
-        ref.controller.state = switch (quizResult) {
-          TriviaQuizData(data: final quiz) => GamePageData(quiz),
-          TriviaQuizEmptyData(message: final message) =>
-            GamePageEmptyData(message),
-          TriviaQuizError(message: final message) => GamePageError(message),
-        };
-      }
-    });
-    return const GamePageLoading();
+  late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
+    final quizResult = ref.watch(QuizGameNotifier.instance);
+    return switch(quizResult) {
+      QuizGameData(:final quiz) => GamePageData(quiz),
+      QuizGameLoading(:final withMessage) => GamePageLoading(),
+      QuizGameEmptyData(:final message) => GamePageEmptyData(message),
+      QuizGameError(:final message) => GamePageError(message),
+    };
   });
 
-  late final amountQuizzes = AutoDisposeProvider<int>(
-      (ref) => _cachedQuizzesNotifier.state.length);
+  late final amountQuizzes =
+      AutoDisposeProvider<int>((ref) => _cachedQuizzesNotifier.state.length);
 
   Future<void> checkAnswer(String answer) async {
-    final quiz = await _quizGameNotifier.checkMyAnswer(answer);
-
-    _ref.read(currentQuiz.notifier).update((_) => GamePageData(quiz));
+    await _quizGameNotifier.checkMyAnswer(answer);
   }
 
   Future<void> onNextQuiz() async {
-    // we need to return the value immediately without waiting.
-    // ignore: unused_result
-    _ref.refresh(currentQuiz);
+    await _quizGameNotifier.nextQuiz();
   }
 }

@@ -136,7 +136,7 @@ class _QuizWidget extends ConsumerWidget {
           ),
         ),
       GamePageError(message: final message) => Center(
-          child: Text(message, textAlign: TextAlign.center),
+          child: SelectableText(message, textAlign: TextAlign.center),
         ),
     };
   }

@@ -25,4 +25,12 @@ class QuizConfig {
       quizType: quizType ?? this.quizType,
     );
   }
+
+  @override
+  String toString() {
+    return 'QuizConfig{'
+        'category: ${quizCategory.name}|${quizCategory.id}, '
+        '$quizDifficulty, '
+        '$quizType}';
+  }
 }

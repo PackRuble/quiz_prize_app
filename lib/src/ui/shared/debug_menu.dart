@@ -9,7 +9,7 @@ class DebugDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cachedQuizzesCount = ref.watch(CachedQuizzesNotifier.instance).length;
+    final cachedQuizzesCount = ref.watch(QuizzesNotifier.instance).length;
 
     return AlertDialog.adaptive(
       title: const Text('Debug menu'),

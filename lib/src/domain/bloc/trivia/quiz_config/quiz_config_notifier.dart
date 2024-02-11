@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:trivia_app/internal/debug_flags.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
@@ -26,6 +27,7 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
     _storage = ref.watch(GameStorage.instance);
     _triviaRepository = TriviaRepository(
       client: http.Client(),
+      useMockData: DebugFlags.triviaRepoUseMock,
     );
 
     // The `attach` method provides a reactive state change while storing

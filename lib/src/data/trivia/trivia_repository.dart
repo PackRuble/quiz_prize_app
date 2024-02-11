@@ -72,7 +72,7 @@ class TriviaRepoError<T> extends TriviaRepoResult<T> {
 class TriviaRepository {
   const TriviaRepository({
     required this.client,
-    this.useMockData = false,
+    required this.useMockData,
   });
 
   final http.Client client;
