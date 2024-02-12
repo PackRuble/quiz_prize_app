@@ -12,8 +12,8 @@ class TriviaStatsProvider extends QuizStatsNotifier {
     );
   });
 
-  late final statsOnDifficulty =
-      AutoDisposeProvider<Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
+  late final statsOnDifficulty = AutoDisposeProvider<
+      Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
     (ref) => _calculateStatsOnDifficulty(ref.watch(quizzesPlayed)),
   );
 
@@ -27,6 +27,7 @@ class TriviaStatsProvider extends QuizStatsNotifier {
       GameCard.quizzesPlayed,
       (value) => ref.state = value,
       detacher: ref.onDispose,
+      onRemove: () => ref.state = [],
     );
   });
 
@@ -35,6 +36,7 @@ class TriviaStatsProvider extends QuizStatsNotifier {
       GameCard.winning,
       (value) => ref.state = value,
       detacher: ref.onDispose,
+      onRemove: () => ref.state = 0,
     );
   });
 
@@ -43,6 +45,7 @@ class TriviaStatsProvider extends QuizStatsNotifier {
       GameCard.losing,
       (value) => ref.state = value,
       detacher: ref.onDispose,
+      onRemove: () => ref.state = 0,
     );
   });
 }
@@ -59,7 +62,8 @@ class QuizStatsNotifier {
   // ***************************************************************************
   // counting quizzes played by their difficulty
 
-  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)> _calculateStatsOnDifficulty(
+  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
+      _calculateStatsOnDifficulty(
     List<Quiz> quizzes,
   ) {
     final result = <TriviaQuizDifficulty, (int correctly, int uncorrectly)>{};
@@ -80,7 +84,8 @@ class QuizStatsNotifier {
   // ***************************************************************************
   // counting quizzes played by their category
 
-  Map<_CategoryName, (int correctly, int uncorrectly)> _calculateStatsOnCategory(
+  Map<_CategoryName, (int correctly, int uncorrectly)>
+      _calculateStatsOnCategory(
     List<Quiz> quizzes,
   ) {
     final result = <_CategoryName, (int correctly, int uncorrectly)>{};
