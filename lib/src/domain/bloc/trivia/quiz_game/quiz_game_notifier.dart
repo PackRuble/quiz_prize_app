@@ -47,7 +47,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     );
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
-    unawaited(nextQuiz());
+    // this allows you to run method immediately after this build has finished running
+    Future.microtask(nextQuiz);
 
     return const QuizGameResult.loading();
   }
