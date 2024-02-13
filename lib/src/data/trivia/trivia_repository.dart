@@ -41,29 +41,29 @@ enum TriviaException implements Exception {
   final String message;
 }
 
-/// Each method in this [TriviaRepository] returns [TriviaRepoResult]<[T]>.
-sealed class TriviaRepoResult<T> {
-  const TriviaRepoResult();
+/// Each method in this [TriviaRepository] returns [TriviaResult]<[T]>.
+sealed class TriviaResult<T> {
+  const TriviaResult();
 
-  const factory TriviaRepoResult.data(T data) = TriviaRepoData;
-  const factory TriviaRepoResult.exceptionApi(TriviaException exception) =
-      TriviaRepoExceptionApi;
-  const factory TriviaRepoResult.error(Object error, StackTrace stack) =
-      TriviaRepoError;
+  const factory TriviaResult.data(T data) = TriviaData;
+  const factory TriviaResult.exceptionApi(TriviaException exception) =
+      TriviaExceptionApi;
+  const factory TriviaResult.error(Object error, StackTrace stack) =
+      TriviaError;
 }
 
-class TriviaRepoData<T> extends TriviaRepoResult<T> {
-  const TriviaRepoData(this.data);
+class TriviaData<T> extends TriviaResult<T> {
+  const TriviaData(this.data);
   final T data;
 }
 
-class TriviaRepoExceptionApi<T> extends TriviaRepoResult<T> {
-  const TriviaRepoExceptionApi(this.exception);
+class TriviaExceptionApi<T> extends TriviaResult<T> {
+  const TriviaExceptionApi(this.exception);
   final TriviaException exception;
 }
 
-class TriviaRepoError<T> extends TriviaRepoResult<T> {
-  const TriviaRepoError(this.error, this.stack);
+class TriviaError<T> extends TriviaResult<T> {
+  const TriviaError(this.error, this.stack);
   final Object error;
   final StackTrace stack;
 }
@@ -87,7 +87,7 @@ class TriviaRepository {
 extension GetCategories on TriviaRepository {
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
-  Future<TriviaRepoResult<List<CategoryDTO>>> getCategories() async {
+  Future<TriviaResult<List<CategoryDTO>>> getCategories() async {
     log('$TriviaRepository.getCategories been called');
 
     final uri = Uri.https(TriviaRepository._baseUrl, 'api_category.php');
@@ -104,12 +104,12 @@ extension GetCategories on TriviaRepository {
       try {
         response = await client.get(uri);
       } catch (e, s) {
-        return TriviaRepoResult.error(e, s);
+        return TriviaResult.error(e, s);
       }
     }
 
     if (response.statusCode != 200) {
-      return TriviaRepoResult.error(
+      return TriviaResult.error(
         'Failed to get quiz. Status code ${response.statusCode}',
         StackTrace.current,
       );
@@ -120,7 +120,7 @@ extension GetCategories on TriviaRepository {
     final categoriesJson =
         (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
 
-    return TriviaRepoResult.data(
+    return TriviaResult.data(
         categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
@@ -147,7 +147,7 @@ extension GetQuizzes on TriviaRepository {
   /// 10.02.2024: On top of that, there is a limit on the number of requests on the current IP.
   /// Therefore, [TriviaException.rateLimit] was added.
   ///
-  Future<TriviaRepoResult<List<QuizDTO>>> getQuizzes({
+  Future<TriviaResult<List<QuizDTO>>> getQuizzes({
     required CategoryDTO category,
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
@@ -175,15 +175,15 @@ extension GetQuizzes on TriviaRepository {
       try {
         response = await client.get(uri);
       } catch (e, s) {
-        return TriviaRepoResult.error(e, s);
+        return TriviaResult.error(e, s);
       }
     }
 
     if (response.statusCode != 200) {
       if (response.statusCode == 429) {
-        return const TriviaRepoResult.exceptionApi(TriviaException.rateLimit);
+        return const TriviaResult.exceptionApi(TriviaException.rateLimit);
       }
-      return TriviaRepoResult.error(
+      return TriviaResult.error(
         'Failed to get quiz. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
         StackTrace.current,
       );
@@ -194,18 +194,18 @@ extension GetQuizzes on TriviaRepository {
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => TriviaRepoResult.error(
+      null => TriviaResult.error(
           'Response Code is "null". Status code ${response.statusCode}, message: ${response.reasonPhrase}',
           StackTrace.current,
         ),
       0 => () {
           final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
-          return TriviaRepoResult.data(quizzes.map(QuizDTO.fromJson).toList());
+          return TriviaResult.data(quizzes.map(QuizDTO.fromJson).toList());
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
-        TriviaRepoResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => TriviaRepoResult.error(
+        TriviaResult.exceptionApi(TriviaException.values[responseCode]),
+      _ => TriviaResult.error(
           'Response Code is $responseCode. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
           StackTrace.current,
         ),
