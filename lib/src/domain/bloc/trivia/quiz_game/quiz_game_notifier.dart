@@ -18,6 +18,7 @@ import '../cached_quizzes/cached_quizzes_notifier.dart';
 import '../model/quiz.model.dart';
 import '../quiz_config/quiz_config_notifier.dart';
 import '../stats/trivia_stats_bloc.dart';
+typedef TriviaResultAsyncCallback = Future<TriviaResult> Function();
 
 /// Notifier is a certain state machine for the game process and methods
 /// for managing this state.
@@ -34,7 +35,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
-  final _executionRequestQueue = Queue<Future<TriviaResult> Function()>();
+  final _executionRequestQueue = Queue<TriviaResultAsyncCallback>();
   // LinkedList<Future>? _cachedQuizzesIterator;
 
   // todo: feature: make a request before the quizzes are over
@@ -49,6 +50,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       useMockData: DebugFlags.triviaRepoUseMock,
     );
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
+
+    print('build QuizGameNotifier');
 
     ref.onDispose(() {
       _executionRequestQueue.clear();
@@ -89,6 +92,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       log('$this-> Викторина найдена=$cachedQuiz');
       state = QuizGameData(cachedQuiz);
     } else {
+      _cachedQuizzesIterator = null;
       log('$this-> Локальные данные не найдены, добавляем запрос в очередь первым. desiredCount=1');
 
       _executionRequestQueue.addFirst(() async {
@@ -101,7 +105,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
 
     // silently increase number of quizzes if their cached number is below allowed level
-    if (_isEnoughCachedQuizzes) {
+    if (!_isEnoughCachedQuizzes) {
       log('$this-> not enough cached quizzes');
 
       // this means that locally suitable data is no longer available
@@ -113,44 +117,52 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       final currentRequest = _executionRequestQueue.removeFirst();
       final triviaResult = await currentRequest.call();
 
-      await _updateStateWithResult(triviaResult);
+      await _updateStateWithResult(triviaResult, currentRequest);
     }
   }
 
-  Future<void> _updateStateWithResult(TriviaResult triviaResult) async {
-    //todo: важно - сделать так, чтобы состояние обновлялось только в случае [подумать] оно находится в этом состоянии
+  /// todo: это кеширующий запрос, вместо этого добавить флаг в  TriviaResultAsyncCallback
+  bool get _mayUpdate {
+    final result = state is! QuizGameData;
+    log('In $state, updateable=$result');
+    return result;
+  }
 
+  Future<void> _updateStateWithResult(
+    TriviaResult triviaResult,
+    TriviaResultAsyncCallback currentRequest,
+  ) async {
     if (triviaResult case TriviaData<List<QuizDTO>>(:final data)) {
       final quizzes = Quiz.quizzesFromDTO(data);
       await _quizzesNotifier.cacheQuizzes(quizzes);
-
+      print('Полученные викторины: ${quizzes.length}');
       // todo: возможен красивый фикс с чистой функцией
       // after this, the `QuizzesNotifier` state already contains current data
       final cachedQuiz = _getCachedQuiz();
-      log('$this-> Данные получены, повторный запрос на поиск с резульатом=$cachedQuiz');
+      log('$this-> Повторный запрос с результатом=$cachedQuiz');
       if (cachedQuiz != null) {
         log('$this-> Викторина найдена=$cachedQuiz');
         state = QuizGameData(cachedQuiz);
       }
-    } else if (triviaResult case TriviaExceptionApi(:final exception)) {
-      if (exception case TriviaException.noResults) {
-        log('$this-> try again because $exception');
-        // it is worth trying to query with less [countFetchQuizzes]
-      } else if (exception case TriviaException.rateLimit) {
-        log('$this-> try again because $exception');
-        // todo: мы должны попросить сделать этот запрос заново, только спустя 5 секунд
+    } else if (triviaResult case TriviaExceptionApi(exception: final exc)) {
+      log('$this-> try again because $exc');
+      if (exc case TriviaException.rateLimit) {
+        await Future.delayed(const Duration(seconds: 5));
+        _executionRequestQueue.addFirst(currentRequest);
+      } else if (exc case TriviaException.tokenEmptySession) {
+        print('предложить сбросить сессию');
+        // todo
       } else {
-        state = QuizGameResult.error(exception.message);
+        if (_mayUpdate) state = QuizGameResult.error(exc.message);
         _executionRequestQueue.clear();
-        return;
       }
     } else if (triviaResult case TriviaError(:final error)) {
-      state = QuizGameResult.error(error.toString());
+      if (_mayUpdate) state = QuizGameResult.error(error.toString());
       _executionRequestQueue.clear();
-      return;
+    } else {
+      _executionRequestQueue.clear();
+      if (_mayUpdate) state = const QuizGameResult.emptyData();
     }
-    _executionRequestQueue.clear();
-    state = const QuizGameResult.emptyData();
   }
 
   void _fillQueueSilent() {
@@ -200,14 +212,24 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       _quizzesNotifier.state.length > _minCountCachedQuizzes;
 
   Quiz? _getCachedQuiz() {
-    _cachedQuizzesIterator ??= List.of(_quizzesNotifier.state).iterator;
+    if (_cachedQuizzesIterator == null) {
+      final quizzes = List.of(_quizzesNotifier.state)..shuffle();
+      _cachedQuizzesIterator = quizzes.iterator;
+    }
+
+    print('Состояние кеширующего нотифаера: ${_quizzesNotifier.state.length}');
+
     while (_cachedQuizzesIterator!.moveNext()) {
       final quiz = _cachedQuizzesIterator!.current;
 
+      print(quiz);
+
       if (_quizConfigNotifier.matchQuizByFilter(quiz)) {
+        print('Викторина успешно подошла $quiz');
         return quiz;
       }
     }
+
     return null;
   }
 
