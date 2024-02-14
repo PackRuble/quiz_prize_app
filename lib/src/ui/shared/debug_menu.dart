@@ -9,22 +9,30 @@ class DebugDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cachedQuizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     final cachedQuizzesCount = ref.watch(QuizzesNotifier.instance).length;
 
-    return AlertDialog.adaptive(
+    final mq = MediaQuery.of(context);
+
+    return AlertDialog(
+      scrollable: true,
       title: const Text('Debug menu'),
-      content: SingleChildScrollView(
-        child: CardPad(
-          padding: EdgeInsets.zero,
-          margin: const EdgeInsets.all(4.0),
-          child: Column(
-            children: [
-              ListTile(
-                title: const Text('Cached quizzes'),
-                trailing: Text(cachedQuizzesCount.toString()),
+      content: SizedBox(
+        width: mq.size.width * .7,
+        child: Column(
+          children: [
+            CardPad(
+              padding: EdgeInsets.zero,
+              margin: const EdgeInsets.all(4.0),
+              child: ListTile(
+                title: Text('Cached quizzes: $cachedQuizzesCount'),
+                trailing: IconButton(
+                  onPressed: cachedQuizzesNotifier.clearAll,
+                  icon: const Icon(Icons.cleaning_services_rounded),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       actions: [

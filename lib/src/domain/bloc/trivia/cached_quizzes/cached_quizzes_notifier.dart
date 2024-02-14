@@ -31,8 +31,9 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
     // the new value in storage
     return _storage.attach(
       GameCard.quizzes,
-      (value) => state = value,
+      (value) => state = List.of(value),
       detacher: ref.onDispose,
+      onRemove: () => state = [],
     );
   }
 
@@ -41,6 +42,10 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
       GameCard.quizzes,
       [...state, ...fetched]..shuffle(),
     );
+  }
+
+  Future<void> clearAll() async {
+    await _storage.remove(GameCard.quizzes);
   }
 
   // todo(08.02.2024): move in TriviaStatsBloc + create dependencies
