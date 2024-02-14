@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:core';
 import 'dart:developer' show log;
@@ -13,6 +14,7 @@ import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dar
 
 import '../cached_quizzes/cached_quizzes_notifier.dart';
 import '../model/quiz.model.dart';
+import '../quiz_config/quiz_config_model.dart';
 import '../quiz_config/quiz_config_notifier.dart';
 import '../stats/trivia_stats_bloc.dart';
 typedef TriviaResultAsyncCallback = Future<TriviaResult> Function();
@@ -20,12 +22,14 @@ typedef TriviaResultAsyncCallback = Future<TriviaResult> Function();
 class _QuizRequest {
   const _QuizRequest({
     required this.execution,
+    required this.quizConfig,
     this.onlyCache = false,
     this.clearIfSuccess = false,
   });
   final TriviaResultAsyncCallback execution;
   final bool onlyCache;
   final bool clearIfSuccess;
+  final QuizConfig quizConfig;
 }
 
 /// Notifier is a certain state machine for the game process and methods
@@ -44,10 +48,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
   final _executionRequestQueue = Queue<_QuizRequest>();
-  // LinkedList<Future>? _cachedQuizzesIterator;
-
-  // todo: feature: make a request before the quizzes are over
-  // Quiz? nextQuiz; // or nextState
 
   @override
   QuizGameResult build() {
@@ -58,8 +58,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       useMockData: DebugFlags.triviaRepoUseMock,
     );
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
-
-    print('build QuizGameNotifier');
 
     ref.onDispose(() {
       _executionRequestQueue.clear();
@@ -74,45 +72,50 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// This is a list of numbers, each of which represents the number of quizzes
   /// we would like to receive from the server.
   ///
-
-  ///
   /// for 50: [25, 13, 7, 4, 2, 1]
   /// for 16: [ 8,  4, 2, 1]
   ListBiIterator<int> getReductionNumbers() =>
-      ListBiIterator(getReductionsSequence(_maxCountQuizzesPerRequest));
+      ListBiIterator(getReductionsSequence(_maxAmountQuizzesPerRequest));
 
   /// Maximum number of quizzes per request.
   ///
   /// If the category is popular, we will make 6 requests,
   /// otherwise we will make only 4.
-  int get _maxCountQuizzesPerRequest =>
+  int get _maxAmountQuizzesPerRequest =>
       _quizConfigNotifier.state.quizCategory.isAny ? 50 : 16;
 
+  QuizConfig get _getQuizConfig => _quizConfigNotifier.state;
+
+  /// Request for the next quiz. The state will be updated reactively.
   Future<void> nextQuiz() async {
-    log('$this-> get next quiz');
+    log('$this.nextQuiz-> Request for the next quiz');
 
     state = const QuizGameResult.loading();
 
     bool needSilentRequest = false;
-    // todo: вероятно код ниже даже можно убрать
     // looking for a quiz that matches the filters
     final cachedQuiz = _getCachedQuiz();
     if (cachedQuiz != null) {
-      log('$this-> Викторина найдена=$cachedQuiz');
       state = QuizGameData(cachedQuiz);
     } else {
+      log('$this-> Cached quizzes were not found, add request to queue first, amount=1');
       needSilentRequest = true;
-
       _cachedQuizzesIterator = null;
-      log('$this-> Локальные данные не найдены, добавляем запрос в очередь первым. desiredCount=1');
+
+      final quizConfig = _getQuizConfig;
       _executionRequestQueue.addFirst(
         _QuizRequest(
+          quizConfig: _getQuizConfig,
           execution: () async {
             // We don't need to think about it, since the queue handler will
             // re-create the request with a delay if an error occurs.
             // Quantity is 1 because we are guaranteed to want the quiz right now
             // subsequent calls will be delayed :(
-            return await _fetchQuiz(1, Duration.zero);
+            return await _fetchQuiz(
+              amountQuizzes: 1,
+              quizConfig: quizConfig,
+              delay: Duration.zero,
+            );
           },
         ),
       );
@@ -134,94 +137,118 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
-  Future<void> _updateStateWithResult(_QuizRequest currentRequest) async {
-    final triviaResult = await currentRequest.execution.call();
+  Future<void> _updateStateWithResult(_QuizRequest request) async {
+    final triviaResult = await request.execution.call();
 
     if (triviaResult case TriviaData<List<QuizDTO>>(:final data)) {
-      _cachedQuizzesIterator = null;
-
       final quizzes = Quiz.quizzesFromDTO(data);
+      log('$this-> result with data, l=${_quizzesNotifier.state.length}');
       await _quizzesNotifier.cacheQuizzes(quizzes);
-      print('Полученные викторины: ${quizzes.length}');
-      // todo: возможен красивый фикс с чистой функцией
+
+      _cachedQuizzesIterator = null;
       // after this, the `QuizzesNotifier` state already contains current data
       final cachedQuiz = _getCachedQuiz();
-      log('$this-> Повторный запрос с результатом=$cachedQuiz');
       if (cachedQuiz != null) {
-        log('$this-> Викторина найдена=$cachedQuiz');
-        if (!currentRequest.onlyCache) state = QuizGameData(cachedQuiz);
+        if (!request.onlyCache) state = QuizGameData(cachedQuiz);
       }
     } else if (triviaResult case TriviaExceptionApi(exception: final exc)) {
       log('$this-> try again because $exc');
       if (exc case TriviaException.rateLimit) {
-        await Future.delayed(const Duration(seconds: 5));
-        _executionRequestQueue.addFirst(currentRequest);
+        await Future.delayed(const Duration(seconds: 6));
+        // if (_executionRequestQueue.isNotEmpty) {
+        //   await _updateStateWithResult(request);
+        // }
+        // todo: проблема правильно обработать очередь
+
       } else if (exc case TriviaException.tokenEmptySession) {
-        print('предложить сбросить сессию');
+        _clearQueueByConfig(request);
         // todo
+        print('предложить сбросить сессию');
+        if (!request.onlyCache) state = const QuizGameResult.emptyData();
+
       } else {
-        if (!currentRequest.onlyCache)
-          state = QuizGameResult.error(exc.message);
         _executionRequestQueue.clear();
+        if (!request.onlyCache) state = QuizGameResult.error(exc.message);
       }
     } else if (triviaResult case TriviaError(:final error)) {
-      if (!currentRequest.onlyCache)
-        state = QuizGameResult.error(error.toString());
       _executionRequestQueue.clear();
-    } else {
-      _executionRequestQueue.clear();
-      if (!currentRequest.onlyCache) state = const QuizGameResult.emptyData();
+      if (!request.onlyCache) state = QuizGameResult.error(error.toString());
     }
 
-    if (currentRequest.clearIfSuccess) _executionRequestQueue.clear();
+    if (request.clearIfSuccess) _clearQueueByConfig(request);
   }
 
+  /// Removes requests from the queue if they have the same config as the current request.
+  void _clearQueueByConfig(_QuizRequest request) {
+    _executionRequestQueue.removeWhere((el) => el.quizConfig == request.quizConfig);
+  }
+
+  /// The function fills the queue with requests [TriviaRepository.getQuizzes].
+  /// These requests will be completed later.
+  ///
+  /// Feature: the first request is always for the maximum number of quizzes,
+  /// and then each subsequent request with a binary reduction of the requested
+  /// number.
   void _fillQueueSilent() {
+    final quizConfig = _getQuizConfig;
+
     _executionRequestQueue.add(
       _QuizRequest(
         execution: () async {
-          log('$this-> Делаем максимальный запрос. desiredCount=$_maxCountQuizzesPerRequest');
-          return await _fetchQuiz(_maxCountQuizzesPerRequest);
+          log('$this-> Request for maximum amount=$_maxAmountQuizzesPerRequest');
+          return await _fetchQuiz(
+            amountQuizzes: _maxAmountQuizzesPerRequest,
+            quizConfig: quizConfig,
+          );
         },
+        quizConfig: quizConfig,
         onlyCache: true,
+        // clear the queue with this config if the request was successful
         clearIfSuccess: true,
       ),
     );
 
     final numbersReductionIterator = getReductionNumbers();
     while (numbersReductionIterator.moveNext()) {
-      final desiredCount = numbersReductionIterator.current;
+      final amount = numbersReductionIterator.current;
 
       _executionRequestQueue.add(
         _QuizRequest(
           execution: () async {
-            log('$this-> Делаем повторный запрос. desiredCount=$desiredCount');
-            return await _fetchQuiz(desiredCount);
+            log('$this-> Request for amount=$amount');
+            return await _fetchQuiz(
+              amountQuizzes: amount,
+              quizConfig: quizConfig,
+            );
           },
+          quizConfig: quizConfig,
           onlyCache: true,
         ),
       );
     }
   }
 
-  Future<TriviaResult> _fetchQuiz(
-    int countFetchQuizzes, [
+  /// Get quizzes from the Trivia server. Use delay if necessary.
+  ///
+  /// Pure method.
+  Future<TriviaResult> _fetchQuiz({
+    required int amountQuizzes,
+    required QuizConfig quizConfig,
     // Update: At some point in the Trivia backend there is a limit on the number
     // of requests per second from one IP. To get around this, we will wait an
     // additional 5 seconds when this error occurs.
     //
     // therefore we wait 5 seconds as the backend dictates. Then we do a request.
-    Duration delay = const Duration(seconds: 5),
-  ]) async {
-    final quizConfig = _quizConfigNotifier.state;
-    log('$this.fetch quizzes-> with $quizConfig, countFetchQuizzes=$countFetchQuizzes');
+    Duration delay = const Duration(seconds: 6),
+  }) async {
+    log('$this._fetchQuiz-> with $quizConfig, amount=$amountQuizzes, delay=${delay.inSeconds}sec');
 
     await Future.delayed(delay);
     final result = await _triviaRepository.getQuizzes(
       category: quizConfig.quizCategory,
       difficulty: quizConfig.quizDifficulty,
       type: quizConfig.quizType,
-      amount: countFetchQuizzes,
+      amount: amountQuizzes,
     );
 
     return result;
@@ -234,19 +261,20 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   bool get _isEnoughCachedQuizzes =>
       _quizzesNotifier.state.length > _minCountCachedQuizzes;
 
+  Iterator<Quiz> get _getNewCachedQuizzesIterator {
+    final quizzes = List.of(_quizzesNotifier.state)..shuffle();
+    return quizzes.iterator;
+  }
+
   Quiz? _getCachedQuiz() {
-    if (_cachedQuizzesIterator == null) {
-      final quizzes = List.of(_quizzesNotifier.state)..shuffle();
-      _cachedQuizzesIterator = quizzes.iterator;
-    }
+    log('$this-> $_quizzesNotifier state: l=${_quizzesNotifier.state.length}');
 
-    print('Состояние кеширующего нотифаера: ${_quizzesNotifier.state.length}');
-
+    _cachedQuizzesIterator ??= _getNewCachedQuizzesIterator;
     while (_cachedQuizzesIterator!.moveNext()) {
       final quiz = _cachedQuizzesIterator!.current;
 
       if (_quizConfigNotifier.matchQuizByFilter(quiz)) {
-        print('Викторина успешно подошла $quiz');
+        log('$this-> Quiz found in cache, hash:${quiz.hashCode}');
         return quiz;
       }
     }
@@ -255,7 +283,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> checkMyAnswer(String answer) async {
-    var quiz = _cachedQuizzesIterator!.current;
+    if (state is! QuizGameData) return;
+
+    var quiz = (state as QuizGameData).quiz;
     quiz = quiz.copyWith(yourAnswer: answer);
 
     unawaited(_quizStatsNotifier.savePoints(quiz.correctlySolved!));
