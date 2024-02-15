@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:core';
 import 'dart:developer' show log;
+import 'package:async/async.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     show AutoDisposeNotifier, AutoDisposeNotifierProvider;
 import 'package:http/http.dart' as http;
@@ -30,6 +31,20 @@ class _QuizRequest {
   final bool onlyCache;
   final bool clearIfSuccess;
   final QuizConfig quizConfig;
+
+  _QuizRequest copyWith({
+    TriviaResultAsyncCallback? execution,
+    bool? onlyCache,
+    bool? clearIfSuccess,
+    QuizConfig? quizConfig,
+  }) {
+    return _QuizRequest(
+      execution: execution ?? this.execution,
+      onlyCache: onlyCache ?? this.onlyCache,
+      clearIfSuccess: clearIfSuccess ?? this.clearIfSuccess,
+      quizConfig: quizConfig ?? this.quizConfig,
+    );
+  }
 }
 
 /// Notifier is a certain state machine for the game process and methods
@@ -48,6 +63,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
   final _executionRequestQueue = Queue<_QuizRequest>();
+  bool _queueAtWork = false;
 
   @override
   QuizGameResult build() {
@@ -100,19 +116,22 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     } else {
       log('$this-> Cached quizzes were not found, add request to queue first, amount=1');
       needSilentRequest = true;
-      _cachedQuizzesIterator = null;
 
+      // todo: если конфиг популярный, можно сделать сразу длинный запрос!
+      //  а тайный запросить в обоих случаях
       final quizConfig = _getQuizConfig;
       _executionRequestQueue.addFirst(
         _QuizRequest(
           quizConfig: _getQuizConfig,
           execution: () async {
             // We don't need to think about it, since the queue handler will
-            // re-create the request with a delay if an error occurs.
-            // Quantity is 1 because we are guaranteed to want the quiz right now
+            // re-create the request with a delay if an `TriviaException.rateLimit` occur.
+            // Amount is 1 because we are guaranteed to want the quiz right now
             // subsequent calls will be delayed :(
             return await _fetchQuiz(
-              amountQuizzes: 1,
+              amountQuizzes: _quizConfigNotifier.isPopularConfig(quizConfig)
+                  ? _maxAmountQuizzesPerRequest
+                  : 1,
               quizConfig: quizConfig,
               delay: Duration.zero,
             );
@@ -124,22 +143,29 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     // silently increase number of quizzes if their cached number is below allowed level
     if (!_isEnoughCachedQuizzes || needSilentRequest) {
       log('$this-> not enough cached quizzes');
-
-      // this means that locally suitable data is no longer available
-      _cachedQuizzesIterator = null;
       _fillQueueSilent();
     }
 
-    while (_executionRequestQueue.isNotEmpty) {
-      final currentRequest = _executionRequestQueue.removeFirst();
+    if (_queueAtWork) {
+      print(1);
+      return;
+    } else {
+      print(2);
+      _queueAtWork = true;
+      while (_executionRequestQueue.isNotEmpty) {
+        final currentRequest = _executionRequestQueue.removeFirst();
 
-      await _updateStateWithResult(currentRequest);
+        await _updateStateWithResult(currentRequest);
+      }
+      print(3);
+      _queueAtWork = false;
     }
   }
 
   Future<void> _updateStateWithResult(_QuizRequest request) async {
     final triviaResult = await request.execution.call();
 
+    QuizGameResult? newState;
     if (triviaResult case TriviaData<List<QuizDTO>>(:final data)) {
       final quizzes = Quiz.quizzesFromDTO(data);
       log('$this-> result with data, l=${_quizzesNotifier.state.length}');
@@ -149,38 +175,47 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       // after this, the `QuizzesNotifier` state already contains current data
       final cachedQuiz = _getCachedQuiz();
       if (cachedQuiz != null) {
-        if (!request.onlyCache) state = QuizGameData(cachedQuiz);
+        newState = QuizGameData(cachedQuiz);
       }
+      if (request.clearIfSuccess) _clearQueueByConfig(request);
     } else if (triviaResult case TriviaExceptionApi(exception: final exc)) {
-      log('$this-> try again because $exc');
+      log('$this-> result is $exc');
       if (exc case TriviaException.rateLimit) {
-        await Future.delayed(const Duration(seconds: 6));
-        // if (_executionRequestQueue.isNotEmpty) {
-        //   await _updateStateWithResult(request);
-        // }
-        // todo: проблема правильно обработать очередь
-
+        // we are sure that added query will be executed because `_updateStateWithResult` method
+        // is always executed in a `while (_executionRequestQueue.isNotEmpty)` loop.
+        _executionRequestQueue.addFirst(
+          request.copyWith(
+            execution: () async {
+              await Future.delayed(const Duration(seconds: 5));
+              return request.execution();
+            },
+          ),
+        );
+        // todo(15.02.2024): Another solution to the problem is to use threads
+        //  that can listen and perform actions as long as there are elements in the queue
+        //  - maybe `StreamQueue` ?..
       } else if (exc case TriviaException.tokenEmptySession) {
         _clearQueueByConfig(request);
         // todo
         print('предложить сбросить сессию');
-        if (!request.onlyCache) state = const QuizGameResult.emptyData();
-
-      } else {
-        _executionRequestQueue.clear();
-        if (!request.onlyCache) state = QuizGameResult.error(exc.message);
+        newState = const QuizGameResult.emptyData();
+      } else if (exc case TriviaException.invalidParameter) {
+        newState = QuizGameResult.error(exc.message);
       }
     } else if (triviaResult case TriviaError(:final error)) {
-      _executionRequestQueue.clear();
-      if (!request.onlyCache) state = QuizGameResult.error(error.toString());
+      log('$this-> result error: $error');
+      newState = QuizGameResult.error(error.toString());
     }
 
-    if (request.clearIfSuccess) _clearQueueByConfig(request);
+    if (!request.onlyCache || state is QuizGameLoading) {
+      if (newState != null) state = newState;
+    }
   }
 
   /// Removes requests from the queue if they have the same config as the current request.
   void _clearQueueByConfig(_QuizRequest request) {
-    _executionRequestQueue.removeWhere((el) => el.quizConfig == request.quizConfig);
+    _executionRequestQueue
+        .removeWhere((el) => el.quizConfig == request.quizConfig);
   }
 
   /// The function fills the queue with requests [TriviaRepository.getQuizzes].
