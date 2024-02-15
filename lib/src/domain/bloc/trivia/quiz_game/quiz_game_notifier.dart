@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:collection';
+import 'dart:collection' show Queue;
 import 'dart:core';
 import 'dart:developer' show log;
-import 'package:async/async.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     show AutoDisposeNotifier, AutoDisposeNotifierProvider;
 import 'package:http/http.dart' as http;
@@ -117,8 +117,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       log('$this-> Cached quizzes were not found, add request to queue first, amount=1');
       needSilentRequest = true;
 
-      // todo: если конфиг популярный, можно сделать сразу длинный запрос!
-      //  а тайный запросить в обоих случаях
       final quizConfig = _getQuizConfig;
       _executionRequestQueue.addFirst(
         _QuizRequest(
@@ -133,6 +131,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
                   ? _maxAmountQuizzesPerRequest
                   : 1,
               quizConfig: quizConfig,
+              // todo(15.02.2024): In the future, this can be abandoned if you
+              //  separate the request queue management into a separate class
               delay: Duration.zero,
             );
           },
@@ -147,17 +147,15 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
 
     if (_queueAtWork) {
-      print(1);
+      // requests will still be executed in previous `nextQuiz` call
       return;
     } else {
-      print(2);
       _queueAtWork = true;
       while (_executionRequestQueue.isNotEmpty) {
         final currentRequest = _executionRequestQueue.removeFirst();
 
         await _updateStateWithResult(currentRequest);
       }
-      print(3);
       _queueAtWork = false;
     }
   }
@@ -196,8 +194,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         //  - maybe `StreamQueue` ?..
       } else if (exc case TriviaException.tokenEmptySession) {
         _clearQueueByConfig(request);
-        // todo
-        print('предложить сбросить сессию');
+        // todo: suggest resetting the session
         newState = const QuizGameResult.emptyData();
       } else if (exc case TriviaException.invalidParameter) {
         newState = QuizGameResult.error(exc.message);
@@ -243,6 +240,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       ),
     );
 
+    // we fill the queue with binary reduction queries only to retrieve data if 
+    // the first query fails. If the request is successful, the queue will be 
+    // cleared (this is what the [_QuizRequest.clearIfSuccess] flag is for)
     final numbersReductionIterator = getReductionNumbers();
     while (numbersReductionIterator.moveNext()) {
       final amount = numbersReductionIterator.current;
@@ -329,6 +329,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   @override
+  @protected
   String toString() =>
       super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
 }
