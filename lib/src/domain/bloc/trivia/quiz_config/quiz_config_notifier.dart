@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 
@@ -15,7 +14,7 @@ import 'quiz_config_model.dart';
 
 class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   static final instance =
-  AutoDisposeNotifierProvider<QuizConfigNotifier, QuizConfig>(
+      AutoDisposeNotifierProvider<QuizConfigNotifier, QuizConfig>(
     QuizConfigNotifier.new,
   );
 
@@ -35,17 +34,17 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
     return QuizConfig(
       quizCategory: _storage.attach(
         GameCard.quizCategory,
-            (value) => state = state.copyWith(quizCategory: value),
+        (value) => state = state.copyWith(quizCategory: value),
         detacher: ref.onDispose,
       ),
       quizDifficulty: _storage.attach(
         GameCard.quizDifficulty,
-            (value) => state = state.copyWith(quizDifficulty: value),
+        (value) => state = state.copyWith(quizDifficulty: value),
         detacher: ref.onDispose,
       ),
       quizType: _storage.attach(
         GameCard.quizType,
-            (value) => state = state.copyWith(quizType: value),
+        (value) => state = state.copyWith(quizType: value),
         detacher: ref.onDispose,
       ),
     );
@@ -57,14 +56,21 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
     final difficulty = state.quizDifficulty;
     final type = state.quizType;
 
-    if ((quiz.category == category.name || category.isAny) &&
+    return (quiz.category.toLowerCase() == category.name.toLowerCase() ||
+            category.isAny) &&
         (quiz.difficulty == difficulty ||
             difficulty == TriviaQuizDifficulty.any) &&
-        (quiz.type == type || type == TriviaQuizType.any)) {
-      return true;
-    } else {
-      return false;
-    }
+        (quiz.type == type || type == TriviaQuizType.any);
+  }
+
+  /// A config is only popular if all filters are selected to "any" except [Category].
+  ///
+  /// Pure method.
+  bool isPopularConfig(QuizConfig quizConfig) {
+    final difficulty = state.quizDifficulty;
+    final type = state.quizType;
+
+    return difficulty == TriviaQuizDifficulty.any && type == TriviaQuizType.any;
   }
 
   /// Set the difficulty of quizzes you want.
@@ -86,14 +92,14 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   /// Get all sorts of categories of quizzes.
   Future<List<CategoryDTO>> fetchCategories() async {
     return switch (await _triviaRepository.getCategories()) {
-      TriviaRepoData<List<CategoryDTO>>(data: final list) => () async {
-        await _storage.set(GameCard.allCategories, list);
-        return list;
-      }.call(),
-      TriviaRepoError(error: final e) =>
-      e is SocketException || e is TimeoutException
-          ? _storage.get(GameCard.allCategories)
-          : throw Exception(e),
+      TriviaData<List<CategoryDTO>>(data: final list) => () async {
+          await _storage.set(GameCard.allCategories, list);
+          return list;
+        }.call(),
+      TriviaError(error: final e) =>
+        e is SocketException || e is TimeoutException
+            ? _storage.get(GameCard.allCategories)
+            : throw Exception(e),
       _ => throw Exception('$this.fetchCategories() failed'),
     };
   }
