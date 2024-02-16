@@ -82,6 +82,60 @@ class TriviaRepository {
   static const _responseCodeKey = 'response_code';
 
   String _convertUnescapeHtml(String data) => HtmlUnescape().convert(data);
+
+  TriviaError<T> _getTriviaError<T>(
+    http.Response response, [
+    String message = '',
+    TriviaException? triviaExc,
+  ]) {
+    return TriviaError<T>(
+      '$message '
+      '${triviaExc == null ? '' : '${triviaExc.code}:${triviaExc.name}, ${triviaExc.message}. '}'
+      'Status code ${response.statusCode}, message: ${response.reasonPhrase}',
+      StackTrace.current,
+    );
+  }
+}
+
+extension _TriviaTokenX on TriviaRepository {
+  static const _tokenApiPath = 'api_token.php';
+  static const _dataKey = 'token';
+
+  /// Retrieve a Session Token.
+  Future<TriviaResult<String>> fetchToken() async {
+    log('$TriviaRepository.fetchToken been called');
+
+    final uri = Uri.https(TriviaRepository._baseUrl, _tokenApiPath);
+
+    log('-> by url: $uri');
+
+    final http.Response response;
+
+    try {
+      response = await client.get(uri);
+    } catch (e, s) {
+      return TriviaResult.error(e, s);
+    }
+
+    if (response.statusCode != 200) {
+      return _getTriviaError(response, 'Failed to fetch Token.');
+    }
+
+    final decoded = json.decode(response.body) as Map;
+    final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
+
+    return switch (responseCode) {
+      null => _getTriviaError(response, 'Response Code is "null".'),
+      0 => () {
+          final token = decoded[_dataKey] as String;
+
+          return TriviaResult<String>.data(token);
+        }.call(),
+      > 0 when responseCode < TriviaException.values.length =>
+        TriviaResult.exceptionApi(TriviaException.values[responseCode]),
+      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
+    };
+  }
 }
 
 extension GetCategories on TriviaRepository {
