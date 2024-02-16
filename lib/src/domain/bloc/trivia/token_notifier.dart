@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,42 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
+
+sealed class TokenState {
+  const TokenState();
+
+  const factory TokenState.active(TriviaToken token) = TokenActive;
+  const factory TokenState.expired(TriviaToken token) = TokenExpired;
+  const factory TokenState.none() = TokenNone;
+  const factory TokenState.error(String message) = TokenError;
+}
+
+class TokenActive extends TokenState {
+  const TokenActive(this.token);
+
+  final TriviaToken token;
+}
+
+class TokenExpired extends TokenState {
+  const TokenExpired(this.token);
+
+  final TriviaToken token;
+}
+
+class TokenEmptySession extends TokenState {
+  const TokenEmptySession(this.token);
+
+  final TriviaToken token;
+}
+
+class TokenNone extends TokenState {
+  const TokenNone();
+}
+
+class TokenError extends TokenState {
+  const TokenError(this.message);
+  final String message;
+}
 
 @immutable
 class TriviaToken {
@@ -49,8 +86,9 @@ class TriviaToken {
 }
 
 /// Notifier contains methods for working with the [TriviaToken].
-class TokenNotifier extends Notifier<TriviaToken?> {
-  static final instance = NotifierProvider<TokenNotifier, TriviaToken?>(
+///
+class TokenNotifier extends Notifier<TokenState> {
+  static final instance = NotifierProvider<TokenNotifier, TokenState>(
     TokenNotifier.new,
   );
 
@@ -58,78 +96,94 @@ class TokenNotifier extends Notifier<TriviaToken?> {
   late TriviaTokenRepository _tokenRepository;
 
   @override
-  TriviaToken? build() {
+  TokenState build() {
     _tokenRepository = TriviaTokenRepository(client: http.Client());
 
-    return _storage.attach(
-      GameCard.token,
-      (value) => state = value,
-      detacher: ref.onDispose,
-      onRemove: () => state = null,
-    );
+    final token = _storage.getOrNull(GameCard.token);
+
+    return switch (token) {
+      null => const TokenState.none(),
+      TriviaToken() => isValidToken(token)
+          ? TokenState.active(token)
+          : TokenState.expired(token),
+    };
   }
 
   /// Local token verification. If the token has not been used, it will be reset
   /// via [TriviaTokenRepository.tokenLifetime].
-  bool isValidToken() {
-    final token = state;
-    if (token == null) return false;
-
-    final date = token.dateOfRenewal ?? token.dateOfReceipt;
-    return date.difference(DateTime.now()) <
-        TriviaTokenRepository.tokenLifetime;
-  }
+  bool isValidToken(TriviaToken token) =>
+      (token.dateOfRenewal ?? token.dateOfReceipt).difference(DateTime.now()) <
+      TriviaTokenRepository.tokenLifetime;
 
   /// Get a new token that lives [TriviaTokenRepository.tokenLifetime] time.
+  /// The state will be updated reactively.
   ///
-  /// if return true -> token successfully updated
-  /// if return false -> the request was unsuccessful/token not received
-  Future<bool> updateToken() async {
+  /// - if return true -> token successfully updated
+  /// - if return false -> the request was unsuccessful/token not received
+  Future<TriviaToken?> fetchNewToken() async {
     final result = await _tokenRepository.fetchToken();
 
-    final bool isSuccess;
     switch (result) {
       case TriviaData<String>(data: final token):
-        await _storage.set(
-          GameCard.token,
-          TriviaToken(dateOfReceipt: DateTime.now(), token: token),
+        final newToken = TriviaToken(
+          dateOfReceipt: DateTime.now(),
+          token: token,
         );
-        isSuccess = true;
+        await _storage.set(GameCard.token, newToken);
+        state = TokenState.active(newToken);
+        return newToken;
       case TriviaExceptionApi(:final exception):
         log('$TokenNotifier.updateToken -> result is $exception');
-        isSuccess = false;
+
+        state = TokenState.error(
+          'An exception occurred as a result of receiving a new token: $exception',
+        );
       case TriviaError(:final error, :final stack):
         log('$TokenNotifier.updateToken -> result is $error, $stack');
-        isSuccess = false;
+        state = TokenState.error(
+          'An error occurred as a result of receiving a new token: $error',
+        );
     }
 
-    return isSuccess;
+    return null;
   }
 
-  /// Reset token on server.
+  /// According to Trivia API, a token is considered renewed if it was used
+  /// to make a request to receive quizzes.
   ///
-  /// if return null -> the request was unsuccessful/token not reset
-  /// if return true -> token successfully reset
-  /// if return false -> token was not found (possibly reset earlier)
-  Future<bool?> resetToken() async {
-    final token = state;
-    if (token == null) return false;
-
-    final result = await _tokenRepository.resetToken(token.token);
-    await _storage.setOrNull<TriviaToken>(GameCard.token, null);
-
-    final bool? isSuccess;
-    switch (result) {
-      case TriviaData<bool>(data: final success):
-        isSuccess = success;
-      case TriviaExceptionApi(:final exception):
-        log('$TokenNotifier.resetToken -> result is $exception');
-        isSuccess = null;
-      case TriviaError(:final error, :final stack):
-        log('$TokenNotifier.resetToken -> result is $error, $stack');
-        isSuccess = null;
+  /// We simply update [TriviaToken.dateOfRenewal] in the token.
+  Future<void> extendValidityOfToken() async {
+    if (state case TokenActive(:final token)) {
+      await _storage.set(
+        GameCard.token,
+        token.copyWith(dateOfRenewal: DateTime.now()),
+      );
     }
+  }
 
-    return isSuccess;
+  /// Reset token on server. Updates the state in case of a request to the server.
+  Future<void> resetToken() async {
+    final triviaToken = _storage.getOrNull(GameCard.token) ??
+        switch (state) { TokenActive(:final token) => token, _ => null };
+
+    if (triviaToken != null) {
+      final result = await _tokenRepository.resetToken(triviaToken.token);
+
+      if (result case TriviaData<bool>(data: final isSuccess)) {
+        if (isSuccess) {
+          final newToken = TriviaToken(
+            dateOfReceipt: DateTime.now(),
+            token: triviaToken.token,
+          );
+          await _storage.set(GameCard.token, newToken);
+          state = TokenState.active(newToken);
+        } else {
+          state = const TokenState.none();
+        }
+      } else if (result case TriviaError(:final error, :final stack)) {
+        log('$TokenNotifier.resetToken -> result is $error, $stack');
+        state = TokenState.error('Error during token reset process: $error');
+      }
+    }
   }
 }
