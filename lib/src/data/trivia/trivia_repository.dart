@@ -101,6 +101,10 @@ extension TriviaTokenX on TriviaRepository {
   static const _tokenApiPath = 'api_token.php';
   static const _dataKey = 'token';
 
+  /// Trivia API says:
+  /// > Session Tokens will be deleted after 6 hours of inactivity.
+  static const tokenLifetime = Duration(hours: 6);
+
   /// Retrieve a Session Token.
   Future<TriviaResult<String>> fetchToken() async {
     log('$TriviaRepository.fetchToken been called');
