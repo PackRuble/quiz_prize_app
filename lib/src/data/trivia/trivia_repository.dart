@@ -136,7 +136,8 @@ extension TriviaTokenX on TriviaRepository {
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ =>
+        _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 
@@ -175,14 +176,15 @@ extension TriviaTokenX on TriviaRepository {
       3 => const TriviaResult<bool>.data(false),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ =>
+        _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 }
 
 extension TriviaCategoryX on TriviaRepository {
   static const _categoriesApi = 'api_category.php';
-  static const _resultsKey = 'trivia_categories';
+  static const _dataKey = 'trivia_categories';
 
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
@@ -211,7 +213,7 @@ extension TriviaCategoryX on TriviaRepository {
 
     final body = json.decode(response.body) as Map;
     final categoriesJson =
-        (body[_resultsKey] as List).cast<Map<String, dynamic>>();
+        (body[_dataKey] as List).cast<Map<String, dynamic>>();
     return TriviaResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
@@ -243,16 +245,21 @@ extension TriviaQuizX on TriviaRepository {
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
     int amount = 50,
+    String token = '',
   }) async {
     assert(0 < amount && amount <= 50);
 
     log('$TriviaRepository.getQuizzes been called');
 
-    final uri = _getUri(
-      category: category,
-      difficulty: difficulty,
-      type: type,
-      amount: amount,
+    final uri = Uri.https(
+      TriviaRepository._baseUrl,
+      _quizzesApi,
+      _makeQueryParams(
+        category: category,
+        difficulty: difficulty,
+        type: type,
+        amount: amount,
+      )..addAll({'token': token}),
     );
 
     log('-> by url: $uri');
@@ -289,7 +296,8 @@ extension TriviaQuizX on TriviaRepository {
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ =>
+        _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 
@@ -319,24 +327,7 @@ extension TriviaQuizX on TriviaRepository {
       )
       .toList();
 
-  Uri _getUri({
-    required CategoryDTO category,
-    required TriviaQuizDifficulty difficulty,
-    required TriviaQuizType type,
-    required int amount,
-  }) =>
-      Uri.https(
-        TriviaRepository._baseUrl,
-        _quizzesApi,
-        _getQueryParams(
-          category: category,
-          difficulty: difficulty,
-          type: type,
-          amount: amount,
-        ),
-      );
-
-  Map<String, String> _getQueryParams({
+  Map<String, String> _makeQueryParams({
     required CategoryDTO category,
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
