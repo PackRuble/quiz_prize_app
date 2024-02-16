@@ -83,7 +83,7 @@ class TriviaRepository {
 
   String _convertUnescapeHtml(String data) => HtmlUnescape().convert(data);
 
-  TriviaError<T> _getTriviaError<T>(
+  TriviaError<T> _makeTriviaError<T>(
     http.Response response, [
     String message = '',
     TriviaException? triviaExc,
@@ -107,7 +107,7 @@ extension TriviaTokenX on TriviaRepository {
 
     final uri = Uri.https(
       TriviaRepository._baseUrl,
-      '/$_tokenApiPath',
+      _tokenApiPath,
       {'command': 'request'},
     );
 
@@ -121,14 +121,14 @@ extension TriviaTokenX on TriviaRepository {
     }
 
     if (response.statusCode != 200) {
-      return _getTriviaError(response, 'Failed to fetch Token.');
+      return _makeTriviaError(response, 'Failed to fetch Token.');
     }
 
     final decoded = json.decode(response.body) as Map;
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => _getTriviaError(response, 'Response Code is "null".'),
+      null => _makeTriviaError(response, 'Response Code is "null".'),
       0 => () {
           final token = decoded[_dataKey] as String;
 
@@ -136,7 +136,7 @@ extension TriviaTokenX on TriviaRepository {
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 
@@ -149,7 +149,7 @@ extension TriviaTokenX on TriviaRepository {
 
     final uri = Uri.https(
       TriviaRepository._baseUrl,
-      '/$_tokenApiPath',
+      _tokenApiPath,
       {'command': 'reset', 'token': token},
     );
 
@@ -163,19 +163,19 @@ extension TriviaTokenX on TriviaRepository {
     }
 
     if (response.statusCode != 200) {
-      return _getTriviaError(response, 'Failed to reset Token.');
+      return _makeTriviaError(response, 'Failed to reset Token.');
     }
 
     final decoded = json.decode(response.body) as Map;
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => _getTriviaError(response, 'Response Code is "null".'),
+      null => _makeTriviaError(response, 'Response Code is "null".'),
       0 => const TriviaResult<bool>.data(true),
       3 => const TriviaResult<bool>.data(false),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 }
@@ -206,7 +206,7 @@ extension TriviaCategoryX on TriviaRepository {
     }
 
     if (response.statusCode != 200) {
-      return _getTriviaError(response, 'Failed to get categories.');
+      return _makeTriviaError(response, 'Failed to get categories.');
     }
 
     final body = json.decode(response.body) as Map;
@@ -274,14 +274,14 @@ extension TriviaQuizX on TriviaRepository {
       if (response.statusCode == 429) {
         return const TriviaResult.exceptionApi(TriviaException.rateLimit);
       }
-      return _getTriviaError(response, 'Failed to get quiz.');
+      return _makeTriviaError(response, 'Failed to get quiz.');
     }
 
     final decoded = json.decode(response.body) as Map;
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => _getTriviaError(response, 'Response Code is "null".'),
+      null => _makeTriviaError(response, 'Response Code is "null".'),
       0 => () {
           final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
@@ -289,7 +289,7 @@ extension TriviaQuizX on TriviaRepository {
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
+      _ => _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 
