@@ -97,7 +97,7 @@ class TriviaRepository {
   }
 }
 
-extension _TriviaTokenX on TriviaRepository {
+extension TriviaTokenX on TriviaRepository {
   static const _tokenApiPath = 'api_token.php';
   static const _dataKey = 'token';
 
@@ -110,7 +110,6 @@ extension _TriviaTokenX on TriviaRepository {
     log('-> by url: $uri');
 
     final http.Response response;
-
     try {
       response = await client.get(uri);
     } catch (e, s) {
@@ -138,18 +137,19 @@ extension _TriviaTokenX on TriviaRepository {
   }
 }
 
-extension GetCategories on TriviaRepository {
+extension TriviaCategoryX on TriviaRepository {
+  static const _categoriesApi = 'api_category.php';
+  static const _resultsKey = 'trivia_categories';
+
   /// Returns list of categories [List]<[CategoryDTO]>.
   /// Each category [CategoryDTO] is represented by name and id.
   Future<TriviaResult<List<CategoryDTO>>> getCategories() async {
     log('$TriviaRepository.getCategories been called');
 
-    final uri = Uri.https(TriviaRepository._baseUrl, 'api_category.php');
-
+    final uri = Uri.https(TriviaRepository._baseUrl, _categoriesApi);
     log('-> by url: $uri');
 
     final http.Response response;
-
     if (useMockData) {
       log('-> mock request');
 
@@ -163,23 +163,17 @@ extension GetCategories on TriviaRepository {
     }
 
     if (response.statusCode != 200) {
-      return TriviaResult.error(
-        'Failed to get quiz. Status code ${response.statusCode}',
-        StackTrace.current,
-      );
+      return _getTriviaError(response, 'Failed to get categories.');
     }
 
     final body = json.decode(response.body) as Map;
-
     final categoriesJson =
-        (body["trivia_categories"] as List).cast<Map<String, dynamic>>();
-
-    return TriviaResult.data(
-        categoriesJson.map(CategoryDTO.fromJson).toList());
+        (body[_resultsKey] as List).cast<Map<String, dynamic>>();
+    return TriviaResult.data(categoriesJson.map(CategoryDTO.fromJson).toList());
   }
 }
 
-extension GetQuizzes on TriviaRepository {
+extension TriviaQuizX on TriviaRepository {
   static const _quizzesApi = 'api.php';
   static const _resultsKey = 'results';
 
@@ -237,21 +231,14 @@ extension GetQuizzes on TriviaRepository {
       if (response.statusCode == 429) {
         return const TriviaResult.exceptionApi(TriviaException.rateLimit);
       }
-      return TriviaResult.error(
-        'Failed to get quiz. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
-        StackTrace.current,
-      );
+      return _getTriviaError(response, 'Failed to get quiz.');
     }
 
     final decoded = json.decode(response.body) as Map;
-
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => TriviaResult.error(
-          'Response Code is "null". Status code ${response.statusCode}, message: ${response.reasonPhrase}',
-          StackTrace.current,
-        ),
+      null => _getTriviaError(response, 'Response Code is "null".'),
       0 => () {
           final quizzes = _sanitizeQuizzes(decoded[_resultsKey] as List);
 
@@ -259,16 +246,17 @@ extension GetQuizzes on TriviaRepository {
         }.call(),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
-      _ => TriviaResult.error(
-          'Response Code is $responseCode. Status code ${response.statusCode}, message: ${response.reasonPhrase}',
-          StackTrace.current,
-        ),
+      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
   }
 
   List<Map<String, dynamic>> _sanitizeQuizzes(List data) => data
       .map(
         (q) => (q as Map<String, dynamic>)
+          ..update(
+            "category",
+            (value) => _convertUnescapeHtml(value as String),
+          )
           ..update(
             "question",
             (value) => _convertUnescapeHtml(value as String),
