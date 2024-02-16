@@ -105,7 +105,11 @@ extension TriviaTokenX on TriviaRepository {
   Future<TriviaResult<String>> fetchToken() async {
     log('$TriviaRepository.fetchToken been called');
 
-    final uri = Uri.https(TriviaRepository._baseUrl, _tokenApiPath);
+    final uri = Uri.https(
+      TriviaRepository._baseUrl,
+      '/$_tokenApiPath',
+      {'command': 'request'},
+    );
 
     log('-> by url: $uri');
 
@@ -130,6 +134,45 @@ extension TriviaTokenX on TriviaRepository {
 
           return TriviaResult<String>.data(token);
         }.call(),
+      > 0 when responseCode < TriviaException.values.length =>
+        TriviaResult.exceptionApi(TriviaException.values[responseCode]),
+      _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
+    };
+  }
+
+  /// Reset a Session Token.
+  ///
+  /// if returned `true` -> token reset request was successful
+  /// else -> token was not found in the system
+  Future<TriviaResult<bool>> resetToken(String token) async {
+    log('$TriviaRepository.resetToken been called');
+
+    final uri = Uri.https(
+      TriviaRepository._baseUrl,
+      '/$_tokenApiPath',
+      {'command': 'reset', 'token': token},
+    );
+
+    log('-> by url: $uri');
+
+    final http.Response response;
+    try {
+      response = await client.get(uri);
+    } catch (e, s) {
+      return TriviaResult.error(e, s);
+    }
+
+    if (response.statusCode != 200) {
+      return _getTriviaError(response, 'Failed to reset Token.');
+    }
+
+    final decoded = json.decode(response.body) as Map;
+    final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
+
+    return switch (responseCode) {
+      null => _getTriviaError(response, 'Response Code is "null".'),
+      0 => const TriviaResult<bool>.data(true),
+      3 => const TriviaResult<bool>.data(false),
       > 0 when responseCode < TriviaException.values.length =>
         TriviaResult.exceptionApi(TriviaException.values[responseCode]),
       _ => _getTriviaError(response, 'Trivia Api response code $responseCode.'),
@@ -299,6 +342,7 @@ extension TriviaQuizX on TriviaRepository {
     required TriviaQuizType type,
     required int amount,
   }) =>
+      // even with empty parameters in the url request is processed successfully
       {
         'amount': amount.toString(),
         'category': category.param,
