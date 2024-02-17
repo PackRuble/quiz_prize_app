@@ -36,16 +36,10 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
     GamePagePresenter.new,
   );
 
-  // late QuizStatsNotifier _quizStatsNotifier;
-  // late QuizzesNotifier _quizzesNotifier;
-  // late QuizzesNotifier _cachedQuizzesNotifier;
   late QuizGameNotifier _quizGameNotifier;
-  // late TriviaStatsProvider _triviaStatsProvider;
 
   @override
   GamePageState build() {
-    // _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
-    // _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     _quizGameNotifier = ref.watch(QuizGameNotifier.instance.notifier);
 
     final quizGameResult = ref.watch(QuizGameNotifier.instance);
