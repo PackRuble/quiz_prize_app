@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:cardoteka/cardoteka.dart' show Converters;
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -71,18 +72,23 @@ class TriviaToken {
   Map<String, dynamic> toJson() {
     return {
       'token': token,
-      'dateOfReceipt': dateOfReceipt,
-      'dateOfRenewal': dateOfRenewal,
+      'dateOfReceipt': _dateConverter.to(dateOfReceipt),
+      'dateOfRenewal':
+          dateOfRenewal != null ? _dateConverter.to(dateOfRenewal!) : null,
     };
   }
 
   factory TriviaToken.fromJson(Map<String, dynamic> map) {
+    final dateOfRenewal = map['dateOfRenewal'] as String?;
     return TriviaToken(
       token: map['token'] as String,
-      dateOfReceipt: map['dateOfReceipt'] as DateTime,
-      dateOfRenewal: map['dateOfRenewal'] as DateTime?,
+      dateOfReceipt: _dateConverter.from(map['dateOfReceipt'] as String),
+      dateOfRenewal:
+          dateOfRenewal != null ? _dateConverter.from(dateOfRenewal) : null,
     );
   }
+
+  static const _dateConverter = Converters.dateTimeAsString;
 }
 
 /// Notifier contains methods for working with the [TriviaToken].
