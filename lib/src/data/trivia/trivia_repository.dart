@@ -68,6 +68,11 @@ class TriviaError<T> extends TriviaResult<T> {
   final StackTrace stack;
 }
 
+// todo(02/17/2024): `TriviaRepository` can become an `abstract base` class that
+//  will have some useful methods and required parameters.
+//  At the same time, the heirs will look exactly like `TriviaTokenRepository`.
+//  This can be left as an example of different approaches.
+
 /// Use [TriviaRepository] to get list of categories or to fetch a quiz.
 class TriviaRepository {
   const TriviaRepository({
@@ -97,7 +102,21 @@ class TriviaRepository {
   }
 }
 
-extension TriviaTokenX on TriviaRepository {
+/// Repository for working with Trivia API session tokens.
+///
+/// Trivia API says:
+/// >Session Tokens are unique keys that will help keep track of the questions
+/// the API has already retrieved. By appending a Session Token to a API Call,
+/// the API will never give you the same question twice. Over the lifespan of
+/// a Session Token, there will eventually reach a point where you have exhausted
+/// all the possible questions in the database. At this point, the API
+/// will respond with the appropriate "Response Code". From here, you can either
+/// "Reset" the Token, which will wipe all past memory, or you can ask for a new one.
+///
+/// > *Session Tokens will be deleted after 6 hours of inactivity*.
+class TriviaTokenRepository extends TriviaRepository {
+  TriviaTokenRepository({required super.client}) : super(useMockData: false);
+
   static const _tokenApiPath = 'api_token.php';
   static const _dataKey = 'token';
 
@@ -147,9 +166,12 @@ extension TriviaTokenX on TriviaRepository {
 
   /// Reset a Session Token.
   ///
-  /// if returned `true` -> token reset request was successful
-  /// else -> token was not found in the system
-  Future<TriviaResult<bool>> resetToken(String token) async {
+  /// - if returned `true` -> token reset request was successful
+  /// - if returned `false` -> token not found on server
+  /// - else [TriviaError]
+  Future<TriviaResult<bool> /*[TriviaData] or [TriviaError] */ > resetToken(
+    String token,
+  ) async {
     log('$TriviaRepository.resetToken been called');
 
     final uri = Uri.https(
@@ -175,11 +197,8 @@ extension TriviaTokenX on TriviaRepository {
     final responseCode = decoded[TriviaRepository._responseCodeKey] as int?;
 
     return switch (responseCode) {
-      null => _makeTriviaError(response, 'Response Code is "null".'),
-      0 => const TriviaResult<bool>.data(true),
-      3 => const TriviaResult<bool>.data(false),
-      > 0 when responseCode < TriviaException.values.length =>
-        TriviaResult.exceptionApi(TriviaException.values[responseCode]),
+      0 => const TriviaResult.data(true), // [TriviaException.success]
+      3 => const TriviaResult.data(false), // [TriviaException.tokenNotFound]
       _ =>
         _makeTriviaError(response, 'Trivia Api response code $responseCode.'),
     };
@@ -249,7 +268,7 @@ extension TriviaQuizX on TriviaRepository {
     required TriviaQuizDifficulty difficulty,
     required TriviaQuizType type,
     int amount = 50,
-    String token = '',
+    String? token,
   }) async {
     assert(0 < amount && amount <= 50);
 
@@ -263,7 +282,7 @@ extension TriviaQuizX on TriviaRepository {
         difficulty: difficulty,
         type: type,
         amount: amount,
-      )..addAll({'token': token}),
+      )..addAll({'token': token ?? ''}),
     );
 
     log('-> by url: $uri');
