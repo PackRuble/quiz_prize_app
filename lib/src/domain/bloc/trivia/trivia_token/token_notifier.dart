@@ -1,95 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:cardoteka/cardoteka.dart' show Converters;
-import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
-sealed class TokenState {
-  const TokenState();
-
-  const factory TokenState.active(TriviaToken token) = TokenActive;
-  const factory TokenState.expired(TriviaToken token) = TokenExpired;
-  const factory TokenState.none() = TokenNone;
-  const factory TokenState.error(String message) = TokenError;
-}
-
-class TokenActive extends TokenState {
-  const TokenActive(this.token);
-
-  final TriviaToken token;
-}
-
-class TokenExpired extends TokenState {
-  const TokenExpired(this.token);
-
-  final TriviaToken token;
-}
-
-class TokenEmptySession extends TokenState {
-  const TokenEmptySession(this.token);
-
-  final TriviaToken token;
-}
-
-class TokenNone extends TokenState {
-  const TokenNone();
-}
-
-class TokenError extends TokenState {
-  const TokenError(this.message);
-  final String message;
-}
-
-@immutable
-class TriviaToken {
-  const TriviaToken({
-    required this.token,
-    required this.dateOfReceipt,
-    this.dateOfRenewal,
-  });
-
-  final String token;
-  final DateTime dateOfReceipt;
-  final DateTime? dateOfRenewal;
-
-  @override
-  String toString() {
-    return 'TriviaToken{ token: $token, dateOfReceipt: $dateOfReceipt, dateOfRenewal: $dateOfRenewal }';
-  }
-
-  TriviaToken copyWith({DateTime? dateOfRenewal}) {
-    return TriviaToken(
-      token: token,
-      dateOfReceipt: dateOfReceipt,
-      dateOfRenewal: dateOfRenewal ?? this.dateOfRenewal,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'token': token,
-      'dateOfReceipt': _dateConverter.to(dateOfReceipt),
-      'dateOfRenewal':
-          dateOfRenewal != null ? _dateConverter.to(dateOfRenewal!) : null,
-    };
-  }
-
-  factory TriviaToken.fromJson(Map<String, dynamic> map) {
-    final dateOfRenewal = map['dateOfRenewal'] as String?;
-    return TriviaToken(
-      token: map['token'] as String,
-      dateOfReceipt: _dateConverter.from(map['dateOfReceipt'] as String),
-      dateOfRenewal:
-          dateOfRenewal != null ? _dateConverter.from(dateOfRenewal) : null,
-    );
-  }
-
-  static const _dateConverter = Converters.dateTimeAsString;
-}
+import 'token_state.dart';
+import 'trivia_token_model.dart';
 
 /// Notifier contains methods for working with the [TriviaToken].
 ///
