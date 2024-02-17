@@ -39,20 +39,12 @@ class _QuizWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final pageController = ref.watch(GamePageCtrl.instance);
-    final currentQuiz = ref.watch(pageController.currentQuiz);
+    final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
+    final gamePageState = ref.watch(GamePagePresenter.instance);
 
-    return switch (currentQuiz) {
+    return switch (gamePageState) {
       GamePageData(data: final quiz) => ListView(
           children: [
-            if (kDebugMode)
-              Consumer(
-                builder: (context, ref, child) {
-                  return Text(
-                    'Available questions: ${ref.watch(pageController.amountQuizzes)}',
-                  );
-                },
-              ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -83,16 +75,25 @@ class _QuizWidget extends ConsumerWidget {
                 },
                 blocked: quiz.correctlySolved != null,
                 answer: answer,
-                onTap: () async => pageController.checkAnswer(answer),
+                onTap: () async => pagePresenter.checkAnswer(answer),
               ),
             const SizedBox(height: 30),
             if (quiz.correctlySolved != null)
               ElevatedButton.icon(
                 icon: const Icon(Icons.arrow_forward),
-                onPressed: pageController.onNextQuiz,
+                onPressed: pagePresenter.onNextQuiz,
                 label: const Text('Next question'),
               ),
-            if (kDebugMode) Text('Correct answer: ${quiz.correctAnswer}'),
+            if (kDebugMode) ...[
+              Consumer(
+                builder: (context, ref, child) {
+                  return Text(
+                    'Available questions: ${ref.watch(GamePagePresenter.debugAmountQuizzes)}',
+                  );
+                },
+              ),
+              Text('Correct answer: ${quiz.correctAnswer}'),
+            ],
           ],
         ),
       GamePageLoading(:final message) => Center(
@@ -100,10 +101,11 @@ class _QuizWidget extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(),
-              if (message != null) Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(message),
-              ),
+              if (message != null)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(message),
+                ),
             ],
           ),
         ),
@@ -123,8 +125,9 @@ class _QuizWidget extends ConsumerWidget {
                 children: [
                   Flexible(
                     child: ElevatedButton(
-                      // todo: since there is no method to reset the token, we just pop
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await pagePresenter.onResetToken();
+                      },
                       child: const Text(
                         'Reset token',
                         textAlign: TextAlign.center,
@@ -134,7 +137,9 @@ class _QuizWidget extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await pagePresenter.onResetQuizConfig();
+                      },
                       child: const Text(
                         'Change category',
                         textAlign: TextAlign.center,
@@ -256,8 +261,10 @@ class _AnswerSelectButton extends HookConsumerWidget {
     path.moveTo(size.width, halfWidth);
 
     for (double step = 0; step < fullAngle; step += degreesPerStep) {
-      path.lineTo(halfWidth + externalRadius * cos(step),
-          halfWidth + externalRadius * sin(step));
+      path.lineTo(
+        halfWidth + externalRadius * cos(step),
+        halfWidth + externalRadius * sin(step),
+      );
       path.lineTo(
         halfWidth + internalRadius * cos(step + halfDegreesPerStep),
         halfWidth + internalRadius * sin(step + halfDegreesPerStep),
@@ -295,10 +302,9 @@ class _AppCardBar extends AppBarCustom {
     return Consumer(
       builder: (context, ref, child) {
         final textTheme = Theme.of(context).textTheme;
-        final pageController = ref.watch(GamePageCtrl.instance);
-
-        final solvedCount = ref.watch(pageController.solvedCountProvider);
-        final unsolvedCount = ref.watch(pageController.unSolvedCountProvider);
+        final solvedCount = ref.watch(GamePagePresenter.solvedCountProvider);
+        final unsolvedCount =
+            ref.watch(GamePagePresenter.unSolvedCountProvider);
         final score = solvedCount - unsolvedCount;
 
         return AppBarCustom(

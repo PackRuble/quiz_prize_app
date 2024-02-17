@@ -30,59 +30,32 @@ class GamePageError extends GamePageState {
   final String message;
 }
 
-class GamePageCtrl {
-  GamePageCtrl({
-    required Ref ref,
-    required QuizzesNotifier cachedQuizzesNotifier,
-    required TriviaStatsProvider triviaStatsProvider,
-    required QuizGameNotifier quizGameNotifier,
-  })  : _quizGameNotifier = quizGameNotifier,
-        _cachedQuizzesNotifier = cachedQuizzesNotifier,
-        _triviaStatsProvider = triviaStatsProvider,
-        _ref = ref;
-
-  final Ref _ref;
-  final QuizzesNotifier _cachedQuizzesNotifier;
-  final QuizGameNotifier _quizGameNotifier;
-  final TriviaStatsProvider _triviaStatsProvider;
-
-  static final instance = AutoDisposeProvider<GamePageCtrl>(
-    (ref) {
-      final cachedQuizzesNotifier =
-          ref.watch(QuizzesNotifier.instance.notifier);
-      // this allows the iterator to be properly cleaned up
-      // so we're just listen, no rebuilding
-      // ref.listen(triviaQuizProvider.quizzes, (_, __) {});
-
-      return GamePageCtrl(
-        ref: ref,
-        cachedQuizzesNotifier: cachedQuizzesNotifier,
-        triviaStatsProvider: ref.watch(TriviaStatsProvider.instance),
-        quizGameNotifier: ref.watch(QuizGameNotifier.instance.notifier),
-      );
-    },
+class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
+  static final instance =
+      AutoDisposeNotifierProvider<GamePagePresenter, GamePageState>(
+    GamePagePresenter.new,
   );
 
-  AutoDisposeProvider<int> get solvedCountProvider =>
-      _triviaStatsProvider.winning;
-  AutoDisposeProvider<int> get unSolvedCountProvider =>
-      _triviaStatsProvider.losing;
+  // late QuizStatsNotifier _quizStatsNotifier;
+  // late QuizzesNotifier _quizzesNotifier;
+  // late QuizzesNotifier _cachedQuizzesNotifier;
+  late QuizGameNotifier _quizGameNotifier;
+  // late TriviaStatsProvider _triviaStatsProvider;
 
-  // AutoDisposeNotifierProvider<QuizGameNotifier, QuizGameResult>
-  //     get currentQuiz => QuizGameNotifier.instance;
+  @override
+  GamePageState build() {
+    // _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
+    // _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
+    _quizGameNotifier = ref.watch(QuizGameNotifier.instance.notifier);
 
-  late final currentQuiz = AutoDisposeStateProvider<GamePageState>((ref) {
-    final quizResult = ref.watch(QuizGameNotifier.instance);
-    return switch(quizResult) {
+    final quizGameResult = ref.watch(QuizGameNotifier.instance);
+    return switch (quizGameResult) {
       QuizGameData(:final quiz) => GamePageData(quiz),
       QuizGameLoading(:final withMessage) => GamePageLoading(withMessage),
       QuizGameEmptyData(:final message) => GamePageEmptyData(message),
       QuizGameError(:final message) => GamePageError(message),
     };
-  });
-
-  late final amountQuizzes =
-      AutoDisposeProvider<int>((ref) => _cachedQuizzesNotifier.state.length);
+  }
 
   Future<void> checkAnswer(String answer) async {
     await _quizGameNotifier.checkMyAnswer(answer);
@@ -91,4 +64,26 @@ class GamePageCtrl {
   Future<void> onNextQuiz() async {
     await _quizGameNotifier.nextQuiz();
   }
+
+  Future<void> onResetToken() async {
+    state = const GamePageLoading('Renewing the token...');
+    await _quizGameNotifier.resetSessionToken();
+    await onNextQuiz();
+  }
+
+  Future<void> onResetQuizConfig() async {
+    // todo(17.02.2024):
+  }
+
+  static final debugAmountQuizzes = AutoDisposeProvider<int>(
+    (ref) => ref.watch(QuizzesNotifier.instance).length,
+  );
+
+  static final solvedCountProvider = AutoDisposeProvider<int>(
+    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).winning),
+  );
+
+  static final unSolvedCountProvider = AutoDisposeProvider<int>(
+    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).losing),
+  );
 }
