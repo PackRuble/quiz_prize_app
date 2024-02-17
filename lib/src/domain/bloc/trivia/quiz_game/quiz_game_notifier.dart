@@ -12,6 +12,7 @@ import 'package:trivia_app/internal/debug_flags.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/token_notifier.dart';
 
 import '../cached_quizzes/cached_quizzes_notifier.dart';
 import '../model/quiz.model.dart';
@@ -59,6 +60,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   late QuizzesNotifier _quizzesNotifier;
   late TriviaRepository _triviaRepository;
   late QuizConfigNotifier _quizConfigNotifier;
+  late TokenNotifier _tokenNotifier;
 
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
@@ -69,10 +71,12 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   QuizGameResult build() {
     _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
+    _tokenNotifier = ref.watch(TokenNotifier.instance.notifier);
     _triviaRepository = TriviaRepository(
       client: http.Client(),
       useMockData: DebugFlags.triviaRepoUseMock,
     );
+    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
     ref.onDispose(() {
@@ -118,6 +122,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       needSilentRequest = true;
 
       final quizConfig = _getQuizConfig;
+      final isPopularConfig = _quizConfigNotifier.isPopularConfig(quizConfig);
       _executionRequestQueue.addFirst(
         _QuizRequest(
           quizConfig: _getQuizConfig,
@@ -127,7 +132,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
             // Amount is 1 because we are guaranteed to want the quiz right now
             // subsequent calls will be delayed :(
             return await _fetchQuiz(
-              amountQuizzes: _quizConfigNotifier.isPopularConfig(quizConfig)
+              amountQuizzes: isPopularConfig
                   ? _maxAmountQuizzesPerRequest
                   : 1,
               quizConfig: quizConfig,
@@ -136,6 +141,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
               delay: Duration.zero,
             );
           },
+          clearIfSuccess: isPopularConfig,
         ),
       );
     }
@@ -209,6 +215,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
+  resetSessionToken() {
+    // todo(16.02.2024): implement
+  }
+
   /// Removes requests from the queue if they have the same config as the current request.
   void _clearQueueByConfig(_QuizRequest request) {
     _executionRequestQueue
@@ -240,8 +250,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       ),
     );
 
-    // we fill the queue with binary reduction queries only to retrieve data if 
-    // the first query fails. If the request is successful, the queue will be 
+    // we fill the queue with binary reduction queries only to retrieve data if
+    // the first query fails. If the request is successful, the queue will be
     // cleared (this is what the [_QuizRequest.clearIfSuccess] flag is for)
     final numbersReductionIterator = getReductionNumbers();
     while (numbersReductionIterator.moveNext()) {
@@ -274,7 +284,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     // additional 5 seconds when this error occurs.
     //
     // therefore we wait 5 seconds as the backend dictates. Then we do a request.
-    Duration delay = const Duration(seconds: 6),
+    Duration delay = const Duration(seconds: 5),
   }) async {
     log('$this._fetchQuiz-> with $quizConfig, amount=$amountQuizzes, delay=${delay.inSeconds}sec');
 
@@ -284,9 +294,37 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       difficulty: quizConfig.quizDifficulty,
       type: quizConfig.quizType,
       amount: amountQuizzes,
+      token: await _getToken(),
     );
 
+    if (result case TriviaData()) await _tokenNotifier.extendValidityOfToken();
+
     return result;
+  }
+
+  Future<String?> _getToken() async {
+    String? token;
+    switch (_tokenNotifier.state) {
+      case TokenActive(token: final triviaToken):
+        token = triviaToken.token;
+      case TokenExpired():
+      case TokenEmptySession():
+      // todo: сказать пользователю о том, что его токен теперь не валиден
+      // пусть обновит (с удалением статистики)
+        log('TokenExpired or TokenEmptySession');
+      case TokenNone():
+        final triviaToken = await _tokenNotifier.fetchNewToken();
+        if (triviaToken == null) {
+          continue errorLabel;
+        } else {
+          token = triviaToken.token;
+        }
+      errorLabel:
+      case TokenError(:final message):
+      // todo: произошла ошибка. Предложить повторить запрос
+        log('TokenError');
+    }
+    return token;
   }
 
   /// Limited so as to make the least number of requests to the server,
