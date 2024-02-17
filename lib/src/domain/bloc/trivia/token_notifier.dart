@@ -103,6 +103,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
   @override
   TokenState build() {
+    _storage = ref.watch(GameStorage.instance);
     _tokenRepository = TriviaTokenRepository(client: http.Client());
 
     final token = _storage.getOrNull(GameCard.token);
@@ -125,7 +126,7 @@ class TokenNotifier extends Notifier<TokenState> {
   /// The state will be updated reactively.
   ///
   /// - if return true -> token successfully updated
-  /// - if return false -> the request was unsuccessful/token not received
+  /// - if return null -> the request was unsuccessful/token not received
   Future<TriviaToken?> fetchNewToken() async {
     final result = await _tokenRepository.fetchToken();
 
