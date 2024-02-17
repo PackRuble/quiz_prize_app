@@ -23,27 +23,32 @@ typedef TriviaResultAsyncCallback = Future<TriviaResult> Function();
 
 class _QuizRequest {
   const _QuizRequest({
-    required this.execution,
     required this.quizConfig,
+    required this.amountQuizzes,
     this.onlyCache = false,
     this.clearIfSuccess = false,
+    this.desiredDelay,
   });
-  final TriviaResultAsyncCallback execution;
+
+  final QuizConfig quizConfig;
+  final int amountQuizzes;
   final bool onlyCache;
   final bool clearIfSuccess;
-  final QuizConfig quizConfig;
+  final Duration? desiredDelay;
 
   _QuizRequest copyWith({
-    TriviaResultAsyncCallback? execution,
+    QuizConfig? quizConfig,
+    int? amountQuizzes,
     bool? onlyCache,
     bool? clearIfSuccess,
-    QuizConfig? quizConfig,
+    ValueGetter<Duration?>? delay,
   }) {
     return _QuizRequest(
-      execution: execution ?? this.execution,
+      quizConfig: quizConfig ?? this.quizConfig,
+      amountQuizzes: amountQuizzes ?? this.amountQuizzes,
       onlyCache: onlyCache ?? this.onlyCache,
       clearIfSuccess: clearIfSuccess ?? this.clearIfSuccess,
-      quizConfig: quizConfig ?? this.quizConfig,
+      desiredDelay: delay != null ? delay() : desiredDelay,
     );
   }
 }
@@ -64,6 +69,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
+  // todo(15.02.2024): In the future, this can be abandoned if you
+  //  separate the request queue management into a separate class
   final _executionRequestQueue = Queue<_QuizRequest>();
   bool _queueAtWork = false;
 
@@ -124,23 +131,14 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       final quizConfig = _getQuizConfig;
       final isPopularConfig = _quizConfigNotifier.isPopularConfig(quizConfig);
       _executionRequestQueue.addFirst(
+        // We don't need to think about it, since the queue handler will
+        // re-create the request with a delay if an `TriviaException.rateLimit` occur.
+        // Amount is 1 because we are guaranteed to want the quiz right now
+        // subsequent calls will be delayed :(
         _QuizRequest(
           quizConfig: _getQuizConfig,
-          execution: () async {
-            // We don't need to think about it, since the queue handler will
-            // re-create the request with a delay if an `TriviaException.rateLimit` occur.
-            // Amount is 1 because we are guaranteed to want the quiz right now
-            // subsequent calls will be delayed :(
-            return await _fetchQuiz(
-              amountQuizzes: isPopularConfig
-                  ? _maxAmountQuizzesPerRequest
-                  : 1,
-              quizConfig: quizConfig,
-              // todo(15.02.2024): In the future, this can be abandoned if you
-              //  separate the request queue management into a separate class
-              delay: Duration.zero,
-            );
-          },
+          amountQuizzes: isPopularConfig ? _maxAmountQuizzesPerRequest : 1,
+          desiredDelay: Duration.zero,
           clearIfSuccess: isPopularConfig,
         ),
       );
@@ -167,12 +165,16 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> _updateStateWithResult(_QuizRequest request) async {
-    final triviaResult = await request.execution.call();
+    final triviaResult = await _fetchQuiz(
+      amountQuizzes: request.amountQuizzes,
+      quizConfig: request.quizConfig,
+      delay: request.desiredDelay,
+    );
 
     QuizGameResult? newState;
     if (triviaResult case TriviaData<List<QuizDTO>>(:final data)) {
       final quizzes = Quiz.quizzesFromDTO(data);
-      log('$this-> result with data, l=${_quizzesNotifier.state.length}');
+      log('$this-> result with data, l=${quizzes.length}');
       await _quizzesNotifier.cacheQuizzes(quizzes);
 
       _cachedQuizzesIterator = null;
@@ -187,21 +189,20 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       if (exc case TriviaException.rateLimit) {
         // we are sure that added query will be executed because `_updateStateWithResult` method
         // is always executed in a `while (_executionRequestQueue.isNotEmpty)` loop.
-        _executionRequestQueue.addFirst(
-          request.copyWith(
-            execution: () async {
-              await Future.delayed(const Duration(seconds: 5));
-              return request.execution();
-            },
-          ),
-        );
+        _executionRequestQueue.addFirst(request.copyWith(delay: () => null));
+
         // todo(15.02.2024): Another solution to the problem is to use threads
         //  that can listen and perform actions as long as there are elements in the queue
         //  - maybe `StreamQueue` ?..
       } else if (exc case TriviaException.tokenEmptySession) {
-        _clearQueueByConfig(request);
-        // todo: suggest resetting the session
-        newState = const QuizGameResult.emptyData();
+        if (request.amountQuizzes == 1) {
+          // as it turns out, if the number of quizzes requested is too large,
+          // the server will first issue [tokenEmptySession], not [noResults]
+          // as you might expect, so we check that the requested number is exactly 1.
+          _clearQueueByConfig(request);
+          // todo: suggest resetting the session
+          newState = const QuizGameResult.emptyData();
+        }
       } else if (exc case TriviaException.invalidParameter) {
         newState = QuizGameResult.error(exc.message);
       }
@@ -210,13 +211,13 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       newState = QuizGameResult.error(error.toString());
     }
 
-    if (!request.onlyCache || state is QuizGameLoading) {
+    if (!request.onlyCache || state is QuizGameLoading || state is QuizGameError) {
       if (newState != null) state = newState;
     }
   }
 
-  resetSessionToken() {
-    // todo(16.02.2024): implement
+  Future<void> resetSessionToken() async {
+    await _tokenNotifier.resetToken();
   }
 
   /// Removes requests from the queue if they have the same config as the current request.
@@ -236,13 +237,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     _executionRequestQueue.add(
       _QuizRequest(
-        execution: () async {
-          log('$this-> Request for maximum amount=$_maxAmountQuizzesPerRequest');
-          return await _fetchQuiz(
-            amountQuizzes: _maxAmountQuizzesPerRequest,
-            quizConfig: quizConfig,
-          );
-        },
+        amountQuizzes: _maxAmountQuizzesPerRequest,
         quizConfig: quizConfig,
         onlyCache: true,
         // clear the queue with this config if the request was successful
@@ -259,13 +254,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
       _executionRequestQueue.add(
         _QuizRequest(
-          execution: () async {
-            log('$this-> Request for amount=$amount');
-            return await _fetchQuiz(
-              amountQuizzes: amount,
-              quizConfig: quizConfig,
-            );
-          },
+          amountQuizzes: amount,
           quizConfig: quizConfig,
           onlyCache: true,
         ),
@@ -284,8 +273,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     // additional 5 seconds when this error occurs.
     //
     // therefore we wait 5 seconds as the backend dictates. Then we do a request.
-    Duration delay = const Duration(seconds: 5),
+    Duration? delay = const Duration(seconds: 5),
   }) async {
+    // ignore: parameter_assignments
+    delay ??= const Duration(seconds: 5);
     log('$this._fetchQuiz-> with $quizConfig, amount=$amountQuizzes, delay=${delay.inSeconds}sec');
 
     await Future.delayed(delay);
@@ -309,8 +300,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         token = triviaToken.token;
       case TokenExpired():
       case TokenEmptySession():
-      // todo: сказать пользователю о том, что его токен теперь не валиден
-      // пусть обновит (с удалением статистики)
+        // todo: сказать пользователю о том, что его токен теперь не валиден
+        // пусть обновит (с удалением статистики)
         log('TokenExpired or TokenEmptySession');
       case TokenNone():
         final triviaToken = await _tokenNotifier.fetchNewToken();
@@ -321,7 +312,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         }
       errorLabel:
       case TokenError(:final message):
-      // todo: произошла ошибка. Предложить повторить запрос
+        // todo: произошла ошибка. Предложить повторить запрос
         log('TokenError');
     }
     return token;
