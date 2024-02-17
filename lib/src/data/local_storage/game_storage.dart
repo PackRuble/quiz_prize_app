@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/trivia_token_model.dart';
 
 /// Define our storage class with the necessary mixins and parameters.
 class GameStorage extends Cardoteka with WatcherImpl {
@@ -12,7 +13,8 @@ class GameStorage extends Cardoteka with WatcherImpl {
 
   /// Using the riverpod state manager to create a single storage instance.
   /// Putting the provider inside the class for an explicit singleton analogy.
-  static final instance = Provider((ref) => GameStorage(config: GameCard._config));
+  static final instance =
+      Provider((ref) => GameStorage(config: GameCard._config));
 }
 
 /// [Card]s related to the process of the game.
@@ -23,15 +25,17 @@ class GameStorage extends Cardoteka with WatcherImpl {
 /// Your [T] type can also be extended from [Object]? to use null values as
 /// [defaultValue]. To access such a value, use [Cardoteka.getOrNull]
 /// and [Cardoteka.setOrNull]. [defaultValue]s must be constant.
-enum GameCard<T extends Object> implements Card<T> {
+enum GameCard<T extends Object?> implements Card<T> {
   quizzes<List<Quiz>>(DataType.stringList, []),
   quizzesPlayed<List<Quiz>>(DataType.stringList, []),
   winning<int>(DataType.int, 0),
   losing<int>(DataType.int, 0),
-  quizDifficulty<TriviaQuizDifficulty>(DataType.string, TriviaQuizDifficulty.any),
+  quizDifficulty<TriviaQuizDifficulty>(
+      DataType.string, TriviaQuizDifficulty.any),
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
   quizCategory<CategoryDTO>(DataType.string, CategoryDTO.any),
   allCategories<List<CategoryDTO>>(DataType.stringList, [CategoryDTO.any]),
+  token<TriviaToken?>(DataType.string, null),
   ;
 
   const GameCard(this.type, this.defaultValue);
@@ -65,6 +69,7 @@ enum GameCard<T extends Object> implements Card<T> {
       quizType: _QuizTypeConverter(),
       quizCategory: _QuizCategoryConverter(),
       allCategories: _AllCategoriesConverter(),
+      token: _TokenConverter(),
     },
   );
 }
@@ -92,7 +97,8 @@ class _QuizzesConverter extends ListConverter<Quiz> {
   const _QuizzesConverter();
 
   @override
-  Quiz objFrom(String element) => Quiz.fromJson(jsonDecode(element) as Map<String, dynamic>);
+  Quiz objFrom(String element) =>
+      Quiz.fromJson(jsonDecode(element) as Map<String, dynamic>);
 
   @override
   String objTo(Quiz obj) => jsonEncode(obj.toJson());
@@ -118,4 +124,15 @@ class _QuizCategoryConverter extends Converter<CategoryDTO, String> {
 
   @override
   String to(CategoryDTO object) => jsonEncode(object.toJson());
+}
+
+class _TokenConverter extends Converter<TriviaToken, String> {
+  const _TokenConverter();
+
+  @override
+  TriviaToken from(String element) =>
+      TriviaToken.fromJson(jsonDecode(element) as Map<String, dynamic>);
+
+  @override
+  String to(TriviaToken object) => jsonEncode(object.toJson());
 }
