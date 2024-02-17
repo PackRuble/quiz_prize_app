@@ -63,6 +63,13 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
         (quiz.type == type || type == TriviaQuizType.any);
   }
 
+  /// Resets the configuration to its initial values. Reactively updates the state.
+  Future<void> resetQuizConfig() async {
+    await setQuizDifficulty(TriviaQuizDifficulty.any);
+    await setQuizType(TriviaQuizType.any);
+    await setCategory(CategoryDTO.any);
+  }
+
   /// A config is only popular if all filters are selected to "any" except [Category].
   ///
   /// Pure method.

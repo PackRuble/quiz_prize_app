@@ -62,11 +62,11 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
   Future<void> onResetToken() async {
     state = const GamePageLoading('Renewing the token...');
     await _quizGameNotifier.resetSessionToken();
-    await onNextQuiz();
+    // todo(17.02.2024): предложить очистить статистику
   }
 
-  Future<void> onResetQuizConfig() async {
-    // todo(17.02.2024):
+  Future<void> onResetFilters() async {
+    await _quizGameNotifier.resetQuizConfig();
   }
 
   static final debugAmountQuizzes = AutoDisposeProvider<int>(

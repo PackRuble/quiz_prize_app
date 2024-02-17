@@ -12,7 +12,7 @@ import 'package:trivia_app/internal/debug_flags.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/token_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
 
 import '../cached_quizzes/cached_quizzes_notifier.dart';
 import '../model/quiz.model.dart';
@@ -217,7 +217,17 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> resetSessionToken() async {
+    _executionRequestQueue.clear();
+    _cachedQuizzesIterator = null;
     await _tokenNotifier.resetToken();
+    ref.invalidateSelf();
+  }
+
+  Future<void> resetQuizConfig() async {
+    _executionRequestQueue.clear();
+    _cachedQuizzesIterator = null;
+    await _quizConfigNotifier.resetQuizConfig();
+    ref.invalidateSelf();
   }
 
   /// Removes requests from the queue if they have the same config as the current request.

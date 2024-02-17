@@ -138,7 +138,7 @@ class _QuizWidget extends ConsumerWidget {
                   Flexible(
                     child: ElevatedButton(
                       onPressed: () async {
-                        await pagePresenter.onResetQuizConfig();
+                        await pagePresenter.onResetFilters();
                       },
                       child: const Text(
                         'Change category',

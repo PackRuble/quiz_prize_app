@@ -50,7 +50,7 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
 
   // todo(08.02.2024): move in TriviaStatsBloc + create dependencies
   Future<void> moveQuizAsPlayed(Quiz quiz) async {
-    final quizzes = state;
+    final quizzes = List.of(state);
 
     final removedIndex = quizzes.indexWhere(
       (q) =>
