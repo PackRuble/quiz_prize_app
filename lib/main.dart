@@ -66,7 +66,9 @@ class MyApp extends ConsumerWidget {
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
     final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
-        isPreferredSize ? {for (final pl in TargetPlatform.values) pl: transitions} : {};
+        isPreferredSize
+            ? {for (final pl in TargetPlatform.values) pl: transitions}
+            : {};
 
     final themeMode = ref.watch(appController.themeMode);
     final themeColor = ref.watch(appController.themeColor);
@@ -97,15 +99,15 @@ class MyApp extends ConsumerWidget {
       localeResolutionCallback: (locale, _) => locale ?? const Locale('en'),
       theme: themeData,
       themeMode: themeMode,
-      initialRoute: HomePage.path,
       builder: (context, child) {
+        final scrollBehavior = ScrollConfiguration.of(context);
+
         return ResponsiveWindow(
           child: SafeArea(
             child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
+              behavior: scrollBehavior.copyWith(
                 dragDevices: {
-                  // todo: добавить остальные
-                  PointerDeviceKind.touch,
+                  ...scrollBehavior.dragDevices,
                   PointerDeviceKind.mouse,
                 },
               ),
@@ -114,6 +116,7 @@ class MyApp extends ConsumerWidget {
           ),
         );
       },
+      initialRoute: HomePage.path,
       routes: <String, WidgetBuilder>{
         HomePage.path: (context) => const HomePage(),
         GamePage.path: (context) => const GamePage(),
