@@ -19,7 +19,7 @@ import '../model/quiz.model.dart';
 import '../quiz_config/quiz_config_model.dart';
 import '../quiz_config/quiz_config_notifier.dart';
 import '../stats/trivia_stats_bloc.dart';
-typedef TriviaResultAsyncCallback = Future<TriviaResult> Function();
+import '../trivia_token/token_state.dart';
 
 class _QuizRequest {
   const _QuizRequest({

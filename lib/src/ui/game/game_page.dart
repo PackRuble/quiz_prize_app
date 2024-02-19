@@ -14,9 +14,7 @@ import '../shared/cardpad.dart';
 import '../shared/material_state_custom.dart';
 
 class GamePage extends ConsumerWidget {
-  const GamePage({
-    super.key,
-  });
+  const GamePage({super.key});
 
   static const path = '/game';
 
@@ -25,16 +23,14 @@ class GamePage extends ConsumerWidget {
     return const Scaffold(
       appBar: _AppCardBar(),
       body: CardPad(
-        child: _QuizWidget(),
+        child: _QuizView(),
       ),
     );
   }
 }
 
-class _QuizWidget extends ConsumerWidget {
-  const _QuizWidget({
-    super.key,
-  });
+class _QuizView extends ConsumerWidget {
+  const _QuizView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,16 +80,23 @@ class _QuizWidget extends ConsumerWidget {
                 onPressed: pagePresenter.onNextQuiz,
                 label: const Text('Next question'),
               ),
-            if (kDebugMode) ...[
-              Consumer(
-                builder: (context, ref, child) {
-                  return Text(
-                    'Available questions: ${ref.watch(GamePagePresenter.debugAmountQuizzes)}',
-                  );
-                },
+            if (kDebugMode)
+              CardPad(
+                margin: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Consumer(
+                      builder: (context, ref, child) {
+                        return Text(
+                          'Available questions: ${ref.watch(GamePagePresenter.debugAmountQuizzes)}',
+                        );
+                      },
+                    ),
+                    Text('Correct answer: ${quiz.correctAnswer}'),
+                  ],
+                ),
               ),
-              Text('Correct answer: ${quiz.correctAnswer}'),
-            ],
           ],
         ),
       GamePageLoading(:final message) => Center(
