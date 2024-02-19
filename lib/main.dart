@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'src/domain/app_controller.dart';
+import 'src/ui/const/app_size.dart';
 import 'src/ui/game/game_page.dart';
 import 'src/ui/home/home_page.dart';
 import 'src/ui/shared/background.dart';
@@ -58,14 +59,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentSize = MediaQuery.sizeOf(context);
+    final size = MediaQuery.sizeOf(context);
+    final isPreferredSize = AppSize.isPreferredSize(size);
 
     final appController = ref.watch(AppProvider.instance);
-    final usePreferredSize = appController.isPreferredSize(currentSize);
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
     final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
-        usePreferredSize ? {for (final pl in TargetPlatform.values) pl: transitions} : {};
+        isPreferredSize ? {for (final pl in TargetPlatform.values) pl: transitions} : {};
 
     final themeMode = ref.watch(appController.themeMode);
     final themeColor = ref.watch(appController.themeColor);

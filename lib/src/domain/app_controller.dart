@@ -64,11 +64,6 @@ class AppBloc {
 
   final AppStorage _appStorage;
 
-  final preferredSize = const Size(684.0, 864.0);
-
-  bool isPreferredSize(Size size) =>
-      size.width >= preferredSize.width || size.height >= preferredSize.height;
-
   // ***************************************************************************
   // theme mode
 

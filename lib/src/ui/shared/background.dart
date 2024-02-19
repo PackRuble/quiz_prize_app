@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/app_controller.dart';
 import 'package:weather_animation/weather_animation.dart';
+
+import '../const/app_size.dart';
 
 class ResponsiveWindow extends ConsumerWidget {
   const ResponsiveWindow({
@@ -16,20 +17,17 @@ class ResponsiveWindow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
+    final isPreferredSize = AppSize.isPreferredSize(size);
 
-    final appController = ref.watch(AppProvider.instance);
-    final preferredSize = appController.preferredSize;
-    final usePreferredSize = appController.usePreferredSize(size);
-
-    final child = usePreferredSize
+    final child = isPreferredSize
         ? Stack(
             children: [
               const BackAnimated(),
               Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: preferredSize.width,
-                    maxHeight: preferredSize.height,
+                    maxWidth: AppSize.preferredSize.width,
+                    maxHeight: AppSize.preferredSize.height,
                   ),
                   child: this.child,
                 ),
@@ -69,7 +67,8 @@ class BackAnimated extends ConsumerWidget {
           snowConfig: SnowConfig(
             widgetSnowflake: Icon(
               Icons.cruelty_free,
-              color: isDark ? colorScheme.primaryContainer : colorScheme.primary,
+              color:
+                  isDark ? colorScheme.primaryContainer : colorScheme.primary,
             ),
             areaXStart: 0,
             areaYStart: 0,
