@@ -384,9 +384,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> checkMyAnswer(String answer) async {
-    if (state is! QuizGameData) return;
+    final currentState = state;
+    if (currentState is! QuizGameData) return;
 
-    var quiz = (state as QuizGameData).quiz;
+    var quiz = currentState.quiz;
     quiz = quiz.copyWith(yourAnswer: answer);
 
     unawaited(_quizStatsNotifier.savePoints(quiz.correctlySolved!));
