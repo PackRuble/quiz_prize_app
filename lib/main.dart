@@ -14,14 +14,18 @@ import 'src/ui/shared/background.dart';
 import 'src/ui/stats/stats_page.dart';
 
 void log(
-  String name, {
+  Object? message, {
   required Object error,
   StackTrace? stackTrace,
 }) {
   if (kDebugMode) {
-    print(name);
-    print(error);
-    print(stackTrace);
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        context: ErrorDescription(message.toString()),
+      ),
+    );
   }
 }
 
@@ -32,10 +36,6 @@ void main() async {
 }
 
 Future<void> body() async {
-  // flutter framework error logging
-  FlutterError.onError = (details) {
-    log('Flutter Error', error: details.exception, stackTrace: details.stack);
-  };
 
   // platform error logging
   PlatformDispatcher.instance.onError = (error, stack) {
@@ -43,8 +43,6 @@ Future<void> body() async {
     return true;
   };
 
-  // todo the extremely important thing to add to the redmi db
-  // WidgetsFlutterBinding.ensureInitialized(); // с какой версии в этом нет нужды?
   await Cardoteka.init();
 
   runApp(
@@ -83,7 +81,6 @@ class MyApp extends ConsumerWidget {
         brightness: switch (themeMode) {
           ThemeMode.light => Brightness.light,
           ThemeMode.dark => Brightness.dark,
-          // _ => Theme.of(context).brightness,
           _ => MediaQuery.platformBrightnessOf(context),
         },
       ),
