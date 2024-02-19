@@ -61,7 +61,7 @@ class MyApp extends ConsumerWidget {
     final currentSize = MediaQuery.sizeOf(context);
 
     final appController = ref.watch(AppProvider.instance);
-    final usePreferredSize = appController.usePreferredSize(currentSize);
+    final usePreferredSize = appController.isPreferredSize(currentSize);
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
     final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
@@ -103,6 +103,7 @@ class MyApp extends ConsumerWidget {
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(
                 dragDevices: {
+                  // todo: добавить остальные
                   PointerDeviceKind.touch,
                   PointerDeviceKind.mouse,
                 },
