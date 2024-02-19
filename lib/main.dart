@@ -60,16 +60,14 @@ class MyApp extends ConsumerWidget {
     final size = MediaQuery.sizeOf(context);
     final isPreferredSize = AppSize.isPreferredSize(size);
 
-    final appController = ref.watch(AppProvider.instance);
+    final themeColor = ref.watch(AppNotifiers.themeColor);
+    final themeMode = ref.watch(AppNotifiers.themeMode);
 
     const transitions = FadeUpwardsPageTransitionsBuilder();
     final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
         isPreferredSize
             ? {for (final pl in TargetPlatform.values) pl: transitions}
             : {};
-
-    final themeMode = ref.watch(appController.themeMode);
-    final themeColor = ref.watch(appController.themeColor);
 
     final themeData = ThemeData(
       useMaterial3: true,
