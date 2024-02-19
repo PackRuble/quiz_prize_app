@@ -4,15 +4,23 @@ import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_
 
 import 'cardpad.dart';
 
+final _debugCachedQuizzesNotifier = AutoDisposeProvider<QuizzesNotifier>(
+      (ref) => ref.watch(QuizzesNotifier.instance.notifier),
+);
+
+final _debugAmountCachedQuizzes = AutoDisposeProvider<int>(
+  (ref) => ref.watch(QuizzesNotifier.instance).length,
+);
+
 class DebugDialog extends ConsumerWidget {
   const DebugDialog({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cachedQuizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
-    final cachedQuizzesCount = ref.watch(QuizzesNotifier.instance).length;
-
     final mq = MediaQuery.of(context);
+
+    final cachedQuizzesNotifier = ref.watch(_debugCachedQuizzesNotifier);
+    final cachedQuizzesCount = ref.watch(_debugAmountCachedQuizzes);
 
     return AlertDialog(
       scrollable: true,
