@@ -109,9 +109,35 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// If the category is popular, we will make 6 requests,
   /// otherwise we will make only 4.
   int get _maxAmountQuizzesPerRequest =>
-      _quizConfigNotifier.state.quizCategory.isAny ? 50 : 16;
+      _quizConfig.quizCategory.isAny ? 50 : 16;
 
-  QuizConfig get _getQuizConfig => _quizConfigNotifier.state;
+  QuizConfig get _quizConfig => _quizConfigNotifier.state;
+
+  Future<void> resetGame() async {
+    await resetQuizConfig();
+    await _resetStatistics();
+    await _resetSessionToken();
+    await _resetInternalState();
+  }
+
+  Future<void> _resetStatistics() async {
+    await _tokenNotifier.resetToken();
+  }
+
+  Future<void> _resetSessionToken() async {
+    await _tokenNotifier.resetToken();
+  }
+
+  Future<void> resetQuizConfig() async {
+    await _quizConfigNotifier.resetQuizConfig();
+    await _resetInternalState();
+  }
+
+  Future<void> _resetInternalState() async {
+    _executionRequestQueue.clear();
+    _cachedQuizzesIterator = null;
+    ref.invalidateSelf();
+  }
 
   /// Request for the next quiz. The state will be updated reactively.
   Future<void> nextQuiz() async {
@@ -125,18 +151,17 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     if (cachedQuiz != null) {
       state = QuizGameData(cachedQuiz);
     } else {
-      log('$this-> Cached quizzes were not found, add request to queue first, amount=1');
+      log('$this-> Cached quizzes were not found');
       needSilentRequest = true;
 
-      final quizConfig = _getQuizConfig;
-      final isPopularConfig = _quizConfigNotifier.isPopularConfig(quizConfig);
+      final isPopularConfig = _quizConfigNotifier.isPopular();
       _executionRequestQueue.addFirst(
         // We don't need to think about it, since the queue handler will
         // re-create the request with a delay if an `TriviaException.rateLimit` occur.
         // Amount is 1 because we are guaranteed to want the quiz right now
         // subsequent calls will be delayed :(
         _QuizRequest(
-          quizConfig: _getQuizConfig,
+          quizConfig: _quizConfig,
           amountQuizzes: isPopularConfig ? _maxAmountQuizzesPerRequest : 1,
           desiredDelay: Duration.zero,
           clearIfSuccess: isPopularConfig,
@@ -199,10 +224,19 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
           // as it turns out, if the number of quizzes requested is too large,
           // the server will first issue [tokenEmptySession], not [noResults]
           // as you might expect, so we check that the requested number is exactly 1.
+          if (_quizConfigNotifier.isPopular() &&
+              _quizConfig.quizCategory.isAny) {
+            newState = const QuizGameResult.completed();
+          } else {
+            newState = const QuizGameResult.tryChangeCategory();
+          }
+
           _clearQueueByConfig(request);
-          // todo: suggest resetting the session
-          newState = const QuizGameResult.emptyData();
         }
+      } else if (exc case TriviaException.tokenNotFound) {
+        newState = const QuizGameResult.tokenExpired();
+
+        _clearQueueByConfig(request);
       } else if (exc case TriviaException.invalidParameter) {
         newState = QuizGameResult.error(exc.message);
       }
@@ -211,23 +245,11 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       newState = QuizGameResult.error(error.toString());
     }
 
-    if (!request.onlyCache || state is QuizGameLoading || state is QuizGameError) {
+    if (!request.onlyCache ||
+        state is QuizGameLoading ||
+        state is QuizGameError) {
       if (newState != null) state = newState;
     }
-  }
-
-  Future<void> resetSessionToken() async {
-    _executionRequestQueue.clear();
-    _cachedQuizzesIterator = null;
-    await _tokenNotifier.resetToken();
-    ref.invalidateSelf();
-  }
-
-  Future<void> resetQuizConfig() async {
-    _executionRequestQueue.clear();
-    _cachedQuizzesIterator = null;
-    await _quizConfigNotifier.resetQuizConfig();
-    ref.invalidateSelf();
   }
 
   /// Removes requests from the queue if they have the same config as the current request.
@@ -243,7 +265,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// and then each subsequent request with a binary reduction of the requested
   /// number.
   void _fillQueueSilent() {
-    final quizConfig = _getQuizConfig;
+    final quizConfig = _quizConfig;
 
     _executionRequestQueue.add(
       _QuizRequest(
@@ -289,13 +311,16 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     delay ??= const Duration(seconds: 5);
     log('$this._fetchQuiz-> with $quizConfig, amount=$amountQuizzes, delay=${delay.inSeconds}sec');
 
+    final (token, exception) = await _getToken();
+    if (exception != null) return exception;
+
     await Future.delayed(delay);
     final result = await _triviaRepository.getQuizzes(
       category: quizConfig.quizCategory,
       difficulty: quizConfig.quizDifficulty,
       type: quizConfig.quizType,
       amount: amountQuizzes,
-      token: await _getToken(),
+      token: token,
     );
 
     if (result case TriviaData()) await _tokenNotifier.extendValidityOfToken();
@@ -303,16 +328,18 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     return result;
   }
 
-  Future<String?> _getToken() async {
+  /// Calling this method may result in an exception [TriviaExceptionApi]:
+  /// - [TriviaException.tokenEmptySession]
+  /// - [TriviaException.tokenNotFound]
+  Future<(String? token, TriviaExceptionApi? exception)> _getToken() async {
     String? token;
+    TriviaExceptionApi? exception;
+
     switch (_tokenNotifier.state) {
       case TokenActive(token: final triviaToken):
         token = triviaToken.token;
-      case TokenExpired():
       case TokenEmptySession():
-        // todo: сказать пользователю о том, что его токен теперь не валиден
-        // пусть обновит (с удалением статистики)
-        log('TokenExpired or TokenEmptySession');
+        exception = const TriviaExceptionApi(TriviaException.tokenEmptySession);
       case TokenNone():
         final triviaToken = await _tokenNotifier.fetchNewToken();
         if (triviaToken == null) {
@@ -321,11 +348,11 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
           token = triviaToken.token;
         }
       errorLabel:
-      case TokenError(:final message):
-        // todo: произошла ошибка. Предложить повторить запрос
-        log('TokenError');
+      case TokenExpired():
+      case TokenError():
+        exception = const TriviaExceptionApi(TriviaException.tokenNotFound);
     }
-    return token;
+    return (token, exception);
   }
 
   /// Limited so as to make the least number of requests to the server,

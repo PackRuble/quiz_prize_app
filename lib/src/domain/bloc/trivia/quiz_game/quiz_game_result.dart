@@ -5,7 +5,11 @@ sealed class QuizGameResult {
 
   const factory QuizGameResult.data(Quiz quiz) = QuizGameData;
   const factory QuizGameResult.loading([String? withMessage]) = QuizGameLoading;
-  const factory QuizGameResult.emptyData([String message]) = QuizGameEmptyData;
+  const factory QuizGameResult.completed([String message]) = QuizGameCompleted;
+  const factory QuizGameResult.tryChangeCategory([String message]) =
+      QuizGameTryChangeCategory;
+  const factory QuizGameResult.tokenExpired([String message]) =
+      QuizGameTokenExpired;
   const factory QuizGameResult.error(String message) = QuizGameError;
 }
 
@@ -19,12 +23,26 @@ class QuizGameLoading extends QuizGameResult {
   final String? withMessage;
 }
 
-class QuizGameEmptyData extends QuizGameResult {
-  const QuizGameEmptyData([
+class QuizGameCompleted extends QuizGameResult {
+  const QuizGameCompleted([
     this.message =
-        'Congratulations, you have solved all the quizzes for the given category. '
-            'Please try other categories or '
-            'reset your token for a new game.',
+        'Congratulations, you have solved all the quizzes for the given category.',
+  ]);
+  final String message;
+}
+
+class QuizGameTryChangeCategory extends QuizGameResult {
+  const QuizGameTryChangeCategory([
+    this.message = 'Quizzes have ended in this category. '
+        'Please try other categories. ',
+  ]);
+  final String message;
+}
+
+class QuizGameTokenExpired extends QuizGameResult {
+  const QuizGameTokenExpired([
+    this.message =
+        'The token was inactive for 6 hours and expired. Reset your token for a new game. Statistics will be cleared. ',
   ]);
   final String message;
 }

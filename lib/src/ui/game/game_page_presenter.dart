@@ -46,7 +46,10 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
     return switch (quizGameResult) {
       QuizGameData(:final quiz) => GamePageData(quiz),
       QuizGameLoading(:final withMessage) => GamePageLoading(withMessage),
-      QuizGameEmptyData(:final message) => GamePageEmptyData(message),
+      QuizGameCompleted(:final message) ||
+      QuizGameTokenExpired(:final message) ||
+      QuizGameTryChangeCategory(:final message) =>
+        GamePageEmptyData(message),
       QuizGameError(:final message) => GamePageError(message),
     };
   }
@@ -61,8 +64,7 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
 
   Future<void> onResetToken() async {
     state = const GamePageLoading('Renewing the token...');
-    await _quizGameNotifier.resetSessionToken();
-    // todo(17.02.2024): предложить очистить статистику
+    await _quizGameNotifier.resetGame();
   }
 
   Future<void> onResetFilters() async {
