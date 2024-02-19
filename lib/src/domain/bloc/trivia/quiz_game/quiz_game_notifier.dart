@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:collection' show Queue;
+import 'dart:collection' show Queue, UnmodifiableListView;
 import 'dart:core';
 import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
@@ -359,16 +359,19 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// if the number of available quizzes on the selected parameters is minimal.
   static const _minCountCachedQuizzes = 10;
 
+  UnmodifiableListView<Quiz> get _cachedQuizzes =>
+      UnmodifiableListView(_quizzesNotifier.state);
+
   bool get _isEnoughCachedQuizzes =>
-      _quizzesNotifier.state.length > _minCountCachedQuizzes;
+      _cachedQuizzes.length > _minCountCachedQuizzes;
 
   Iterator<Quiz> get _getNewCachedQuizzesIterator {
-    final quizzes = List.of(_quizzesNotifier.state)..shuffle();
+    final quizzes = List.of(_cachedQuizzes)..shuffle();
     return quizzes.iterator;
   }
 
   Quiz? _getCachedQuiz() {
-    log('$this-> $_quizzesNotifier state: l=${_quizzesNotifier.state.length}');
+    log('$this-> Cached Quizzes: l=${_cachedQuizzes.length}');
 
     _cachedQuizzesIterator ??= _getNewCachedQuizzesIterator;
     while (_cachedQuizzesIterator!.moveNext()) {
