@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart' show protected;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
@@ -26,6 +27,8 @@ class TokenNotifier extends Notifier<TokenState> {
 
     final token = _storage.getOrNull(GameCard.token);
 
+    log('$this-> $token, valid=${token != null ? isValidToken(token) : null}');
+
     return switch (token) {
       null => const TokenState.none(),
       TriviaToken() => isValidToken(token)
@@ -37,7 +40,7 @@ class TokenNotifier extends Notifier<TokenState> {
   /// Local token verification. If the token has not been used, it will be reset
   /// via [TriviaTokenRepository.tokenLifetime].
   bool isValidToken(TriviaToken token) =>
-      (token.dateOfRenewal ?? token.dateOfReceipt).difference(DateTime.now()) <
+      DateTime.now().difference(token.dateOfRenewal ?? token.dateOfReceipt) <
       TriviaTokenRepository.tokenLifetime;
 
   /// Get a new token that lives [TriviaTokenRepository.tokenLifetime] time.
@@ -111,4 +114,9 @@ class TokenNotifier extends Notifier<TokenState> {
       }
     }
   }
+
+  @override
+  @protected
+  String toString() =>
+      super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
 }
