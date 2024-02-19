@@ -7,6 +7,7 @@ import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/domain/app_controller.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -181,14 +182,14 @@ class _ThemeModeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageCtrl = ref.watch(HomePageCtrl.instance);
-    final themeMode = ref.watch(pageCtrl.themeMode);
+    final themeModeNotifier = ref.watch(AppNotifiers.themeMode.notifier);
+    final themeMode = ref.watch(AppNotifiers.themeMode);
 
     void nextMode() {
       final mode =
           themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
 
-      unawaited(pageCtrl.selectThemeMode(mode));
+      unawaited(themeModeNotifier.changeThemeMode(mode));
     }
 
     return IconButton(
@@ -207,20 +208,22 @@ class _ThemeColorSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageCtrl = ref.watch(HomePageCtrl.instance);
-    final color = ref.watch(pageCtrl.themeColor);
+    final themeColorNotifier = ref.watch(AppNotifiers.themeColor.notifier);
+    final themeColor = ref.watch(AppNotifiers.themeColor);
 
     void nextMode() {
-      var index = colors.indexWhere((element) => element.value == color.value);
+      var index = colors.indexWhere(
+        (element) => element.value == themeColor.value,
+      );
 
       unawaited(
-        pageCtrl.selectThemeColor(colors[++index % colors.length]),
+        themeColorNotifier.changeThemeColor(colors[++index % colors.length]),
       );
     }
 
     return IconButton(
       onPressed: nextMode,
-      icon: Icon(color: color, Icons.circle_rounded),
+      icon: Icon(color: themeColor, Icons.circle_rounded),
     );
   }
 }
@@ -291,8 +294,7 @@ class _CategoryButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageCtrl = ref.watch(HomePageCtrl.instance);
-    final current = ref.watch(pageCtrl.currentCategory);
+    final currentCategory = ref.watch(HomePageCtrl.currentCategory);
 
     Future<void> onClick() async {
       await showModalBottomSheet(
@@ -315,7 +317,7 @@ class _CategoryButton extends ConsumerWidget {
       child: Column(
         children: [
           Text(
-            current.name,
+            currentCategory.name,
             textAlign: TextAlign.center,
           ),
           const SizedBox(width: 200, child: Divider(height: 4)),
@@ -339,27 +341,27 @@ class _FetchedCategories extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageCtrl = ref.watch(HomePageCtrl.instance);
-    final categories = ref.watch(pageCtrl.fetchedCategories);
-    final current = ref.watch(pageCtrl.currentCategory);
+    final pageCtrl = ref.watch(HomePageCtrl.instance.notifier);
+    final categories = ref.watch(HomePageCtrl.fetchedCategories);
+    final currentCategory = ref.watch(HomePageCtrl.currentCategory);
 
     return ListView(
       children: [
         _CategoryTile(
           leading: 'Current:',
-          title: current.name,
+          title: currentCategory.name,
           selected: true,
           onTap: null,
           trailing: IconButton(
             icon: const Icon(Icons.cloud_sync_rounded),
-            onPressed: pageCtrl.reloadCategories,
+            onPressed: pageCtrl.onReloadCategories,
           ),
         ),
         const Divider(height: 0.0),
         ...categories.when<List<Widget>>(
           data: (data) => [
             for (final category in [CategoryDTO.any, ...data])
-              if (category == current)
+              if (category == currentCategory)
                 const SizedBox.shrink()
               else
                 _CategoryTile(

@@ -1,71 +1,55 @@
-import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/domain/app_controller.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/categories_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/stats/trivia_stats_bloc.dart';
 
-class HomePageCtrl {
-  HomePageCtrl({
-    required Ref ref,
-    required QuizConfigNotifier quizConfigNotifier,
-    required AppProvider appProvider,
-  })  : _quizConfigNotifier = quizConfigNotifier,
-        _appProvider = appProvider,
-        _ref = ref;
+class HomePageCtrl extends AutoDisposeNotifier<void> {
+  static final instance = AutoDisposeNotifierProvider<HomePageCtrl, void>(
+    HomePageCtrl.new,
+  );
 
-  static final instance = AutoDisposeProvider(
-    (ref) => HomePageCtrl(
-      ref: ref,
-      quizConfigNotifier: ref.watch(QuizConfigNotifier.instance.notifier),
-      appProvider: ref.watch(AppProvider.instance),
+  static final solvedCountProvider = AutoDisposeProvider<int>(
+    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).winning),
+  );
+
+  static final unSolvedCountProvider = AutoDisposeProvider<int>(
+    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).losing),
+  );
+
+  static final currentCategory = AutoDisposeProvider<CategoryDTO>(
+    (ref) => ref.watch(
+      QuizConfigNotifier.instance.select((config) => config.quizCategory),
     ),
   );
 
-  final Ref _ref;
-  final QuizConfigNotifier _quizConfigNotifier;
-  final AppProvider _appProvider;
-
-  late final currentCategory = AutoDisposeProvider<CategoryDTO>(
-    (ref) => ref.watch(
-        QuizConfigNotifier.instance.select((value) => value.quizCategory)),
+  static final fetchedCategories = AutoDisposeFutureProvider<List<CategoryDTO>>(
+    (ref) => ref.watch(CategoriesNotifier.instance.future),
   );
 
-  /// We want to keep the result of the request for the entire life cycle of the
-  /// application.
-  late final fetchedCategories =
-      StateProvider<AsyncValue<List<CategoryDTO>>>((ref) {
-    ref.listenSelf((_, next) {
-      // initialization method
-      if (next.isLoading) {
-        fetchCategories();
-      }
-    });
-    return const AsyncLoading();
-  });
+  late QuizConfigNotifier _quizConfigNotifier;
+  late QuizGameNotifier _quizGameNotifier;
+  late CategoriesNotifier _categoriesNotifier;
 
-  AutoDisposeProvider<ThemeMode> get themeMode => _appProvider.themeMode;
+  @override
+  void build() {
+    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
+    _quizGameNotifier = ref.watch(QuizGameNotifier.instance.notifier);
+    _categoriesNotifier = ref.watch(CategoriesNotifier.instance.notifier);
+  }
 
-  Future<void> selectThemeMode(ThemeMode mode) async =>
-      _appProvider.selectThemeMode(mode);
+  Future<void> onResetFilters() async {
+    // todo(19.02.2024): use this
+    await _quizGameNotifier.resetQuizConfig();
+  }
 
-  AutoDisposeProvider<Color> get themeColor => _appProvider.themeColor;
-
-  Future<void> selectThemeColor(Color color) async =>
-      _appProvider.selectThemeColor(color);
-
-  void _updFetchedCategories(AsyncValue<List<CategoryDTO>> value) =>
-      _ref.read(fetchedCategories.notifier).update((_) => value);
-
-  Future<void> fetchCategories() async {
-    final result = await AsyncValue.guard(_quizConfigNotifier.fetchCategories);
-    _updFetchedCategories(result);
+  Future<void> onReloadCategories() async {
+    await _categoriesNotifier.refetchCategories();
   }
 
   Future<void> selectCategory(CategoryDTO category) async {
     await _quizConfigNotifier.setCategory(category);
-  }
-
-  Future<void> reloadCategories() async {
-    _updFetchedCategories(const AsyncLoading());
   }
 }

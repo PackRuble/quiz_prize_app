@@ -19,15 +19,10 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   );
 
   late GameStorage _storage;
-  late TriviaRepository _triviaRepository;
 
   @override
   QuizConfig build() {
     _storage = ref.watch(GameStorage.instance);
-    _triviaRepository = TriviaRepository(
-      client: http.Client(),
-      useMockData: DebugFlags.triviaRepoUseMock,
-    );
 
     // The `attach` method provides a reactive state change while storing
     // the new value in storage
@@ -94,20 +89,5 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
   /// Set the quiz category as the current selection.
   Future<void> setCategory(CategoryDTO category) async {
     await _storage.set<CategoryDTO>(GameCard.quizCategory, category);
-  }
-
-  /// Get all sorts of categories of quizzes.
-  Future<List<CategoryDTO>> fetchCategories() async {
-    return switch (await _triviaRepository.getCategories()) {
-      TriviaData<List<CategoryDTO>>(data: final list) => () async {
-          await _storage.set(GameCard.allCategories, list);
-          return list;
-        }.call(),
-      TriviaError(error: final e) =>
-        e is SocketException || e is TimeoutException
-            ? _storage.get(GameCard.allCategories)
-            : throw Exception(e),
-      _ => throw Exception('$this.fetchCategories() failed'),
-    };
   }
 }
