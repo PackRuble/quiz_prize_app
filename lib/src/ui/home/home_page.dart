@@ -24,50 +24,64 @@ class HomePage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final th = Theme.of(context);
-    final cs = Theme.of(context).colorScheme;
-    final useScrollNotifier = useState(true);
-    final scrollController = useScrollController();
-    final useScroll = useScrollNotifier.value;
+    final cs = th.colorScheme;
 
-    bool handleScrollNotification(ScrollMetricsNotification notification) {
-      if (notification.metrics.extentAfter == 0.0 &&
-          notification.metrics.extentBefore == 0.0) {
-        useScrollNotifier.value = true;
-      }
-      return true;
-    }
+    // todo(19.02.2024): there is no more terrible solution than this.
+    //  But my skills were not enough to solve this problem of replacing
+    //  a Column with a Scrollable.
+    //  It works great though.
+    final scrollController = useScrollController();
+    final spaceNotifier = useState(true);
+    final space = spaceNotifier.value;
+
+    bool handleScrollNotification(ScrollMetricsNotification scrollMetrics) =>
+        spaceNotifier.value = scrollMetrics.metrics.extentAfter == 0;
 
     final children = <Widget>[
-      if (useScroll) const Spacer(),
+      Flexible(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => spaceNotifier.value = !(constraints.maxHeight == 0),
+            );
+
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+      const Spacer(),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const _ThemeColorSelector(),
           Expanded(
-            child: Text(
-              'Trivia Quiz',
-              textAlign: TextAlign.center,
-              style: th.textTheme.displaySmall?.copyWith(
-                shadows: [
-                  Shadow(
-                    color: cs.primary,
-                    offset: const Offset(2, 2),
-                    blurRadius: 4,
-                  ),
-                ],
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Trivia Quiz',
+                textAlign: TextAlign.center,
+                style: th.textTheme.displaySmall?.copyWith(
+                  shadows: [
+                    Shadow(
+                      color: cs.primary,
+                      offset: const Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           const _ThemeModeSelector(),
         ],
       ),
-      if (useScroll) const Spacer(),
+      const Spacer(),
       const SizedBox(height: 8),
       _ChapterButton(
         chapter: 'Play',
         onTap: () => unawaited(Navigator.of(context).pushNamed(GamePage.path)),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _ChapterButton(
         chapter: 'Statistics',
         onTap: () => unawaited(Navigator.of(context).pushNamed(StatsPage.path)),
@@ -78,47 +92,46 @@ class HomePage extends HookConsumerWidget {
           ),
         ),
       ),
-      const SizedBox(height: 12),
-      if (useScroll)
-        Flexible(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              WidgetsBinding.instance.addPostFrameCallback((dur) {
-                if (constraints.maxHeight == 0) useScrollNotifier.value = false;
-              });
-
-              return const SizedBox(height: 32);
-            },
-          ),
-        ),
+      const SizedBox(height: 8),
+      const Spacer(flex: 2),
       const _CategoryButton(),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       const FittedBox(
         fit: BoxFit.scaleDown,
         child: _DifficultyButton(),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       const FittedBox(
         fit: BoxFit.scaleDown,
         child: _QuizTypeSelector(),
       ),
-      if (useScroll) const Spacer(flex: 3),
+      const Spacer(flex: 3),
       const _ShieldsBar(),
       const _InfoWidget(),
     ];
+
+    if (!space) {
+      children.removeWhere(
+        (element) => element is Spacer || element is Flexible,
+      );
+    }
 
     final child = Column(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: children,
     );
 
+    const pad = EdgeInsets.all(8.0);
+
     return Scaffold(
       body: CardPad(
-        child: useScroll
+        padding: space ? pad : EdgeInsets.zero,
+        child: space
             ? child
             : NotificationListener<ScrollMetricsNotification>(
                 onNotification: handleScrollNotification,
                 child: SingleChildScrollView(
+                  padding: pad,
                   controller: scrollController,
                   child: child,
                 ),
