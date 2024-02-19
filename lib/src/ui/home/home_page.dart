@@ -15,7 +15,7 @@ import '../game/game_page.dart';
 import '../shared/cardpad.dart';
 import '../shared/debug_menu.dart';
 import '../stats/stats_page.dart';
-import 'home_page_ctrl.dart';
+import 'home_page_presenter.dart';
 
 class HomePage extends HookConsumerWidget {
   const HomePage({super.key});
@@ -43,7 +43,7 @@ class HomePage extends HookConsumerWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             WidgetsBinding.instance.addPostFrameCallback(
-              (_) => spaceNotifier.value = !(constraints.maxHeight == 0),
+                  (_) => spaceNotifier.value = !(constraints.maxHeight == 0),
             );
 
             return const SizedBox.shrink();
@@ -113,7 +113,7 @@ class HomePage extends HookConsumerWidget {
 
     if (!space) {
       children.removeWhere(
-        (element) => element is Spacer || element is Flexible,
+            (element) => element is Spacer || element is Flexible,
       );
     }
 
@@ -130,13 +130,13 @@ class HomePage extends HookConsumerWidget {
         child: space
             ? child
             : NotificationListener<ScrollMetricsNotification>(
-                onNotification: handleScrollNotification,
-                child: SingleChildScrollView(
-                  padding: pad,
-                  controller: scrollController,
-                  child: child,
-                ),
-              ),
+          onNotification: handleScrollNotification,
+          child: SingleChildScrollView(
+            padding: pad,
+            controller: scrollController,
+            child: child,
+          ),
+        ),
       ),
     );
   }
@@ -156,17 +156,17 @@ class _ChapterButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => FilledButton.tonal(
-        style: const ButtonStyle(
-          padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
-        ),
-        onPressed: onTap,
-        onLongPress: onLongTap,
-        child: Text(
-          chapter,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-      );
+    style: const ButtonStyle(
+      padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
+    ),
+    onPressed: onTap,
+    onLongPress: onLongTap,
+    child: Text(
+      chapter,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.headlineSmall,
+    ),
+  );
 }
 
 class _ThemeModeSelector extends ConsumerWidget {
@@ -187,7 +187,7 @@ class _ThemeModeSelector extends ConsumerWidget {
 
     void nextMode() {
       final mode =
-          themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
+      themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
 
       unawaited(themeModeNotifier.changeThemeMode(mode));
     }
@@ -213,7 +213,7 @@ class _ThemeColorSelector extends ConsumerWidget {
 
     void nextMode() {
       var index = colors.indexWhere(
-        (element) => element.value == themeColor.value,
+            (element) => element.value == themeColor.value,
       );
 
       unawaited(
@@ -238,6 +238,8 @@ class _QuizTypeSelector extends ConsumerWidget {
     final quizType = ref.watch(
       QuizConfigNotifier.instance.select((quizConfig) => quizConfig.quizType),
     );
+
+    // todo: QuizConfigNotifier move in HomePagePresenter
 
     return SegmentedButton<TriviaQuizType>(
       segments: [
@@ -294,7 +296,7 @@ class _CategoryButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentCategory = ref.watch(HomePageCtrl.currentCategory);
+    final currentCategory = ref.watch(HomePagePresenter.currentCategory);
 
     Future<void> onClick() async {
       await showModalBottomSheet(
@@ -341,9 +343,9 @@ class _FetchedCategories extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageCtrl = ref.watch(HomePageCtrl.instance.notifier);
-    final categories = ref.watch(HomePageCtrl.fetchedCategories);
-    final currentCategory = ref.watch(HomePageCtrl.currentCategory);
+    final homePagePresenter = ref.watch(HomePagePresenter.instance.notifier);
+    final categories = ref.watch(HomePagePresenter.fetchedCategories);
+    final currentCategory = ref.watch(HomePagePresenter.currentCategory);
 
     return ListView(
       children: [
@@ -354,7 +356,7 @@ class _FetchedCategories extends ConsumerWidget {
           onTap: null,
           trailing: IconButton(
             icon: const Icon(Icons.cloud_sync_rounded),
-            onPressed: pageCtrl.onReloadCategories,
+            onPressed: homePagePresenter.onReloadCategories,
           ),
         ),
         const Divider(height: 0.0),
@@ -366,7 +368,7 @@ class _FetchedCategories extends ConsumerWidget {
               else
                 _CategoryTile(
                   onTap: () {
-                    unawaited(pageCtrl.selectCategory(category));
+                    unawaited(homePagePresenter.selectCategory(category));
                     Navigator.of(context).pop();
                   },
                   selected: false,
