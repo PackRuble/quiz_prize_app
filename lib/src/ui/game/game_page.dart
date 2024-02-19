@@ -6,12 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 import 'package:trivia_app/src/ui/const/app_colors.dart';
 import 'package:trivia_app/src/ui/game/game_page_presenter.dart';
 
 import '../shared/app_bar_custom.dart';
+import '../shared/app_dialog.dart';
 import '../shared/cardpad.dart';
 import '../shared/material_state_custom.dart';
+import 'game_page_state.dart';
 
 class GamePage extends ConsumerWidget {
   const GamePage({super.key});
@@ -22,9 +25,7 @@ class GamePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return const Scaffold(
       appBar: _AppCardBar(),
-      body: CardPad(
-        child: _QuizView(),
-      ),
+      body: CardPad(child: _QuizView()),
     );
   }
 }
@@ -34,71 +35,10 @@ class _QuizView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
-    final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
     final gamePageState = ref.watch(GamePagePresenter.instance);
 
     return switch (gamePageState) {
-      GamePageData(data: final quiz) => ListView(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: Text(
-                    quiz.category,
-                    style: textTheme.titleSmall,
-                  ),
-                ),
-                _DifficultyStarWidget(difficulty: quiz.difficulty),
-              ],
-            ),
-            const Divider(),
-            SelectableText(
-              quiz.question,
-              textAlign: TextAlign.center,
-              style: textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 20),
-            for (final answer in quiz.answers)
-              _AnswerSelectButton(
-                isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
-                isCorrect: switch (quiz.correctlySolved) {
-                  true when answer == quiz.yourAnswer => true,
-                  false when answer == quiz.yourAnswer => false,
-                  false when answer == quiz.correctAnswer => true,
-                  _ => null,
-                },
-                blocked: quiz.correctlySolved != null,
-                answer: answer,
-                onTap: () async => pagePresenter.checkAnswer(answer),
-              ),
-            const SizedBox(height: 30),
-            if (quiz.correctlySolved != null)
-              ElevatedButton.icon(
-                icon: const Icon(Icons.arrow_forward),
-                onPressed: pagePresenter.onNextQuiz,
-                label: const Text('Next question'),
-              ),
-            if (kDebugMode)
-              CardPad(
-                margin: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Consumer(
-                      builder: (context, ref, child) {
-                        return Text(
-                          'Available questions: ${ref.watch(GamePagePresenter.debugAmountQuizzes)}',
-                        );
-                      },
-                    ),
-                    Text('Correct answer: ${quiz.correctAnswer}'),
-                  ],
-                ),
-              ),
-          ],
-        ),
+      GamePageData(:final data) => GameDataView(quiz: data),
       GamePageLoading(:final message) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -112,52 +52,201 @@ class _QuizView extends ConsumerWidget {
             ],
           ),
         ),
-      GamePageEmptyData(:final message) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Flexible(
-                child: Text(
-                  message,
-                  style: textTheme.headlineSmall,
+      GamePageError(:final message) => Center(
+          child: SelectableText(message, textAlign: TextAlign.center),
+        ),
+      GamePageCongratulation(:final message) ||
+      GamePageNewToken(:final message) ||
+      GamePageNewTokenOrChangeCategory(:final message) =>
+        GameMessageView(message: message),
+    };
+  }
+}
+
+class GameDataView extends ConsumerWidget {
+  const GameDataView({super.key, required this.quiz});
+
+  final Quiz quiz;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return ListView(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: Text(
+                quiz.category,
+                style: textTheme.titleSmall,
+              ),
+            ),
+            _DifficultyStarWidget(difficulty: quiz.difficulty),
+          ],
+        ),
+        const Divider(),
+        SelectableText(
+          quiz.question,
+          textAlign: TextAlign.center,
+          style: textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 20),
+        for (final answer in quiz.answers)
+          _AnswerSelectButton(
+            isCorrectChoice: quiz.yourAnswer == quiz.correctAnswer,
+            isCorrect: switch (quiz.correctlySolved) {
+              true when answer == quiz.yourAnswer => true,
+              false when answer == quiz.yourAnswer => false,
+              false when answer == quiz.correctAnswer => true,
+              _ => null,
+            },
+            blocked: quiz.correctlySolved != null,
+            answer: answer,
+            onTap: () async => pagePresenter.checkAnswer(answer),
+          ),
+        const SizedBox(height: 30),
+        if (quiz.correctlySolved != null)
+          ElevatedButton.icon(
+            icon: const Icon(Icons.arrow_forward),
+            onPressed: pagePresenter.onNextQuiz,
+            label: const Text('Next question'),
+          ),
+        if (kDebugMode)
+          CardPad(
+            margin: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Consumer(
+                  builder: (context, ref, child) {
+                    return Text(
+                      'Available questions: ${ref.watch(GamePagePresenter.debugAmountQuizzes)}',
+                    );
+                  },
+                ),
+                Text('Correct answer: ${quiz.correctAnswer}'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class GameMessageView extends HookConsumerWidget {
+  const GameMessageView({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
+    final gamePageState = ref.watch(GamePagePresenter.instance);
+
+    final confettiControllerRef = useRef<ConfettiController?>(null);
+    useEffect(() {
+      if (gamePageState is GamePageCongratulation) {
+        confettiControllerRef.value = ConfettiController()..play();
+      }
+
+      return confettiControllerRef.value?.dispose;
+    }, const []); // ignore: require_trailing_commas
+
+    final child = Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Flexible(
+          child: Text(
+            message,
+            style: textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Flexible(
+              child: ElevatedButton(
+                onPressed: () async {
+                  final resetStats = await showDeleteStatsDialog(context);
+                  if (resetStats == null) return;
+
+                  await pagePresenter.onResetToken(
+                    withResetStats: resetStats,
+                  );
+                },
+                child: const Text(
+                  'Reset token',
                   textAlign: TextAlign.center,
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Flexible(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await pagePresenter.onResetToken();
-                      },
-                      child: const Text(
-                        'Reset token',
-                        textAlign: TextAlign.center,
-                      ),
+            ),
+            if (gamePageState is GamePageNewTokenOrChangeCategory)
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await pagePresenter.onResetFilters();
+                    },
+                    child: const Text(
+                      'Any category',
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await pagePresenter.onResetFilters();
-                      },
-                      child: const Text(
-                        'Change category',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ],
+          ],
+        ),
+      ],
+    );
+
+    return confettiControllerRef.value != null
+        ? Stack(
+          children: [
+            Center(
+              child: ConfettiWidget(
+                key: ValueKey(confettiControllerRef.hashCode),
+                shouldLoop: true,
+                emissionFrequency: 0.04,
+                blastDirectionality: BlastDirectionality.explosive,
+                maxBlastForce: 80,
+                pauseEmissionOnLowFrameRate: false,
+                confettiController: confettiControllerRef.value!,
+              ),
+            ),
+            child,
+          ],
+        )
+        : child;
+  }
+
+  /// Returned true, if permission to delete statistics is granted.
+  Future<bool?> showDeleteStatsDialog(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: 'Confirmation',
+        message: 'Delete statistics too?',
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
-        ),
-      GamePageError(message: final message) => Center(
-          child: SelectableText(message, textAlign: TextAlign.center),
-        ),
-    };
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(MaterialLocalizations.of(context).deleteButtonTooltip),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -217,7 +306,7 @@ class _AnswerSelectButton extends HookConsumerWidget {
           Align(
             child: ConfettiWidget(
               // the key is needed because window size can change which will cause an error
-              key: ValueKey(MediaQuery.of(context).size),
+              key: ValueKey(answer),
               blastDirectionality: BlastDirectionality.explosive,
               createParticlePath: drawStar,
               pauseEmissionOnLowFrameRate: false,

@@ -1,34 +1,10 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/stats/trivia_stats_bloc.dart';
 
-sealed class GamePageState {
-  const GamePageState();
-}
-
-class GamePageData extends GamePageState {
-  const GamePageData(this.data);
-  final Quiz data;
-}
-
-class GamePageLoading extends GamePageState {
-  const GamePageLoading([this.message]);
-
-  final String? message;
-}
-
-class GamePageEmptyData extends GamePageState {
-  const GamePageEmptyData(this.message);
-  final String message;
-}
-
-class GamePageError extends GamePageState {
-  const GamePageError(this.message);
-  final String message;
-}
+import 'game_page_state.dart';
 
 class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
   static final instance =
@@ -46,10 +22,10 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
     return switch (quizGameResult) {
       QuizGameData(:final quiz) => GamePageData(quiz),
       QuizGameLoading(:final withMessage) => GamePageLoading(withMessage),
-      QuizGameCompleted(:final message) ||
-      QuizGameTokenExpired(:final message) ||
+      QuizGameCompleted(:final message) => GamePageCongratulation(message),
+      QuizGameTokenExpired(:final message) => GamePageNewToken(message),
       QuizGameTryChangeCategory(:final message) =>
-        GamePageEmptyData(message),
+        GamePageNewTokenOrChangeCategory(message),
       QuizGameError(:final message) => GamePageError(message),
     };
   }
@@ -62,9 +38,11 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
     await _quizGameNotifier.nextQuiz();
   }
 
-  Future<void> onResetToken() async {
+  //todo: add reset game when congratilations
+
+  Future<void> onResetToken({required bool withResetStats}) async {
     state = const GamePageLoading('Renewing the token...');
-    await _quizGameNotifier.resetGame();
+    await _quizGameNotifier.resetGame(withResetStats);
   }
 
   Future<void> onResetFilters() async {

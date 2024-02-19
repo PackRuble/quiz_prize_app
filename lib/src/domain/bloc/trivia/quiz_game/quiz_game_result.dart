@@ -34,7 +34,7 @@ class QuizGameCompleted extends QuizGameResult {
 class QuizGameTryChangeCategory extends QuizGameResult {
   const QuizGameTryChangeCategory([
     this.message = 'Quizzes have ended in this category. '
-        'Please try other categories. ',
+        'Please choose another category or reset your token.',
   ]);
   final String message;
 }
@@ -42,7 +42,7 @@ class QuizGameTryChangeCategory extends QuizGameResult {
 class QuizGameTokenExpired extends QuizGameResult {
   const QuizGameTokenExpired([
     this.message =
-        'The token was inactive for 6 hours and expired. Reset your token for a new game. Statistics will be cleared. ',
+        'The token was inactive for 6 hours and expired. Reset your token for a new game.',
   ]);
   final String message;
 }

@@ -113,15 +113,15 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   QuizConfig get _quizConfig => _quizConfigNotifier.state;
 
-  Future<void> resetGame() async {
+  Future<void> resetGame(bool withResetStats) async {
     await resetQuizConfig();
-    await _resetStatistics();
+    if (withResetStats) await resetStatistics();
     await _resetSessionToken();
-    await _resetInternalState();
+    await _resetInternalState(silent: true);
   }
 
-  Future<void> _resetStatistics() async {
-    await _tokenNotifier.resetToken();
+  Future<void> resetStatistics() async {
+    await _quizStatsNotifier.resetStats();
   }
 
   Future<void> _resetSessionToken() async {
@@ -133,10 +133,22 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     await _resetInternalState();
   }
 
-  Future<void> _resetInternalState() async {
+  Future<void> _resetInternalState({bool silent = false}) async {
     _executionRequestQueue.clear();
     _cachedQuizzesIterator = null;
     ref.invalidateSelf();
+  }
+
+  Future<void> checkMyAnswer(String answer) async {
+    final currentState = state;
+    if (currentState is! QuizGameData) return;
+
+    var quiz = currentState.quiz;
+    quiz = quiz.copyWith(yourAnswer: answer);
+
+    unawaited(_quizStatsNotifier.savePoints(quiz.correctlySolved!));
+    unawaited(_quizzesNotifier.moveQuizAsPlayed(quiz));
+    state = QuizGameResult.data(quiz);
   }
 
   /// Request for the next quiz. The state will be updated reactively.
@@ -384,18 +396,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
 
     return null;
-  }
-
-  Future<void> checkMyAnswer(String answer) async {
-    final currentState = state;
-    if (currentState is! QuizGameData) return;
-
-    var quiz = currentState.quiz;
-    quiz = quiz.copyWith(yourAnswer: answer);
-
-    unawaited(_quizStatsNotifier.savePoints(quiz.correctlySolved!));
-    unawaited(_quizzesNotifier.moveQuizAsPlayed(quiz));
-    state = QuizGameResult.data(quiz);
   }
 
   @override
