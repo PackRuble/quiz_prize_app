@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart' show protected;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
+import 'package:trivia_app/src/data/local_storage/token_storage.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
+import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import 'token_model.dart';
 import 'token_state.dart';
@@ -17,12 +19,12 @@ class TokenNotifier extends Notifier<TokenState> {
     TokenNotifier.new,
   );
 
-  late GameStorage _storage;
+  late SecretStorage _storage;
   late TriviaTokenRepository _tokenRepository;
 
   @override
   TokenState build() {
-    _storage = ref.watch(GameStorage.instance);
+    _storage = ref.watch(StorageNotifiers.secret);
     _tokenRepository = TriviaTokenRepository(client: http.Client());
 
     final token = _storage.getOrNull(GameCard.token);

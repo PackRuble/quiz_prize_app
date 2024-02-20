@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/app_storage.dart';
 
+import 'storage_notifiers.dart';
+
 final class AppNotifiers {
   AppNotifiers._();
 
@@ -21,7 +23,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
   @override
   ThemeMode build() {
-    _appStorage = ref.watch(AppStorage.instance);
+    _appStorage = ref.watch(StorageNotifiers.app);
 
     return _appStorage.attach(
       AppCard.themeMode,
@@ -40,7 +42,7 @@ class ThemeColorNotifier extends Notifier<Color> {
 
   @override
   Color build() {
-    _appStorage = ref.watch(AppStorage.instance);
+    _appStorage = ref.watch(StorageNotifiers.app);
 
     return _appStorage.attach(
       AppCard.themeColor,

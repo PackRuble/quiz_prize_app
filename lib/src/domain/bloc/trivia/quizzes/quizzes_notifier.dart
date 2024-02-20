@@ -10,6 +10,7 @@ import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_state.dart';
+import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import 'model/quiz.model.dart';
 
@@ -28,7 +29,7 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
 
   @override
   List<Quiz> build() {
-    _storage = ref.watch(GameStorage.instance);
+    _storage = ref.watch(StorageNotifiers.game);
     _triviaRepository = TriviaRepository(
       client: http.Client(),
       useMockData: DebugFlags.triviaRepoUseMock,

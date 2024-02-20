@@ -1,11 +1,8 @@
 import 'package:cardoteka/cardoteka.dart';
 import 'package:flutter/material.dart' show Color, Colors, ThemeMode;
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AppStorage extends Cardoteka with WatcherImpl {
-  AppStorage({required super.config});
-
-  static final instance = Provider((ref) => AppStorage(config: AppCard._config));
+  AppStorage() : super(config: AppCard._config);
 }
 
 enum AppCard<T extends Object> implements Card<T> {

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cardoteka/cardoteka.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
@@ -10,11 +9,6 @@ import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_model.dart'
 /// Define our storage class with the necessary mixins and parameters.
 class GameStorage extends Cardoteka with WatcherImpl {
   GameStorage({required super.config});
-
-  /// Using the riverpod state manager to create a single storage instance.
-  /// Putting the provider inside the class for an explicit singleton analogy.
-  static final instance =
-      Provider((ref) => GameStorage(config: GameCard._config));
 }
 
 /// [Card]s related to the process of the game.
@@ -59,7 +53,7 @@ enum GameCard<T extends Object?> implements Card<T> {
   ///
   /// Provide converters if necessary. This may be necessary if the object
   /// is complex and is not one of the possible [DataType].
-  static const _config = CardotekaConfig(
+  static const config = CardotekaConfig(
     name: 'GameCard',
     cards: values,
     converters: {

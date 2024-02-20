@@ -1,6 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import 'quizzes/model/quiz.model.dart';
 
@@ -9,7 +10,7 @@ class TriviaStatsProvider extends QuizStatsNotifier {
 
   static final instance = AutoDisposeProvider<TriviaStatsProvider>((ref) {
     return TriviaStatsProvider(
-      storage: ref.watch(GameStorage.instance),
+      storage: ref.watch(StorageNotifiers.game),
     );
   });
 

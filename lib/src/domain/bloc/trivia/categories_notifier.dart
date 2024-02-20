@@ -7,6 +7,7 @@ import 'package:trivia_app/internal/debug_flags.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
+import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 /// This notifier is responsible for caching the received categories. We only
 /// want the data to be loaded the first time, so we use a caching instance
@@ -23,7 +24,7 @@ class CategoriesNotifier extends AsyncNotifier<List<CategoryDTO>> {
 
   @override
   FutureOr<List<CategoryDTO>> build() async {
-    _gameStorage = ref.watch(GameStorage.instance);
+    _gameStorage = ref.watch(StorageNotifiers.game);
     _triviaRepository = TriviaRepository(
       client: http.Client(),
       useMockData: DebugFlags.triviaRepoUseMock,

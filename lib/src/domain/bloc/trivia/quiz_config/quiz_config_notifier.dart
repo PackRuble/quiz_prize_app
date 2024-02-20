@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import '../quizzes/model/quiz.model.dart';
 import 'quiz_config_model.dart';
@@ -18,7 +19,7 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
 
   @override
   QuizConfig build() {
-    _storage = ref.watch(GameStorage.instance);
+    _storage = ref.watch(StorageNotifiers.game);
 
     // The `attach` method provides a reactive state change while storing
     // the new value in storage
