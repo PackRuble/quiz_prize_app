@@ -113,6 +113,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   QuizConfig get _quizConfig => _quizConfigNotifier.state;
 
+  /// Restart in case of accidents.
+  void updateStateWhenError() => ref.invalidateSelf();
+
   Future<void> resetGame(bool withResetStats) async {
     await resetQuizConfig();
     if (withResetStats) await resetStatistics();

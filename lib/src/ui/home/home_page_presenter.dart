@@ -30,11 +30,6 @@ class HomePagePresenter extends AutoDisposeNotifier<void> {
     _categoriesNotifier = ref.watch(CategoriesNotifier.instance.notifier);
   }
 
-  Future<void> onResetFilters() async {
-    // todo(19.02.2024): use this
-    await _quizGameNotifier.resetQuizConfig();
-  }
-
   Future<void> onReloadCategories() async {
     await _categoriesNotifier.refetchCategories();
   }

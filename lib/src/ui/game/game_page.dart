@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:confetti/confetti.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -25,23 +26,23 @@ class GamePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return const Scaffold(
       appBar: _AppCardBar(),
-      body: CardPad(child: _QuizView()),
+      body: CardPad(child: _GamePageData()),
     );
   }
 }
 
-class _QuizView extends ConsumerWidget {
-  const _QuizView({super.key});
+class _GamePageData extends ConsumerWidget {
+  const _GamePageData({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
     final gamePageState = ref.watch(GamePagePresenter.instance);
 
     return switch (gamePageState) {
       GamePageData(:final data) => GameDataView(quiz: data),
-      GamePageLoading(:final message) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      GamePageLoading(:final message) => _WrapperGameMessageView(
+          messageWidget: Column(
             children: [
               const CircularProgressIndicator(),
               if (message != null)
@@ -51,14 +52,26 @@ class _QuizView extends ConsumerWidget {
                 ),
             ],
           ),
+          actions: const [],
         ),
-      GamePageError(:final message) => Center(
-          child: SelectableText(message, textAlign: TextAlign.center),
+      GamePageError(:final message) => _WrapperGameMessageView(
+          messageWidget: Center(
+            child: SelectableText(message, textAlign: TextAlign.center),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: pagePresenter.onTryAgainError,
+              child: const Text(
+                'Try again',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
       GamePageCongratulation(:final message) ||
       GamePageNewToken(:final message) ||
       GamePageNewTokenOrChangeCategory(:final message) =>
-        GameMessageView(message: message),
+        GameMessageView(message: message, gamePageState: gamePageState),
     };
   }
 }
@@ -138,17 +151,18 @@ class GameDataView extends ConsumerWidget {
 }
 
 class GameMessageView extends HookConsumerWidget {
-  const GameMessageView({super.key, required this.message});
+  const GameMessageView({
+    super.key,
+    required this.message,
+    required this.gamePageState,
+  });
 
   final String message;
+  final GamePageState gamePageState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-
     final pagePresenter = ref.watch(GamePagePresenter.instance.notifier);
-    final gamePageState = ref.watch(GamePagePresenter.instance);
 
     final confettiControllerRef = useRef<ConfettiController?>(null);
     useEffect(() {
@@ -159,72 +173,54 @@ class GameMessageView extends HookConsumerWidget {
       return confettiControllerRef.value?.dispose;
     }, const []); // ignore: require_trailing_commas
 
-    final child = Column(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Flexible(
-          child: Text(
-            message,
-            style: textTheme.headlineSmall,
+    final child = _WrapperGameMessageView(
+      message: message,
+      actions: [
+        OutlinedButton(
+          onPressed: () async {
+            final resetStats = await showDeleteStatsDialog(context);
+            if (resetStats == null) return;
+
+            await pagePresenter.onResetToken(
+              withResetStats: resetStats,
+            );
+          },
+          child: const Text(
+            'Reset token',
             textAlign: TextAlign.center,
           ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Flexible(
-              child: ElevatedButton(
-                onPressed: () async {
-                  final resetStats = await showDeleteStatsDialog(context);
-                  if (resetStats == null) return;
-
-                  await pagePresenter.onResetToken(
-                    withResetStats: resetStats,
-                  );
-                },
-                child: const Text(
-                  'Reset token',
-                  textAlign: TextAlign.center,
-                ),
-              ),
+        if (gamePageState is GamePageNewTokenOrChangeCategory)
+          OutlinedButton(
+            onPressed: () async {
+              await pagePresenter.onResetFilters();
+            },
+            child: const Text(
+              'Any category',
+              textAlign: TextAlign.center,
             ),
-            if (gamePageState is GamePageNewTokenOrChangeCategory)
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await pagePresenter.onResetFilters();
-                    },
-                    child: const Text(
-                      'Any category',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+          ),
       ],
     );
 
-    return confettiControllerRef.value != null
+    final confettiController = confettiControllerRef.value;
+    return confettiController != null
         ? Stack(
-          children: [
-            Center(
-              child: ConfettiWidget(
-                key: ValueKey(confettiControllerRef.hashCode),
-                shouldLoop: true,
-                emissionFrequency: 0.04,
-                blastDirectionality: BlastDirectionality.explosive,
-                maxBlastForce: 80,
-                pauseEmissionOnLowFrameRate: false,
-                confettiController: confettiControllerRef.value!,
+            children: [
+              Center(
+                child: ConfettiWidget(
+                  key: ValueKey(confettiControllerRef.hashCode),
+                  shouldLoop: true,
+                  emissionFrequency: 0.04,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  maxBlastForce: 80,
+                  pauseEmissionOnLowFrameRate: false,
+                  confettiController: confettiController,
+                ),
               ),
-            ),
-            child,
-          ],
-        )
+              child,
+            ],
+          )
         : child;
   }
 
@@ -246,6 +242,54 @@ class GameMessageView extends HookConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _WrapperGameMessageView extends StatelessWidget {
+  const _WrapperGameMessageView({
+    super.key,
+    this.message,
+    this.messageWidget,
+    required this.actions,
+  }) : assert(message == null || messageWidget == null);
+
+  final String? message;
+  final Widget? messageWidget;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        const Spacer(),
+        messageWidget ??
+            Flexible(
+              child: Text(
+                message!,
+                style: textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+            ),
+        const Spacer(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            for (final action in actions)
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: action,
+                ),
+              ),
+          ],
+        ),
+        const Spacer(),
+      ],
     );
   }
 }

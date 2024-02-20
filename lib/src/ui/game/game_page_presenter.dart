@@ -38,7 +38,9 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
     await _quizGameNotifier.nextQuiz();
   }
 
-  //todo: add reset game when congratilations
+  Future<void> onTryAgainError() async {
+    _quizGameNotifier.updateStateWhenError();
+  }
 
   Future<void> onResetToken({required bool withResetStats}) async {
     state = const GamePageLoading('Renewing the token...');
