@@ -69,7 +69,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
-  // todo(15.02.2024): In the future, this can be abandoned if you
+  // futodo(15.02.2024): In the future, this can be abandoned if you
   //  separate the request queue management into a separate class
   final _executionRequestQueue = Queue<_QuizRequest>();
   bool _queueAtWork = false;
@@ -231,7 +231,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         // is always executed in a `while (_executionRequestQueue.isNotEmpty)` loop.
         _executionRequestQueue.addFirst(request.copyWith(delay: () => null));
 
-        // todo(15.02.2024): Another solution to the problem is to use threads
+        // futodo(15.02.2024): Another solution to the problem is to use threads
         //  that can listen and perform actions as long as there are elements in the queue
         //  - maybe `StreamQueue` ?..
       } else if (exc case TriviaException.tokenEmptySession) {

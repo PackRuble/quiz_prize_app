@@ -68,7 +68,7 @@ class TriviaError<T> extends TriviaResult<T> {
   final StackTrace stack;
 }
 
-// todo(02/17/2024): `TriviaRepository` can become an `abstract base` class that
+// futodo(17.02.2024): `TriviaRepository` can become an `abstract base` class that
 //  will have some useful methods and required parameters.
 //  At the same time, the heirs will look exactly like `TriviaTokenRepository`.
 //  This can be left as an example of different approaches.
