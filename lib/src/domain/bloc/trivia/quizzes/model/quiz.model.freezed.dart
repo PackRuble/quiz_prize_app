@@ -12,7 +12,7 @@ part of 'quiz.model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Quiz _$QuizFromJson(Map<String, dynamic> json) {
   return _Quiz.fromJson(json);
@@ -48,7 +48,8 @@ mixin _$Quiz {
 
 /// @nodoc
 abstract class $QuizCopyWith<$Res> {
-  factory $QuizCopyWith(Quiz value, $Res Function(Quiz) then) = _$QuizCopyWithImpl<$Res, Quiz>;
+  factory $QuizCopyWith(Quiz value, $Res Function(Quiz) then) =
+      _$QuizCopyWithImpl<$Res, Quiz>;
   @useResult
   $Res call(
       {String category,
@@ -61,7 +62,8 @@ abstract class $QuizCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$QuizCopyWithImpl<$Res, $Val extends Quiz> implements $QuizCopyWith<$Res> {
+class _$QuizCopyWithImpl<$Res, $Val extends Quiz>
+    implements $QuizCopyWith<$Res> {
   _$QuizCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -114,9 +116,10 @@ class _$QuizCopyWithImpl<$Res, $Val extends Quiz> implements $QuizCopyWith<$Res>
 }
 
 /// @nodoc
-abstract class _$$_QuizCopyWith<$Res> implements $QuizCopyWith<$Res> {
-  factory _$$_QuizCopyWith(_$_Quiz value, $Res Function(_$_Quiz) then) =
-      __$$_QuizCopyWithImpl<$Res>;
+abstract class _$$QuizImplCopyWith<$Res> implements $QuizCopyWith<$Res> {
+  factory _$$QuizImplCopyWith(
+          _$QuizImpl value, $Res Function(_$QuizImpl) then) =
+      __$$QuizImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -130,9 +133,11 @@ abstract class _$$_QuizCopyWith<$Res> implements $QuizCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_QuizCopyWithImpl<$Res> extends _$QuizCopyWithImpl<$Res, _$_Quiz>
-    implements _$$_QuizCopyWith<$Res> {
-  __$$_QuizCopyWithImpl(_$_Quiz _value, $Res Function(_$_Quiz) _then) : super(_value, _then);
+class __$$QuizImplCopyWithImpl<$Res>
+    extends _$QuizCopyWithImpl<$Res, _$QuizImpl>
+    implements _$$QuizImplCopyWith<$Res> {
+  __$$QuizImplCopyWithImpl(_$QuizImpl _value, $Res Function(_$QuizImpl) _then)
+      : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -145,7 +150,7 @@ class __$$_QuizCopyWithImpl<$Res> extends _$QuizCopyWithImpl<$Res, _$_Quiz>
     Object? yourAnswer = freezed,
     Object? answers = null,
   }) {
-    return _then(_$_Quiz(
+    return _then(_$QuizImpl(
       category: null == category
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
@@ -180,8 +185,8 @@ class __$$_QuizCopyWithImpl<$Res> extends _$QuizCopyWithImpl<$Res, _$_Quiz>
 
 /// @nodoc
 @JsonSerializable()
-class _$_Quiz extends _Quiz with DiagnosticableTreeMixin {
-  const _$_Quiz(
+class _$QuizImpl extends _Quiz with DiagnosticableTreeMixin {
+  const _$QuizImpl(
       {required this.category,
       required this.type,
       required this.difficulty,
@@ -192,7 +197,8 @@ class _$_Quiz extends _Quiz with DiagnosticableTreeMixin {
       : _answers = answers,
         super._();
 
-  factory _$_Quiz.fromJson(Map<String, dynamic> json) => _$$_QuizFromJson(json);
+  factory _$QuizImpl.fromJson(Map<String, dynamic> json) =>
+      _$$QuizImplFromJson(json);
 
   /// The name of category
   @override
@@ -250,33 +256,45 @@ class _$_Quiz extends _Quiz with DiagnosticableTreeMixin {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Quiz &&
-            (identical(other.category, category) || other.category == category) &&
+            other is _$QuizImpl &&
+            (identical(other.category, category) ||
+                other.category == category) &&
             (identical(other.type, type) || other.type == type) &&
-            (identical(other.difficulty, difficulty) || other.difficulty == difficulty) &&
-            (identical(other.question, question) || other.question == question) &&
+            (identical(other.difficulty, difficulty) ||
+                other.difficulty == difficulty) &&
+            (identical(other.question, question) ||
+                other.question == question) &&
             (identical(other.correctAnswer, correctAnswer) ||
                 other.correctAnswer == correctAnswer) &&
-            (identical(other.yourAnswer, yourAnswer) || other.yourAnswer == yourAnswer) &&
+            (identical(other.yourAnswer, yourAnswer) ||
+                other.yourAnswer == yourAnswer) &&
             const DeepCollectionEquality().equals(other._answers, _answers));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, category, type, difficulty, question, correctAnswer,
-      yourAnswer, const DeepCollectionEquality().hash(_answers));
+  int get hashCode => Object.hash(
+      runtimeType,
+      category,
+      type,
+      difficulty,
+      question,
+      correctAnswer,
+      yourAnswer,
+      const DeepCollectionEquality().hash(_answers));
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_QuizCopyWith<_$_Quiz> get copyWith => __$$_QuizCopyWithImpl<_$_Quiz>(this, _$identity);
+  _$$QuizImplCopyWith<_$QuizImpl> get copyWith =>
+      __$$QuizImplCopyWithImpl<_$QuizImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_QuizToJson(
+    return _$$QuizImplToJson(
       this,
     );
   }
@@ -290,10 +308,10 @@ abstract class _Quiz extends Quiz {
       required final String question,
       required final String correctAnswer,
       final String? yourAnswer,
-      required final List<String> answers}) = _$_Quiz;
+      required final List<String> answers}) = _$QuizImpl;
   const _Quiz._() : super._();
 
-  factory _Quiz.fromJson(Map<String, dynamic> json) = _$_Quiz.fromJson;
+  factory _Quiz.fromJson(Map<String, dynamic> json) = _$QuizImpl.fromJson;
 
   @override
 
@@ -325,5 +343,6 @@ abstract class _Quiz extends Quiz {
   List<String> get answers;
   @override
   @JsonKey(ignore: true)
-  _$$_QuizCopyWith<_$_Quiz> get copyWith => throw _privateConstructorUsedError;
+  _$$QuizImplCopyWith<_$QuizImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

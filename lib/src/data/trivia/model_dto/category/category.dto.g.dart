@@ -6,12 +6,14 @@ part of 'category.dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_CategoryDTO _$$_CategoryDTOFromJson(Map<String, dynamic> json) => _$_CategoryDTO(
+_$CategoryDTOImpl _$$CategoryDTOImplFromJson(Map<String, dynamic> json) =>
+    _$CategoryDTOImpl(
       id: json['id'] as int,
       name: json['name'] as String,
     );
 
-Map<String, dynamic> _$$_CategoryDTOToJson(_$_CategoryDTO instance) => <String, dynamic>{
+Map<String, dynamic> _$$CategoryDTOImplToJson(_$CategoryDTOImpl instance) =>
+    <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
     };
