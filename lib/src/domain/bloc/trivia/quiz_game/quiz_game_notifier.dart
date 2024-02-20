@@ -65,7 +65,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   late QuizConfigNotifier _quizConfigNotifier;
 
   // internal state
-  late QuizIteratorBloc _currentQuizBloc;
+  late QuizIteratorBloc _quizIteratorBloc;
   // futodo(15.02.2024): In the future, this can be abandoned if you
   //  separate the request queue management into a separate class
   final _executionRequestQueue = Queue<_QuizRequest>();
@@ -76,10 +76,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
-    _currentQuizBloc = QuizIteratorBloc(
-      getCachedQuizzes: () => UnmodifiableListView(_quizzesNotifier.state),
-      matchQuizByFilter: (quiz) => _quizConfigNotifier.matchQuizByFilter(quiz),
-    );
+    _quizIteratorBloc = QuizIteratorBloc(List.of(_quizzesNotifier.state));
 
     ref.onDispose(() {
       _executionRequestQueue.clear();
@@ -92,9 +89,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   /// Maximum number of quizzes per request.
-  ///
-  /// If the category is popular, we will make 6 requests,
-  /// otherwise we will make only 4.
   int get _maxAmountQuizzesPerRequest =>
       _quizConfig.quizCategory.isAny ? 50 : 16;
 
@@ -148,7 +142,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     bool needSilentRequest = false;
     // looking for a quiz that matches the filters
-    final cachedQuiz = _currentQuizBloc.getCachedQuiz();
+    final cachedQuiz =
+        _quizIteratorBloc.getCachedQuiz(_quizConfigNotifier.matchQuizByFilter);
     if (cachedQuiz != null) {
       state = QuizGameData(cachedQuiz);
     } else {
@@ -173,7 +168,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     // silently increase number of quizzes if their cached number is below allowed level
     if (!_quizzesNotifier.isEnoughCachedQuizzes || needSilentRequest) {
       log('$this-> not enough cached quizzes');
-      _fillQueueSilent();
+      _fillQueueSilent(_quizConfig);
     }
 
     if (_queueAtWork) {
@@ -203,9 +198,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       log('$this-> result with data, l=${quizzes.length}');
       await _quizzesNotifier.cacheQuizzes(quizzes);
 
-      _currentQuizBloc.resetIterator();
+      _quizIteratorBloc = QuizIteratorBloc(List.of(_quizzesNotifier.state));
       // after this, the `QuizzesNotifier` state already contains current data
-      final cachedQuiz = _currentQuizBloc.getCachedQuiz();
+      final cachedQuiz = _quizIteratorBloc
+          .getCachedQuiz(_quizConfigNotifier.matchQuizByFilter);
       if (cachedQuiz != null) {
         newState = QuizGameData(cachedQuiz);
       }
@@ -265,18 +261,23 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// Feature: the first request is always for the maximum number of quizzes,
   /// and then each subsequent request with a binary reduction of the requested
   /// number.
-  void _fillQueueSilent() {
-    final quizConfig = _quizConfig;
+  void _fillQueueSilent(QuizConfig quizConfig) {
+    final first = _executionRequestQueue.firstOrNull;
 
-    _executionRequestQueue.add(
-      _QuizRequest(
-        amountQuizzes: _maxAmountQuizzesPerRequest,
-        quizConfig: quizConfig,
-        onlyCache: true,
-        // clear the queue with this config if the request was successful
-        clearIfSuccess: true,
-      ),
-    );
+    if (first == null ||
+        !(first.amountQuizzes == _maxAmountQuizzesPerRequest &&
+            first.quizConfig == quizConfig)) {
+      // make a request only if there is no similar request in the queue
+      _executionRequestQueue.add(
+        _QuizRequest(
+          amountQuizzes: _maxAmountQuizzesPerRequest,
+          quizConfig: quizConfig,
+          onlyCache: true,
+          // clear the queue with this config if the request was successful
+          clearIfSuccess: true,
+        ),
+      );
+    }
 
     // we fill the queue with binary reduction queries only to retrieve data if
     // the first query fails. If the request is successful, the queue will be
@@ -300,6 +301,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   ///
   /// for 50: [25, 13, 7, 4, 2, 1]
   /// for 16: [ 8,  4, 2, 1]
+  ///
+  /// If the category is popular, we will make 6 requests,
+  /// otherwise we will make only 4.
   ListBiIterator<int> _getReductionNumbers() =>
       ListBiIterator(getReductionsSequence(_maxAmountQuizzesPerRequest));
 
@@ -310,31 +314,18 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 }
 
 class QuizIteratorBloc {
-  QuizIteratorBloc({
-    required this.matchQuizByFilter,
-    required this.getCachedQuizzes,
-  });
-
-  final bool Function(Quiz quiz) matchQuizByFilter;
-  final UnmodifiableListView<Quiz> Function() getCachedQuizzes;
-
-  Iterator<Quiz>? _quizzesIterator;
-
-  void resetIterator() => _quizzesIterator = null;
-
-  Iterator<Quiz> get _getNewCachedQuizzesIterator {
-    final quizzes = List.of(getCachedQuizzes())..shuffle();
-    return quizzes.iterator;
+  QuizIteratorBloc(List<Quiz> quizzes) {
+    quizzes.shuffle();
+    _quizzesIterator = quizzes.iterator;
   }
 
-  Quiz? getCachedQuiz() {
-    log('$this-> Cached Quizzes: l=${getCachedQuizzes().length}');
+  late Iterator<Quiz> _quizzesIterator;
 
-    _quizzesIterator ??= _getNewCachedQuizzesIterator;
-    while (_quizzesIterator!.moveNext()) {
-      final quiz = _quizzesIterator!.current;
+  Quiz? getCachedQuiz(bool Function(Quiz quiz) matchFilter) {
+    while (_quizzesIterator.moveNext()) {
+      final quiz = _quizzesIterator.current;
 
-      if (matchQuizByFilter(quiz)) {
+      if (matchFilter(quiz)) {
         log('$this-> Quiz found in cache, hash:${quiz.hashCode}');
         return quiz;
       }
