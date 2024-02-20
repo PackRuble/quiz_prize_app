@@ -19,7 +19,7 @@ class GameStorage extends Cardoteka with WatcherImpl {
 /// Your [T] type can also be extended from [Object]? to use null values as
 /// [defaultValue]. To access such a value, use [Cardoteka.getOrNull]
 /// and [Cardoteka.setOrNull]. [defaultValue]s must be constant.
-enum GameCard<T extends Object?> implements Card<T> {
+enum GameCard<T extends Object> implements Card<T> {
   quizzes<List<Quiz>>(DataType.stringList, []),
   quizzesPlayed<List<Quiz>>(DataType.stringList, []),
   winning<int>(DataType.int, 0),
