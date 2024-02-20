@@ -6,7 +6,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'src/domain/app_controller.dart';
+
+import 'src/domain/app_notifiers.dart';
 import 'src/ui/const/app_size.dart';
 import 'src/ui/game/game_page.dart';
 import 'src/ui/home/home_page.dart';
@@ -36,7 +37,6 @@ void main() async {
 }
 
 Future<void> body() async {
-
   // platform error logging
   PlatformDispatcher.instance.onError = (error, stack) {
     log('PlatformDispatcher Error', error: error, stackTrace: stack);

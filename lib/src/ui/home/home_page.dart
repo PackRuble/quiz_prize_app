@@ -7,7 +7,7 @@ import 'package:simple_icons/simple_icons.dart';
 import 'package:trivia_app/extension/hex_color.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
-import 'package:trivia_app/src/domain/app_controller.dart';
+import 'package:trivia_app/src/domain/app_notifiers.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -43,7 +43,7 @@ class HomePage extends HookConsumerWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => spaceNotifier.value = !(constraints.maxHeight == 0),
+              (_) => spaceNotifier.value = !(constraints.maxHeight == 0),
             );
 
             return const SizedBox.shrink();
@@ -113,7 +113,7 @@ class HomePage extends HookConsumerWidget {
 
     if (!space) {
       children.removeWhere(
-            (element) => element is Spacer || element is Flexible,
+        (element) => element is Spacer || element is Flexible,
       );
     }
 
@@ -130,13 +130,13 @@ class HomePage extends HookConsumerWidget {
         child: space
             ? child
             : NotificationListener<ScrollMetricsNotification>(
-          onNotification: handleScrollNotification,
-          child: SingleChildScrollView(
-            padding: pad,
-            controller: scrollController,
-            child: child,
-          ),
-        ),
+                onNotification: handleScrollNotification,
+                child: SingleChildScrollView(
+                  padding: pad,
+                  controller: scrollController,
+                  child: child,
+                ),
+              ),
       ),
     );
   }
@@ -156,17 +156,17 @@ class _ChapterButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => FilledButton.tonal(
-    style: const ButtonStyle(
-      padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
-    ),
-    onPressed: onTap,
-    onLongPress: onLongTap,
-    child: Text(
-      chapter,
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.headlineSmall,
-    ),
-  );
+        style: const ButtonStyle(
+          padding: MaterialStatePropertyAll(EdgeInsets.all(18)),
+        ),
+        onPressed: onTap,
+        onLongPress: onLongTap,
+        child: Text(
+          chapter,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+      );
 }
 
 class _ThemeModeSelector extends ConsumerWidget {
@@ -187,7 +187,7 @@ class _ThemeModeSelector extends ConsumerWidget {
 
     void nextMode() {
       final mode =
-      themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
+          themeModes.keys.toList()[themeMode.index % themeModes.keys.length];
 
       unawaited(themeModeNotifier.changeThemeMode(mode));
     }
@@ -213,7 +213,7 @@ class _ThemeColorSelector extends ConsumerWidget {
 
     void nextMode() {
       var index = colors.indexWhere(
-            (element) => element.value == themeColor.value,
+        (element) => element.value == themeColor.value,
       );
 
       unawaited(
