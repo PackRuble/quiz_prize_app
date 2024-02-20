@@ -11,7 +11,7 @@ import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.
 import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_state.dart';
 
-import '../model/quiz.model.dart';
+import 'model/quiz.model.dart';
 
 /// Notifier contains a state of cached quizzes.
 ///

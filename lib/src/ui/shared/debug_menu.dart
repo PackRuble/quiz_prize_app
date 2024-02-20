@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/cached_quizzes/cached_quizzes_notifier.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quizzes/quizzes_notifier.dart';
 
 import 'cardpad.dart';
 
 final _debugCachedQuizzesNotifier = AutoDisposeProvider<QuizzesNotifier>(
-      (ref) => ref.watch(QuizzesNotifier.instance.notifier),
+  (ref) => ref.watch(QuizzesNotifier.instance.notifier),
 );
 
 final _debugAmountCachedQuizzes = AutoDisposeProvider<int>(

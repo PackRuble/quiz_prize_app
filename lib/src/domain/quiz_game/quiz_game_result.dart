@@ -1,4 +1,4 @@
-import '../model/quiz.model.dart';
+import '../bloc/trivia/quizzes/model/quiz.model.dart';
 
 sealed class QuizGameResult {
   const QuizGameResult();

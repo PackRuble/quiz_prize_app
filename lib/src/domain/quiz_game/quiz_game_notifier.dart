@@ -1,56 +1,25 @@
 import 'dart:async';
-import 'dart:collection' show Queue, UnmodifiableListView;
+import 'dart:collection' show Queue;
 import 'dart:core';
 import 'dart:developer' show log;
+
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     show AutoDisposeNotifier, AutoDisposeNotifierProvider;
-
 import 'package:trivia_app/extension/bidirectional_iterator.dart';
 import 'package:trivia_app/extension/binary_reduction.dart';
-
 import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
+import 'package:trivia_app/src/domain/quiz_game/quiz_game_result.dart';
 
-import '../cached_quizzes/cached_quizzes_notifier.dart';
-import '../model/quiz.model.dart';
-import '../quiz_config/quiz_config_model.dart';
-import '../quiz_config/quiz_config_notifier.dart';
-import '../stats/trivia_stats_bloc.dart';
-
-class _QuizRequest {
-  const _QuizRequest({
-    required this.quizConfig,
-    required this.amountQuizzes,
-    this.onlyCache = false,
-    this.clearIfSuccess = false,
-    this.desiredDelay,
-  });
-
-  final QuizConfig quizConfig;
-  final int amountQuizzes;
-  final bool onlyCache;
-  final bool clearIfSuccess;
-  final Duration? desiredDelay;
-
-  _QuizRequest copyWith({
-    QuizConfig? quizConfig,
-    int? amountQuizzes,
-    bool? onlyCache,
-    bool? clearIfSuccess,
-    ValueGetter<Duration?>? delay,
-  }) {
-    return _QuizRequest(
-      quizConfig: quizConfig ?? this.quizConfig,
-      amountQuizzes: amountQuizzes ?? this.amountQuizzes,
-      onlyCache: onlyCache ?? this.onlyCache,
-      clearIfSuccess: clearIfSuccess ?? this.clearIfSuccess,
-      desiredDelay: delay != null ? delay() : desiredDelay,
-    );
-  }
-}
+import '../bloc/trivia/quiz_config/quiz_config_model.dart';
+import '../bloc/trivia/quiz_config/quiz_config_notifier.dart';
+import '../bloc/trivia/quizzes/quizzes_notifier.dart';
+import '../bloc/trivia/stats_notifier.dart';
+import 'quiz_iterator_bloc.dart';
+import 'quiz_request_model.dart';
 
 /// Notifier is a certain state machine for the game process and methods
 /// for managing this state.
@@ -68,7 +37,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   late QuizIteratorBloc _quizIteratorBloc;
   // futodo(15.02.2024): In the future, this can be abandoned if you
   //  separate the request queue management into a separate class
-  final _executionRequestQueue = Queue<_QuizRequest>();
+  final _executionRequestQueue = Queue<QuizRequest>();
   bool _queueAtWork = false;
 
   @override
@@ -156,7 +125,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         // re-create the request with a delay if an `TriviaException.rateLimit` occur.
         // Amount is 1 because we are guaranteed to want the quiz right now
         // subsequent calls will be delayed :(
-        _QuizRequest(
+        QuizRequest(
           quizConfig: _quizConfig,
           amountQuizzes: isPopularConfig ? _maxAmountQuizzesPerRequest : 1,
           desiredDelay: Duration.zero,
@@ -185,7 +154,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
-  Future<void> _updateStateWithResult(_QuizRequest request) async {
+  Future<void> _updateStateWithResult(QuizRequest request) async {
     final triviaResult = await _quizzesNotifier.fetchQuiz(
       amountQuizzes: request.amountQuizzes,
       quizConfig: request.quizConfig,
@@ -250,7 +219,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   /// Removes requests from the queue if they have the same config as the current request.
-  void _clearQueueByConfig(_QuizRequest request) {
+  void _clearQueueByConfig(QuizRequest request) {
     _executionRequestQueue
         .removeWhere((el) => el.quizConfig == request.quizConfig);
   }
@@ -269,7 +238,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
             first.quizConfig == quizConfig)) {
       // make a request only if there is no similar request in the queue
       _executionRequestQueue.add(
-        _QuizRequest(
+        QuizRequest(
           amountQuizzes: _maxAmountQuizzesPerRequest,
           quizConfig: quizConfig,
           onlyCache: true,
@@ -287,7 +256,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       final amount = numbersReductionIterator.current;
 
       _executionRequestQueue.add(
-        _QuizRequest(
+        QuizRequest(
           amountQuizzes: amount,
           quizConfig: quizConfig,
           onlyCache: true,
@@ -311,26 +280,4 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   @protected
   String toString() =>
       super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
-}
-
-class QuizIteratorBloc {
-  QuizIteratorBloc(List<Quiz> quizzes) {
-    quizzes.shuffle();
-    _quizzesIterator = quizzes.iterator;
-  }
-
-  late Iterator<Quiz> _quizzesIterator;
-
-  Quiz? getCachedQuiz(bool Function(Quiz quiz) matchFilter) {
-    while (_quizzesIterator.moveNext()) {
-      final quiz = _quizzesIterator.current;
-
-      if (matchFilter(quiz)) {
-        log('$this-> Quiz found in cache, hash:${quiz.hashCode}');
-        return quiz;
-      }
-    }
-
-    return null;
-  }
 }

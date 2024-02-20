@@ -1,4 +1,4 @@
-import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
+import '../../domain/bloc/trivia/quizzes/model/quiz.model.dart';
 
 sealed class GamePageState {
   const GamePageState();

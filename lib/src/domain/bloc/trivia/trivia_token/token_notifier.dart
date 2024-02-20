@@ -7,10 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 
+import 'token_model.dart';
 import 'token_state.dart';
-import 'trivia_token_model.dart';
 
-/// Notifier contains methods for working with the [TriviaToken].
+/// Notifier contains methods for working with the [TokenModel].
 ///
 class TokenNotifier extends Notifier<TokenState> {
   static final instance = NotifierProvider<TokenNotifier, TokenState>(
@@ -31,7 +31,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
     return switch (token) {
       null => const TokenState.none(),
-      TriviaToken() => isValidToken(token)
+      TokenModel() => isValidToken(token)
           ? TokenState.active(token)
           : TokenState.expired(token),
     };
@@ -39,7 +39,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
   /// Local token verification. If the token has not been used, it will be reset
   /// via [TriviaTokenRepository.tokenLifetime].
-  bool isValidToken(TriviaToken token) =>
+  bool isValidToken(TokenModel token) =>
       DateTime.now().difference(token.dateOfRenewal ?? token.dateOfReceipt) <
       TriviaTokenRepository.tokenLifetime;
 
@@ -48,12 +48,12 @@ class TokenNotifier extends Notifier<TokenState> {
   ///
   /// - if return true -> token successfully updated
   /// - if return null -> the request was unsuccessful/token not received
-  Future<TriviaToken?> fetchNewToken() async {
+  Future<TokenModel?> fetchNewToken() async {
     final result = await _tokenRepository.fetchToken();
 
     switch (result) {
       case TriviaData<String>(data: final token):
-        final newToken = TriviaToken(
+        final newToken = TokenModel(
           dateOfReceipt: DateTime.now(),
           token: token,
         );
@@ -79,7 +79,7 @@ class TokenNotifier extends Notifier<TokenState> {
   /// According to Trivia API, a token is considered renewed if it was used
   /// to make a request to receive quizzes.
   ///
-  /// We simply update [TriviaToken.dateOfRenewal] in the token.
+  /// We simply update [TokenModel.dateOfRenewal] in the token.
   Future<void> extendValidityOfToken() async {
     if (state case TokenActive(:final token)) {
       await _storage.set(
@@ -99,7 +99,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
       if (result case TriviaData<bool>(data: final isSuccess)) {
         if (isSuccess) {
-          final newToken = TriviaToken(
+          final newToken = TokenModel(
             dateOfReceipt: DateTime.now(),
             token: triviaToken.token,
           );

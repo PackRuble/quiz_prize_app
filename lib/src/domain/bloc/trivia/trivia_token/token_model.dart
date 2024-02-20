@@ -1,10 +1,9 @@
-
 import 'package:cardoteka/cardoteka.dart' show Converters;
 import 'package:flutter/foundation.dart' show immutable;
 
 @immutable
-class TriviaToken {
-  const TriviaToken({
+class TokenModel {
+  const TokenModel({
     required this.token,
     required this.dateOfReceipt,
     this.dateOfRenewal,
@@ -19,8 +18,8 @@ class TriviaToken {
     return 'TriviaToken{ token: $token, dateOfReceipt: $dateOfReceipt, dateOfRenewal: $dateOfRenewal }';
   }
 
-  TriviaToken copyWith({DateTime? dateOfRenewal}) {
-    return TriviaToken(
+  TokenModel copyWith({DateTime? dateOfRenewal}) {
+    return TokenModel(
       token: token,
       dateOfReceipt: dateOfReceipt,
       dateOfRenewal: dateOfRenewal ?? this.dateOfRenewal,
@@ -32,17 +31,17 @@ class TriviaToken {
       'token': token,
       'dateOfReceipt': _dateConverter.to(dateOfReceipt),
       'dateOfRenewal':
-      dateOfRenewal != null ? _dateConverter.to(dateOfRenewal!) : null,
+          dateOfRenewal != null ? _dateConverter.to(dateOfRenewal!) : null,
     };
   }
 
-  factory TriviaToken.fromJson(Map<String, dynamic> map) {
+  factory TokenModel.fromJson(Map<String, dynamic> map) {
     final dateOfRenewal = map['dateOfRenewal'] as String?;
-    return TriviaToken(
+    return TokenModel(
       token: map['token'] as String,
       dateOfReceipt: _dateConverter.from(map['dateOfReceipt'] as String),
       dateOfRenewal:
-      dateOfRenewal != null ? _dateConverter.from(dateOfRenewal) : null,
+          dateOfRenewal != null ? _dateConverter.from(dateOfRenewal) : null,
     );
   }
 

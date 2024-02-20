@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
+import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
 import 'package:trivia_app/src/ui/const/app_colors.dart';
 import 'package:trivia_app/src/ui/game/game_page_presenter.dart';
 
@@ -233,7 +233,7 @@ class GameMessageView extends HookConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            child: const Text('No'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),

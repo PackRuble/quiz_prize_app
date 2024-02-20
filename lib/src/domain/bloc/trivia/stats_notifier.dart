@@ -1,7 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/model/quiz.model.dart';
+
+import 'quizzes/model/quiz.model.dart';
 
 class TriviaStatsProvider extends QuizStatsNotifier {
   TriviaStatsProvider({required super.storage});
