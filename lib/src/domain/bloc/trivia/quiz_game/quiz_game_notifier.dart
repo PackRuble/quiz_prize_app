@@ -114,13 +114,13 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   QuizConfig get _quizConfig => _quizConfigNotifier.state;
 
   /// Restart in case of accidents.
-  void updateStateWhenError() => ref.invalidateSelf();
+  void updateStateWhenError() => unawaited(_resetInternalState());
 
   Future<void> resetGame(bool withResetStats) async {
-    await resetQuizConfig();
+    await resetQuizConfig(silent: true);
     if (withResetStats) await resetStatistics();
     await _resetSessionToken();
-    await _resetInternalState(silent: true);
+    await _resetInternalState();
   }
 
   Future<void> resetStatistics() async {
@@ -131,12 +131,12 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     await _tokenNotifier.resetToken();
   }
 
-  Future<void> resetQuizConfig() async {
+  Future<void> resetQuizConfig({bool silent = false}) async {
     await _quizConfigNotifier.resetQuizConfig();
-    await _resetInternalState();
+    if (!silent) await _resetInternalState();
   }
 
-  Future<void> _resetInternalState({bool silent = false}) async {
+  Future<void> _resetInternalState() async {
     _executionRequestQueue.clear();
     _cachedQuizzesIterator = null;
     ref.invalidateSelf();
