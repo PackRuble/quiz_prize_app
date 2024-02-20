@@ -65,7 +65,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   late QuizConfigNotifier _quizConfigNotifier;
 
   // internal state
-  Iterator<Quiz>? _cachedQuizzesIterator;
+  late QuizIteratorBloc _currentQuizBloc;
   // futodo(15.02.2024): In the future, this can be abandoned if you
   //  separate the request queue management into a separate class
   final _executionRequestQueue = Queue<_QuizRequest>();
@@ -76,7 +76,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
-    _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
+    _currentQuizBloc = QuizIteratorBloc(
+      getCachedQuizzes: () => UnmodifiableListView(_quizzesNotifier.state),
+      matchQuizByFilter: (quiz) => _quizConfigNotifier.matchQuizByFilter(quiz),
+    );
 
     ref.onDispose(() {
       _executionRequestQueue.clear();
@@ -87,14 +90,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     return const QuizGameResult.loading();
   }
-
-  /// This is a list of numbers, each of which represents the number of quizzes
-  /// we would like to receive from the server.
-  ///
-  /// for 50: [25, 13, 7, 4, 2, 1]
-  /// for 16: [ 8,  4, 2, 1]
-  ListBiIterator<int> getReductionNumbers() =>
-      ListBiIterator(getReductionsSequence(_maxAmountQuizzesPerRequest));
 
   /// Maximum number of quizzes per request.
   ///
@@ -130,7 +125,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   Future<void> _resetInternalState() async {
     _executionRequestQueue.clear();
-    _cachedQuizzesIterator = null;
     ref.invalidateSelf();
   }
 
@@ -154,7 +148,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     bool needSilentRequest = false;
     // looking for a quiz that matches the filters
-    final cachedQuiz = _getCachedQuiz();
+    final cachedQuiz = _currentQuizBloc.getCachedQuiz();
     if (cachedQuiz != null) {
       state = QuizGameData(cachedQuiz);
     } else {
@@ -209,9 +203,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       log('$this-> result with data, l=${quizzes.length}');
       await _quizzesNotifier.cacheQuizzes(quizzes);
 
-      _cachedQuizzesIterator = null;
+      _currentQuizBloc.resetIterator();
       // after this, the `QuizzesNotifier` state already contains current data
-      final cachedQuiz = _getCachedQuiz();
+      final cachedQuiz = _currentQuizBloc.getCachedQuiz();
       if (cachedQuiz != null) {
         newState = QuizGameData(cachedQuiz);
       }
@@ -287,7 +281,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     // we fill the queue with binary reduction queries only to retrieve data if
     // the first query fails. If the request is successful, the queue will be
     // cleared (this is what the [_QuizRequest.clearIfSuccess] flag is for)
-    final numbersReductionIterator = getReductionNumbers();
+    final numbersReductionIterator = _getReductionNumbers();
     while (numbersReductionIterator.moveNext()) {
       final amount = numbersReductionIterator.current;
 
@@ -301,22 +295,46 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
-  UnmodifiableListView<Quiz> get _cachedQuizzes =>
-      UnmodifiableListView(_quizzesNotifier.state);
+  /// This is a list of numbers, each of which represents the number of quizzes
+  /// we would like to receive from the server.
+  ///
+  /// for 50: [25, 13, 7, 4, 2, 1]
+  /// for 16: [ 8,  4, 2, 1]
+  ListBiIterator<int> _getReductionNumbers() =>
+      ListBiIterator(getReductionsSequence(_maxAmountQuizzesPerRequest));
+
+  @override
+  @protected
+  String toString() =>
+      super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
+}
+
+class QuizIteratorBloc {
+  QuizIteratorBloc({
+    required this.matchQuizByFilter,
+    required this.getCachedQuizzes,
+  });
+
+  final bool Function(Quiz quiz) matchQuizByFilter;
+  final UnmodifiableListView<Quiz> Function() getCachedQuizzes;
+
+  Iterator<Quiz>? _quizzesIterator;
+
+  void resetIterator() => _quizzesIterator = null;
 
   Iterator<Quiz> get _getNewCachedQuizzesIterator {
-    final quizzes = List.of(_cachedQuizzes)..shuffle();
+    final quizzes = List.of(getCachedQuizzes())..shuffle();
     return quizzes.iterator;
   }
 
-  Quiz? _getCachedQuiz() {
-    log('$this-> Cached Quizzes: l=${_cachedQuizzes.length}');
+  Quiz? getCachedQuiz() {
+    log('$this-> Cached Quizzes: l=${getCachedQuizzes().length}');
 
-    _cachedQuizzesIterator ??= _getNewCachedQuizzesIterator;
-    while (_cachedQuizzesIterator!.moveNext()) {
-      final quiz = _cachedQuizzesIterator!.current;
+    _quizzesIterator ??= _getNewCachedQuizzesIterator;
+    while (_quizzesIterator!.moveNext()) {
+      final quiz = _quizzesIterator!.current;
 
-      if (_quizConfigNotifier.matchQuizByFilter(quiz)) {
+      if (matchQuizByFilter(quiz)) {
         log('$this-> Quiz found in cache, hash:${quiz.hashCode}');
         return quiz;
       }
@@ -324,9 +342,4 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     return null;
   }
-
-  @override
-  @protected
-  String toString() =>
-      super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
 }
