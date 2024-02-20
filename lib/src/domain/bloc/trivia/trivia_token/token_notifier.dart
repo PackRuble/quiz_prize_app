@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart' show protected;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:trivia_app/src/data/local_storage/game_storage.dart';
 import 'package:trivia_app/src/data/local_storage/token_storage.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/storage_notifiers.dart';
@@ -27,7 +26,7 @@ class TokenNotifier extends Notifier<TokenState> {
     _storage = ref.watch(StorageNotifiers.secret);
     _tokenRepository = TriviaTokenRepository(client: http.Client());
 
-    final token = _storage.getOrNull(GameCard.token);
+    final token = _storage.getOrNull(SecretCards.token);
 
     log('$this-> $token, valid=${token != null ? isValidToken(token) : null}');
 
@@ -59,7 +58,7 @@ class TokenNotifier extends Notifier<TokenState> {
           dateOfReceipt: DateTime.now(),
           token: token,
         );
-        await _storage.set(GameCard.token, newToken);
+        await _storage.set(SecretCards.token, newToken);
         state = TokenState.active(newToken);
         return newToken;
       case TriviaExceptionApi(:final exception):
@@ -85,7 +84,7 @@ class TokenNotifier extends Notifier<TokenState> {
   Future<void> extendValidityOfToken() async {
     if (state case TokenActive(:final token)) {
       await _storage.set(
-        GameCard.token,
+        SecretCards.token,
         token.copyWith(dateOfRenewal: DateTime.now()),
       );
     }
@@ -93,7 +92,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
   /// Reset token on server. Updates the state in case of a request to the server.
   Future<void> resetToken() async {
-    final triviaToken = _storage.getOrNull(GameCard.token) ??
+    final triviaToken = _storage.getOrNull(SecretCards.token) ??
         switch (state) { TokenActive(:final token) => token, _ => null };
 
     if (triviaToken != null) {
@@ -105,7 +104,7 @@ class TokenNotifier extends Notifier<TokenState> {
             dateOfReceipt: DateTime.now(),
             token: triviaToken.token,
           );
-          await _storage.set(GameCard.token, newToken);
+          await _storage.set(SecretCards.token, newToken);
           state = TokenState.active(newToken);
         } else {
           state = const TokenState.none();

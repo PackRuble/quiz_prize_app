@@ -4,7 +4,6 @@ import 'package:cardoteka/cardoteka.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
 import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_model.dart';
 
 /// Define our storage class with the necessary mixins and parameters.
 class GameStorage extends Cardoteka with WatcherImpl {
@@ -29,7 +28,6 @@ enum GameCard<T extends Object> implements Card<T> {
   quizType<TriviaQuizType>(DataType.string, TriviaQuizType.any),
   quizCategory<CategoryDTO>(DataType.string, CategoryDTO.any),
   allCategories<List<CategoryDTO>>(DataType.stringList, [CategoryDTO.any]),
-  token<TokenModel?>(DataType.string, null),
   ;
 
   const GameCard(this.type, this.defaultValue);
@@ -63,7 +61,6 @@ enum GameCard<T extends Object> implements Card<T> {
       quizType: _QuizTypeConverter(),
       quizCategory: _QuizCategoryConverter(),
       allCategories: _AllCategoriesConverter(),
-      token: _TokenConverter(),
     },
   );
 }
@@ -118,15 +115,4 @@ class _QuizCategoryConverter extends Converter<CategoryDTO, String> {
 
   @override
   String to(CategoryDTO object) => jsonEncode(object.toJson());
-}
-
-class _TokenConverter extends Converter<TokenModel, String> {
-  const _TokenConverter();
-
-  @override
-  TokenModel from(String element) =>
-      TokenModel.fromJson(jsonDecode(element) as Map<String, dynamic>);
-
-  @override
-  String to(TokenModel object) => jsonEncode(object.toJson());
 }
