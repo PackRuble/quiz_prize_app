@@ -112,6 +112,8 @@ class TokenNotifier extends Notifier<TokenState> {
         log('$TokenNotifier.resetToken -> result is $error, $stack');
         state = TokenState.error('Error during token reset process: $error');
       }
+    } else {
+      await fetchNewToken();
     }
   }
 
