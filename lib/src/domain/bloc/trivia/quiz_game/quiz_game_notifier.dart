@@ -5,10 +5,10 @@ import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     show AutoDisposeNotifier, AutoDisposeNotifierProvider;
-import 'package:http/http.dart' as http;
+
 import 'package:trivia_app/extension/bidirectional_iterator.dart';
 import 'package:trivia_app/extension/binary_reduction.dart';
-import 'package:trivia_app/internal/debug_flags.dart';
+
 import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
 import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quiz_game/quiz_game_result.dart';
@@ -19,7 +19,6 @@ import '../model/quiz.model.dart';
 import '../quiz_config/quiz_config_model.dart';
 import '../quiz_config/quiz_config_notifier.dart';
 import '../stats/trivia_stats_bloc.dart';
-import '../trivia_token/token_state.dart';
 
 class _QuizRequest {
   const _QuizRequest({
@@ -63,9 +62,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   late QuizStatsNotifier _quizStatsNotifier;
   late QuizzesNotifier _quizzesNotifier;
-  late TriviaRepository _triviaRepository;
   late QuizConfigNotifier _quizConfigNotifier;
-  late TokenNotifier _tokenNotifier;
 
   // internal state
   Iterator<Quiz>? _cachedQuizzesIterator;
@@ -78,11 +75,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   QuizGameResult build() {
     _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
-    _tokenNotifier = ref.watch(TokenNotifier.instance.notifier);
-    _triviaRepository = TriviaRepository(
-      client: http.Client(),
-      useMockData: DebugFlags.triviaRepoUseMock,
-    );
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
 
@@ -128,7 +120,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> _resetSessionToken() async {
-    await _tokenNotifier.resetToken();
+    await ref.read(TokenNotifier.instance.notifier).resetToken();
   }
 
   Future<void> resetQuizConfig({bool silent = false}) async {
@@ -185,7 +177,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
 
     // silently increase number of quizzes if their cached number is below allowed level
-    if (!_isEnoughCachedQuizzes || needSilentRequest) {
+    if (!_quizzesNotifier.isEnoughCachedQuizzes || needSilentRequest) {
       log('$this-> not enough cached quizzes');
       _fillQueueSilent();
     }
@@ -205,7 +197,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   }
 
   Future<void> _updateStateWithResult(_QuizRequest request) async {
-    final triviaResult = await _fetchQuiz(
+    final triviaResult = await _quizzesNotifier.fetchQuiz(
       amountQuizzes: request.amountQuizzes,
       quizConfig: request.quizConfig,
       delay: request.desiredDelay,
@@ -309,76 +301,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
-  /// Get quizzes from the Trivia server. Use delay if necessary.
-  ///
-  /// Pure method.
-  Future<TriviaResult> _fetchQuiz({
-    required int amountQuizzes,
-    required QuizConfig quizConfig,
-    // Update: At some point in the Trivia backend there is a limit on the number
-    // of requests per second from one IP. To get around this, we will wait an
-    // additional 5 seconds when this error occurs.
-    //
-    // therefore we wait 5 seconds as the backend dictates. Then we do a request.
-    Duration? delay = const Duration(seconds: 5),
-  }) async {
-    // ignore: parameter_assignments
-    delay ??= const Duration(seconds: 5);
-    log('$this._fetchQuiz-> with $quizConfig, amount=$amountQuizzes, delay=${delay.inSeconds}sec');
-
-    final (token, exception) = await _getToken();
-    if (exception != null) return exception;
-
-    await Future.delayed(delay);
-    final result = await _triviaRepository.getQuizzes(
-      category: quizConfig.quizCategory,
-      difficulty: quizConfig.quizDifficulty,
-      type: quizConfig.quizType,
-      amount: amountQuizzes,
-      token: token,
-    );
-
-    if (result case TriviaData()) await _tokenNotifier.extendValidityOfToken();
-
-    return result;
-  }
-
-  /// Calling this method may result in an exception [TriviaExceptionApi]:
-  /// - [TriviaException.tokenEmptySession]
-  /// - [TriviaException.tokenNotFound]
-  Future<(String? token, TriviaExceptionApi? exception)> _getToken() async {
-    String? token;
-    TriviaExceptionApi? exception;
-
-    switch (_tokenNotifier.state) {
-      case TokenActive(token: final triviaToken):
-        token = triviaToken.token;
-      case TokenEmptySession():
-        exception = const TriviaExceptionApi(TriviaException.tokenEmptySession);
-      case TokenNone():
-        final triviaToken = await _tokenNotifier.fetchNewToken();
-        if (triviaToken == null) {
-          continue errorLabel;
-        } else {
-          token = triviaToken.token;
-        }
-      errorLabel:
-      case TokenExpired():
-      case TokenError():
-        exception = const TriviaExceptionApi(TriviaException.tokenNotFound);
-    }
-    return (token, exception);
-  }
-
-  /// Limited so as to make the least number of requests to the server,
-  /// if the number of available quizzes on the selected parameters is minimal.
-  static const _minCountCachedQuizzes = 10;
-
   UnmodifiableListView<Quiz> get _cachedQuizzes =>
       UnmodifiableListView(_quizzesNotifier.state);
-
-  bool get _isEnoughCachedQuizzes =>
-      _cachedQuizzes.length > _minCountCachedQuizzes;
 
   Iterator<Quiz> get _getNewCachedQuizzesIterator {
     final quizzes = List.of(_cachedQuizzes)..shuffle();
