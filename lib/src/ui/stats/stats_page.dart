@@ -13,8 +13,7 @@ class StatsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pageController = ref.watch(StatsPageCtrl.instance);
-    final quizzesPlayedCount = ref.watch(pageController.quizzesPlayed).length;
+    final quizzesPlayedCount = ref.watch(StatsPageCtrl.quizzesPlayed).length;
 
     return Scaffold(
       appBar: const AppBarCustom(
@@ -84,10 +83,10 @@ class GeneralStatsBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
-    final pageController = ref.watch(StatsPageCtrl.instance);
-    final totalCount = ref.watch(pageController.quizzesPlayed).length;
-    final solvedCount = ref.watch(pageController.solvedCount);
-    final unsolvedCount = ref.watch(pageController.unsolvedCount);
+    final pageController = ref.watch(StatsPageCtrl.instance.notifier);
+    final totalCount = ref.watch(StatsPageCtrl.quizzesPlayed).length;
+    final solvedCount = ref.watch(StatsPageCtrl.solvedCount);
+    final unsolvedCount = ref.watch(StatsPageCtrl.unsolvedCount);
 
     return CardPad(
       child: Row(
@@ -185,16 +184,16 @@ class DifficultyBlockSliver extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-
-    final pageController = ref.watch(StatsPageCtrl.instance);
-    final statsOnDifficulty = ref.watch(pageController.statsOnDifficulty);
+    final statsOnDifficulty = ref.watch(StatsPageCtrl.statsOnDifficulty);
 
     return SliverToBoxAdapter(
       child: CardPad(
         child: Column(
           children: [
-            for (final MapEntry(key: difficulty, value: (int correctly, int uncorrectly))
-                in statsOnDifficulty.entries)
+            for (final MapEntry(
+                  key: difficulty,
+                  value: (int correctly, int uncorrectly)
+                ) in statsOnDifficulty.entries)
               Row(
                 children: [
                   Expanded(child: Text(difficulty.name)),
@@ -237,15 +236,16 @@ class CategoriesBlockSliver extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
-    final pageController = ref.watch(StatsPageCtrl.instance);
-    final statsOnCategory = ref.watch(pageController.statsOnCategory);
+    final statsOnCategory = ref.watch(StatsPageCtrl.statsOnCategory);
 
     return SliverToBoxAdapter(
       child: CardPad(
         child: Column(
           children: [
-            for (final MapEntry(key: categoryName, value: (int correctly, int uncorrectly))
-                in statsOnCategory.entries)
+            for (final MapEntry(
+                  key: categoryName,
+                  value: (int correctly, int uncorrectly)
+                ) in statsOnCategory.entries)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -289,8 +289,7 @@ class PlayedQuizzesSliver extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
-    final pageController = ref.watch(StatsPageCtrl.instance);
-    final quizzesPlayed = ref.watch(pageController.quizzesPlayed);
+    final quizzesPlayed = ref.watch(StatsPageCtrl.quizzesPlayed);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
