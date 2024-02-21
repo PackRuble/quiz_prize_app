@@ -56,10 +56,14 @@ class GamePagePresenter extends AutoDisposeNotifier<GamePageState> {
   );
 
   static final solvedCountProvider = AutoDisposeProvider<int>(
-    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).winning),
+    (ref) => ref.watch(
+      QuizStatsNotifier.instance.select((stats) => stats.winning),
+    ),
   );
 
   static final unSolvedCountProvider = AutoDisposeProvider<int>(
-    (ref) => ref.watch(ref.watch(TriviaStatsProvider.instance).losing),
+    (ref) => ref.watch(
+      QuizStatsNotifier.instance.select((stats) => stats.losing),
+    ),
   );
 }

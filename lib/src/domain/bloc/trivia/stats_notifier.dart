@@ -5,70 +5,78 @@ import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import 'quizzes/model/quiz.model.dart';
 
-class TriviaStatsProvider extends QuizStatsNotifier {
-  TriviaStatsProvider({required super.storage});
-
-  static final instance = AutoDisposeProvider<TriviaStatsProvider>((ref) {
-    return TriviaStatsProvider(
-      storage: ref.watch(StorageNotifiers.game),
-    );
-  });
-
-  late final statsOnDifficulty = AutoDisposeProvider<
-      Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
-    (ref) => _calculateStatsOnDifficulty(ref.watch(quizzesPlayed)),
-  );
-
-  late final statsOnCategory =
-      AutoDisposeProvider<Map<_CategoryName, (int correctly, int uncorrectly)>>(
-    (ref) => _calculateStatsOnCategory(ref.watch(quizzesPlayed)),
-  );
-
-  late final quizzesPlayed = AutoDisposeProvider<List<Quiz>>((ref) {
-    return _storage.attach(
-      GameCard.quizzesPlayed,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-      onRemove: () => ref.state = [],
-    );
-  });
-
-  late final winning = AutoDisposeProvider<int>((ref) {
-    return _storage.attach(
-      GameCard.winning,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-      onRemove: () => ref.state = 0,
-    );
-  });
-
-  late final losing = AutoDisposeProvider<int>((ref) {
-    return _storage.attach(
-      GameCard.losing,
-      (value) => ref.state = value,
-      detacher: ref.onDispose,
-      onRemove: () => ref.state = 0,
-    );
-  });
-}
-
+typedef StatsAmount = (int correctly, int uncorrectly);
 typedef _CategoryName = String;
 
-class QuizStatsNotifier {
-  QuizStatsNotifier({
-    required GameStorage storage,
-  }) : _storage = storage;
+class StatsModel {
+  late Map<TriviaQuizDifficulty, StatsAmount> onDifficulty;
+  late Map<_CategoryName, StatsAmount> onCategory;
+  late List<Quiz> quizzesPlayed;
+  late int winning;
+  late int losing;
+}
 
-  final GameStorage _storage;
+class QuizStatsNotifier extends AutoDisposeNotifier<StatsModel> {
+  static final instance =
+      AutoDisposeNotifierProvider<QuizStatsNotifier, StatsModel>(
+    QuizStatsNotifier.new,
+  );
 
-  // ***************************************************************************
-  // counting quizzes played by their difficulty
+  late GameStorage _storage;
 
-  Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>
-      _calculateStatsOnDifficulty(
-    List<Quiz> quizzes,
-  ) {
-    final result = <TriviaQuizDifficulty, (int correctly, int uncorrectly)>{};
+  @override
+  StatsModel build() {
+    _storage = ref.watch(StorageNotifiers.game);
+
+    final stats = StatsModel();
+
+    _storage.attach(
+      GameCard.quizzesPlayed,
+      (value) {
+        stats
+          ..onDifficulty = _calcOnDifficulty(value)
+          ..onCategory = _calcOnCategory(value);
+        ref.notifyListeners();
+      },
+      detacher: ref.onDispose,
+      onRemove: () {
+        stats
+          ..onDifficulty = _calcOnDifficulty([])
+          ..onCategory = _calcOnCategory([]);
+        ref.notifyListeners();
+      },
+      fireImmediately: true,
+    );
+
+    return stats
+      ..winning = _storage.attach(
+        GameCard.winning,
+        (value) {
+          state.winning = value;
+          ref.notifyListeners();
+        },
+        detacher: ref.onDispose,
+        onRemove: () {
+          state.winning = 0;
+          ref.notifyListeners();
+        },
+      )
+      ..losing = _storage.attach(
+        GameCard.losing,
+        (value) {
+          state.losing = value;
+          ref.notifyListeners();
+        },
+        detacher: ref.onDispose,
+        onRemove: () {
+          state.losing = 0;
+          ref.notifyListeners();
+        },
+      );
+  }
+
+  Map<TriviaQuizDifficulty, StatsAmount> _calcOnDifficulty(List<Quiz> quizzes) {
+    final result = <TriviaQuizDifficulty, StatsAmount>{};
 
     for (final q in quizzes) {
       var (int correctly, int uncorrectly) = result[q.difficulty] ?? (0, 0);
@@ -83,14 +91,8 @@ class QuizStatsNotifier {
     return result;
   }
 
-  // ***************************************************************************
-  // counting quizzes played by their category
-
-  Map<_CategoryName, (int correctly, int uncorrectly)>
-      _calculateStatsOnCategory(
-    List<Quiz> quizzes,
-  ) {
-    final result = <_CategoryName, (int correctly, int uncorrectly)>{};
+  Map<_CategoryName, StatsAmount> _calcOnCategory(List<Quiz> quizzes) {
+    final result = <_CategoryName, StatsAmount>{};
 
     for (final q in quizzes) {
       var (int correctly, int uncorrectly) = result[q.category] ?? (0, 0);

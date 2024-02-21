@@ -42,7 +42,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   @override
   QuizGameResult build() {
-    _quizStatsNotifier = ref.watch(TriviaStatsProvider.instance);
+    _quizStatsNotifier = ref.watch(QuizStatsNotifier.instance.notifier);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
     _quizIteratorBloc = QuizIteratorBloc(List.of(_quizzesNotifier.state));
