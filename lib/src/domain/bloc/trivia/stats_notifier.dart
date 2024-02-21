@@ -30,25 +30,26 @@ class QuizStatsNotifier extends AutoDisposeNotifier<StatsModel> {
 
     final stats = StatsModel();
 
-    _storage.attach(
-      GameCard.quizzesPlayed,
-      (value) {
-        stats
-          ..onDifficulty = _calcOnDifficulty(value)
-          ..onCategory = _calcOnCategory(value);
-        ref.notifyListeners();
-      },
-      detacher: ref.onDispose,
-      onRemove: () {
-        stats
-          ..onDifficulty = _calcOnDifficulty([])
-          ..onCategory = _calcOnCategory([]);
-        ref.notifyListeners();
-      },
-      fireImmediately: true,
-    );
-
     return stats
+      ..quizzesPlayed = _storage.attach(
+        GameCard.quizzesPlayed,
+        (value) {
+          stats
+            ..quizzesPlayed = value
+            ..onDifficulty = _calcOnDifficulty(value)
+            ..onCategory = _calcOnCategory(value);
+          ref.notifyListeners();
+        },
+        detacher: ref.onDispose,
+        onRemove: () {
+          stats
+            ..quizzesPlayed = []
+            ..onDifficulty = _calcOnDifficulty([])
+            ..onCategory = _calcOnCategory([]);
+          ref.notifyListeners();
+        },
+        fireImmediately: true,
+      )
       ..winning = _storage.attach(
         GameCard.winning,
         (value) {
