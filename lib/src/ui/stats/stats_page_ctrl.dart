@@ -20,17 +20,17 @@ class StatsPageCtrl extends AutoDisposeNotifier<void> {
     ),
   );
 
-  static final statsOnDifficulty = AutoDisposeProvider<
-      Map<TriviaQuizDifficulty, (int correctly, int uncorrectly)>>(
+  static final statsByDifficulty =
+      AutoDisposeProvider<Map<TriviaQuizDifficulty, StatsAmount>>(
     (ref) => ref.watch(
-      QuizStatsNotifier.instance.select((stats) => stats.onDifficulty),
+      QuizStatsNotifier.instance.select((stats) => stats.byDifficulty),
     ),
   );
 
-  static final statsOnCategory =
-      AutoDisposeProvider<Map<String, (int correctly, int uncorrectly)>>(
+  static final statsByCategory =
+      AutoDisposeProvider<Map<CategoryName, StatsAmount>>(
     (ref) => ref.watch(
-      QuizStatsNotifier.instance.select((stats) => stats.onCategory),
+      QuizStatsNotifier.instance.select((stats) => stats.byCategory),
     ),
   );
 

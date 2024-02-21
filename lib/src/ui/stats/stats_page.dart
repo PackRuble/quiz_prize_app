@@ -184,7 +184,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final statsOnDifficulty = ref.watch(StatsPageCtrl.statsOnDifficulty);
+    final statsOnDifficulty = ref.watch(StatsPageCtrl.statsByDifficulty);
 
     return SliverToBoxAdapter(
       child: CardPad(
@@ -192,7 +192,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
           children: [
             for (final MapEntry(
                   key: difficulty,
-                  value: (int correctly, int uncorrectly)
+                  value: (int correctly, int incorrectly)
                 ) in statsOnDifficulty.entries)
               Row(
                 children: [
@@ -200,7 +200,7 @@ class DifficultyBlockSliver extends ConsumerWidget {
                   SizedBox(
                     width: 48,
                     child: Text(
-                      '⬇$uncorrectly',
+                      '⬇$incorrectly',
                       style: textTheme.labelLarge?.copyWith(
                         color: AppColors.unCorrectCounterText,
                       ),
@@ -236,7 +236,7 @@ class CategoriesBlockSliver extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
-    final statsOnCategory = ref.watch(StatsPageCtrl.statsOnCategory);
+    final statsOnCategory = ref.watch(StatsPageCtrl.statsByCategory);
 
     return SliverToBoxAdapter(
       child: CardPad(
@@ -244,7 +244,7 @@ class CategoriesBlockSliver extends ConsumerWidget {
           children: [
             for (final MapEntry(
                   key: categoryName,
-                  value: (int correctly, int uncorrectly)
+                  value: (int correctly, int incorrectly)
                 ) in statsOnCategory.entries)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +253,7 @@ class CategoriesBlockSliver extends ConsumerWidget {
                   SizedBox(
                     width: 48,
                     child: Text(
-                      '⬇$correctly',
+                      '⬇$incorrectly',
                       style: textTheme.labelLarge?.copyWith(
                         color: AppColors.unCorrectCounterText,
                       ),
@@ -264,7 +264,7 @@ class CategoriesBlockSliver extends ConsumerWidget {
                   SizedBox(
                     width: 48,
                     child: Text(
-                      '⬆$uncorrectly',
+                      '⬆$correctly',
                       textAlign: TextAlign.right,
                       style: textTheme.labelLarge?.copyWith(
                         color: AppColors.correctCounterText,

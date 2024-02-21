@@ -5,12 +5,12 @@ import 'package:trivia_app/src/domain/storage_notifiers.dart';
 
 import 'quizzes/model/quiz.model.dart';
 
-typedef StatsAmount = (int correctly, int uncorrectly);
-typedef _CategoryName = String;
+typedef StatsAmount = (int correctly, int incorrectly);
+typedef CategoryName = String;
 
 class StatsModel {
-  late Map<TriviaQuizDifficulty, StatsAmount> onDifficulty;
-  late Map<_CategoryName, StatsAmount> onCategory;
+  late Map<TriviaQuizDifficulty, StatsAmount> byDifficulty;
+  late Map<CategoryName, StatsAmount> byCategory;
   late List<Quiz> quizzesPlayed;
   late int winning;
   late int losing;
@@ -33,19 +33,20 @@ class QuizStatsNotifier extends AutoDisposeNotifier<StatsModel> {
     return stats
       ..quizzesPlayed = _storage.attach(
         GameCard.quizzesPlayed,
-        (value) {
+        (quizzes) {
+          final (byDifficulty, byCategory) = _calcAll(quizzes);
           stats
-            ..quizzesPlayed = value
-            ..onDifficulty = _calcOnDifficulty(value)
-            ..onCategory = _calcOnCategory(value);
+            ..quizzesPlayed = quizzes
+            ..byDifficulty = byDifficulty
+            ..byCategory = byCategory;
           ref.notifyListeners();
         },
         detacher: ref.onDispose,
         onRemove: () {
           stats
             ..quizzesPlayed = []
-            ..onDifficulty = _calcOnDifficulty([])
-            ..onCategory = _calcOnCategory([]);
+            ..byDifficulty = {}
+            ..byCategory = {};
           ref.notifyListeners();
         },
         fireImmediately: true,
@@ -76,32 +77,56 @@ class QuizStatsNotifier extends AutoDisposeNotifier<StatsModel> {
       );
   }
 
-  Map<TriviaQuizDifficulty, StatsAmount> _calcOnDifficulty(List<Quiz> quizzes) {
+  (Map<TriviaQuizDifficulty, StatsAmount>, Map<CategoryName, StatsAmount>)
+      _calcAll(List<Quiz> quizzes) {
+    final byDifficulty = <TriviaQuizDifficulty, StatsAmount>{};
+    final byCategory = <CategoryName, StatsAmount>{};
+
+    for (final q in quizzes) {
+      var (int corDif, int incorDif) = byDifficulty[q.difficulty] ?? (0, 0);
+      var (int corCat, int incorCat) = byCategory[q.category] ?? (0, 0);
+
+      final isSolved = q.correctlySolved;
+      if (isSolved == null) continue;
+
+      if (isSolved) {
+        byDifficulty[q.difficulty] = (++corDif, incorDif);
+        byCategory[q.category] = (++corCat, incorCat);
+      } else {
+        byDifficulty[q.difficulty] = (corDif, ++incorDif);
+        byCategory[q.category] = (corCat, ++incorCat);
+      }
+    }
+
+    return (byDifficulty, byCategory);
+  }
+
+  Map<TriviaQuizDifficulty, StatsAmount> _calcByDifficulty(List<Quiz> quizzes) {
     final result = <TriviaQuizDifficulty, StatsAmount>{};
 
     for (final q in quizzes) {
-      var (int correctly, int uncorrectly) = result[q.difficulty] ?? (0, 0);
+      var (int correctly, int incorrectly) = result[q.difficulty] ?? (0, 0);
 
       if (q.correctlySolved!) {
-        result[q.difficulty] = (++correctly, uncorrectly);
+        result[q.difficulty] = (++correctly, incorrectly);
       } else {
-        result[q.difficulty] = (correctly, ++uncorrectly);
+        result[q.difficulty] = (correctly, ++incorrectly);
       }
     }
 
     return result;
   }
 
-  Map<_CategoryName, StatsAmount> _calcOnCategory(List<Quiz> quizzes) {
-    final result = <_CategoryName, StatsAmount>{};
+  Map<CategoryName, StatsAmount> _calcByCategory(List<Quiz> quizzes) {
+    final result = <CategoryName, StatsAmount>{};
 
     for (final q in quizzes) {
-      var (int correctly, int uncorrectly) = result[q.category] ?? (0, 0);
+      var (int correctly, int incorrectly) = result[q.category] ?? (0, 0);
 
       if (q.correctlySolved!) {
-        result[q.category] = (++correctly, uncorrectly);
+        result[q.category] = (++correctly, incorrectly);
       } else {
-        result[q.category] = (correctly, ++uncorrectly);
+        result[q.category] = (correctly, ++incorrectly);
       }
     }
 
