@@ -3,9 +3,9 @@ import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
 import 'package:trivia_app/src/domain/bloc/trivia/stats_notifier.dart';
 
-class StatsPageCtrl extends AutoDisposeNotifier<void> {
-  static final instance = AutoDisposeNotifierProvider<StatsPageCtrl, void>(
-    StatsPageCtrl.new,
+class StatsPagePresenter extends AutoDisposeNotifier<void> {
+  static final instance = AutoDisposeNotifierProvider<StatsPagePresenter, void>(
+    StatsPagePresenter.new,
   );
 
   static final solvedCount = AutoDisposeProvider<int>(
