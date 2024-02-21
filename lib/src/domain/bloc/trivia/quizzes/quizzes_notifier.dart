@@ -49,6 +49,7 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
   Future<void> cacheQuizzes(List<Quiz> fetched) async {
     await _storage.set<List<Quiz>>(
       GameCard.quizzes,
+      // todo(21.02.2024): вероятно, нет смысла в перемешивании
       [...state, ...fetched]..shuffle(),
     );
   }
@@ -126,7 +127,6 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
     return (token, exception);
   }
 
-  // todo(08.02.2024): move in TriviaStatsBloc + create dependencies
   Future<void> moveQuizAsPlayed(Quiz quiz) async {
     final quizzes = List.of(state);
 
