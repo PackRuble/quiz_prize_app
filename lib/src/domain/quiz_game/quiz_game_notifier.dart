@@ -45,7 +45,13 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     _quizStatsNotifier = ref.watch(QuizStatsNotifier.instance.notifier);
     _quizzesNotifier = ref.watch(QuizzesNotifier.instance.notifier);
     _quizConfigNotifier = ref.watch(QuizConfigNotifier.instance.notifier);
-    _quizIteratorBloc = QuizIteratorBloc(List.of(_quizzesNotifier.state));
+
+    // update our iterator whenever new quizzes arrive in the cache
+    ref.listen(
+      QuizzesNotifier.instance,
+      fireImmediately: true,
+      (_, next) => _quizIteratorBloc = QuizIteratorBloc(List.of(next)),
+    );
 
     ref.onDispose(() {
       _executionRequestQueue.clear();
@@ -97,6 +103,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
     var quiz = currentState.quiz;
     quiz = quiz.copyWith(yourAnswer: answer);
+
+    log('$this.checkMyAnswer-> $quiz');
 
     unawaited(_quizStatsNotifier.savePoints(quiz.correctlySolved!));
     unawaited(_quizzesNotifier.moveQuizAsPlayed(quiz));
@@ -167,13 +175,14 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       log('$this-> result with data, l=${quizzes.length}');
       await _quizzesNotifier.cacheQuizzes(quizzes);
 
-      _quizIteratorBloc = QuizIteratorBloc(List.of(_quizzesNotifier.state));
-      // after this, the `QuizzesNotifier` state already contains current data
-      final cachedQuiz = _quizIteratorBloc
-          .getCachedQuiz(_quizConfigNotifier.matchQuizByFilter);
-      if (cachedQuiz != null) {
-        newState = QuizGameData(cachedQuiz);
+      if (state is! QuizGameData) {
+        final cachedQuiz = _quizIteratorBloc
+            .getCachedQuiz(_quizConfigNotifier.matchQuizByFilter);
+        if (cachedQuiz != null) {
+          newState = QuizGameData(cachedQuiz);
+        }
       }
+
       if (request.clearIfSuccess) _clearQueueByConfig(request);
     } else if (triviaResult case TriviaExceptionApi(exception: final exc)) {
       log('$this-> result is $exc');
@@ -260,6 +269,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
           amountQuizzes: amount,
           quizConfig: quizConfig,
           onlyCache: true,
+          // the last request must be a cleanup request
+          clearIfSuccess: amount == 1,
         ),
       );
     }
