@@ -1,11 +1,11 @@
 {
-    "name": "quiz_prize_app",
-    "short_name": "quiz_prize_app",
+    "name": "quiz_prize",
+    "short_name": "quiz_prize",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A simple MVP quiz app to test the capabilities of Cardoteka",
+    "description": "A simple MVP quiz app to test the capabilities of Cardoteka. Enjoy solving quizzes and viewing statistics. That's all there is to it.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
