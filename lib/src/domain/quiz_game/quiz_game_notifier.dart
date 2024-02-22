@@ -21,6 +21,10 @@ import '../bloc/trivia/stats_notifier.dart';
 import 'quiz_iterator_bloc.dart';
 import 'quiz_request_model.dart';
 
+// futodo(22.02.2024): Debug mode does not exist at the moment
+//  However, there is a flag in [TriviaRepository] for mocking categories.
+//  It can be controlled from [DebugFlags.triviaRepoUseMock]
+
 /// Notifier is a certain state machine for the game process and methods
 /// for managing this state.
 class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
