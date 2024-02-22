@@ -60,11 +60,19 @@ class QuizPrizeApp extends ConsumerWidget {
     final themeColor = ref.watch(AppNotifiers.themeColor);
     final themeMode = ref.watch(AppNotifiers.themeMode);
 
-    const transitions = FadeUpwardsPageTransitionsBuilder();
-    final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions =
-        isPreferredSize
-            ? {for (final pl in TargetPlatform.values) pl: transitions}
-            : {};
+    const fadeUpTransitions = FadeUpwardsPageTransitionsBuilder();
+    const zoomTransitions = ZoomPageTransitionsBuilder(
+      // fixdep(22.02.2024): [Unexpected Ink Splash with Material3 when navigating · Issue #119897 · flutter/flutter](https://github.com/flutter/flutter/issues/119897)
+      // this eliminates the button "blinking" but looks sharper
+      allowEnterRouteSnapshotting: false,
+    );
+    final Map<TargetPlatform, PageTransitionsBuilder> buildersTransitions = {
+      for (final platform in TargetPlatform.values)
+        if (isPreferredSize)
+          platform: fadeUpTransitions
+        else if (platform case TargetPlatform.android)
+          platform: zoomTransitions,
+    };
 
     final themeData = ThemeData(
       useMaterial3: true,
