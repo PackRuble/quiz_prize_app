@@ -43,17 +43,14 @@ Future<void> body() async {
     return true;
   };
 
+  WidgetsFlutterBinding.ensureInitialized();
   await Cardoteka.init();
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: QuizPrizeApp()));
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class QuizPrizeApp extends ConsumerWidget {
+  const QuizPrizeApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
