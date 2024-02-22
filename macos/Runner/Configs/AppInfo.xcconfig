@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = trivia_app
+PRODUCT_NAME = quiz_prize_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.Ruble.Pack.triviaapp.triviaApp
+PRODUCT_BUNDLE_IDENTIFIER = com.Ruble.Pack.quizprizeapp.quizPrizeApp
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.Ruble.Pack.trivia_app. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023-2024 com.Ruble.Pack.quiz_prize_app. All rights reserved.

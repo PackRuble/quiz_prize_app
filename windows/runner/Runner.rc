@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.Ruble.Pack.trivia_app" "\0"
-            VALUE "FileDescription", "trivia_app" "\0"
+            VALUE "CompanyName", "com.Ruble.Pack.quiz_prize_app" "\0"
+            VALUE "FileDescription", "quiz_prize_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "trivia_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.Ruble.Pack.trivia_app. All rights reserved." "\0"
-            VALUE "OriginalFilename", "trivia_app.exe" "\0"
-            VALUE "ProductName", "trivia_app" "\0"
+            VALUE "InternalName", "quiz_prize_app" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023-2024 com.Ruble.Pack.quiz_prize_app. All rights reserved." "\0"
+            VALUE "OriginalFilename", "quiz_prize_app.exe" "\0"
+            VALUE "ProductName", "quiz_prize_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
