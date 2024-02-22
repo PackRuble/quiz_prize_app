@@ -1,7 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/data/local_storage/app_storage.dart';
-import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/local_storage/token_storage.dart';
+import 'package:quiz_prize_app/src/data/local_storage/app_storage.dart';
+import 'package:quiz_prize_app/src/data/local_storage/game_storage.dart';
+import 'package:quiz_prize_app/src/data/local_storage/token_storage.dart';
 
 // ignore_for_file: avoid_classes_with_only_static_members
 

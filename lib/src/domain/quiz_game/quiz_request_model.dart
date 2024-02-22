@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart' show ValueGetter, immutable;
-import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.dart';
 
 @immutable
 class QuizRequest {

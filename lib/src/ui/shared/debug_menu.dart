@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quizzes/quizzes_notifier.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quizzes/quizzes_notifier.dart';
 
 import 'cardpad.dart';
 

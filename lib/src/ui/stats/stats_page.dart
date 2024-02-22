@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/ui/shared/app_bar_custom.dart';
+import 'package:quiz_prize_app/src/ui/shared/app_bar_custom.dart';
 
 import '../const/app_colors.dart';
 import '../shared/cardpad.dart';

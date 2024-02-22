@@ -4,13 +4,13 @@ import 'dart:developer';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:trivia_app/internal/debug_flags.dart';
-import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_state.dart';
-import 'package:trivia_app/src/domain/storage_notifiers.dart';
+import 'package:quiz_prize_app/internal/debug_flags.dart';
+import 'package:quiz_prize_app/src/data/local_storage/game_storage.dart';
+import 'package:quiz_prize_app/src/data/trivia/trivia_repository.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quiz_config/quiz_config_model.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/trivia_token/token_state.dart';
+import 'package:quiz_prize_app/src/domain/storage_notifiers.dart';
 
 import 'model/quiz.model.dart';
 

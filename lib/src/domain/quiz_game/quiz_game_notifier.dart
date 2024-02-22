@@ -6,13 +6,13 @@ import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     show AutoDisposeNotifier, AutoDisposeNotifierProvider;
-import 'package:trivia_app/extension/bidirectional_iterator.dart';
-import 'package:trivia_app/extension/binary_reduction.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
-import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
-import 'package:trivia_app/src/domain/quiz_game/quiz_game_result.dart';
+import 'package:quiz_prize_app/extension/bidirectional_iterator.dart';
+import 'package:quiz_prize_app/extension/binary_reduction.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
+import 'package:quiz_prize_app/src/data/trivia/trivia_repository.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/trivia_token/token_notifier.dart';
+import 'package:quiz_prize_app/src/domain/quiz_game/quiz_game_result.dart';
 
 import '../bloc/trivia/quiz_config/quiz_config_model.dart';
 import '../bloc/trivia/quiz_config/quiz_config_notifier.dart';

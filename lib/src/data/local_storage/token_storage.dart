@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:cardoteka/cardoteka.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/trivia_token/token_model.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/trivia_token/token_model.dart';
 
 /// Please note that this storage will not use [Watcher].
 class SecretStorage extends Cardoteka {

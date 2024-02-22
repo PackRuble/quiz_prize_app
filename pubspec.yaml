@@ -1,10 +1,10 @@
-name: trivia_app
+name: quiz_prize_app
 description: >-
   A simple MVP quiz app to test the capabilities of Cardoteka.
   Enjoy solving quizzes and viewing statistics.
   That's all there is to it.
 publish_to: 'none'
-repository: https://github.com/PackRuble/trivia_app
+repository: https://github.com/PackRuble/quiz_prize_app
 homepage: https://t.me/+AkGV73kZi_Q1YTMy
 topics:
   - cardoteka

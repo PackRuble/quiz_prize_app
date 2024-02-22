@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:quiz_prize_app/extension/hex_color.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/category/category.dto.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:quiz_prize_app/src/domain/app_notifiers.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
 import 'package:simple_icons/simple_icons.dart';
-import 'package:trivia_app/extension/hex_color.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
-import 'package:trivia_app/src/domain/app_notifiers.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../game/game_page.dart';
@@ -438,7 +438,7 @@ class _ShieldsBar extends HookConsumerWidget {
         ),
         IconButton(
           onPressed: () =>
-              launch(Uri.https('github.com', 'PackRuble/trivia_app')),
+              launch(Uri.https('github.com', 'PackRuble/quiz_prize_app')),
           icon: Icon(
             SimpleIcons.github,
             color: ColorHex.fromHex('#181717'), // corporate color

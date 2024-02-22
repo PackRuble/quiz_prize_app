@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
-import 'package:trivia_app/src/ui/const/app_colors.dart';
-import 'package:trivia_app/src/ui/game/game_page_presenter.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quizzes/model/quiz.model.dart';
+import 'package:quiz_prize_app/src/ui/const/app_colors.dart';
+import 'package:quiz_prize_app/src/ui/game/game_page_presenter.dart';
 
 import '../shared/app_bar_custom.dart';
 import '../shared/app_dialog.dart';

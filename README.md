@@ -1,4 +1,4 @@
-# Trivia App
+# Quiz-Prize App
 
 ![](res/banner.png)
 

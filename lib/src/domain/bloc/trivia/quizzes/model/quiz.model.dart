@@ -2,8 +2,8 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/trivia_config_models.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/quiz/quiz.dto.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/trivia_config_models.dart';
 
 part 'quiz.model.freezed.dart';
 part 'quiz.model.g.dart';

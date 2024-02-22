@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:trivia_app/internal/debug_flags.dart';
-import 'package:trivia_app/src/data/local_storage/game_storage.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
-import 'package:trivia_app/src/domain/storage_notifiers.dart';
+import 'package:quiz_prize_app/internal/debug_flags.dart';
+import 'package:quiz_prize_app/src/data/local_storage/game_storage.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/category/category.dto.dart';
+import 'package:quiz_prize_app/src/data/trivia/trivia_repository.dart';
+import 'package:quiz_prize_app/src/domain/storage_notifiers.dart';
 
 /// This notifier is responsible for caching the received categories. We only
 /// want the data to be loaded the first time, so we use a caching instance

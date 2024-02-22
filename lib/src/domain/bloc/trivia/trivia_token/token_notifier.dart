@@ -4,9 +4,9 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart' show protected;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:trivia_app/src/data/local_storage/token_storage.dart';
-import 'package:trivia_app/src/data/trivia/trivia_repository.dart';
-import 'package:trivia_app/src/domain/storage_notifiers.dart';
+import 'package:quiz_prize_app/src/data/local_storage/token_storage.dart';
+import 'package:quiz_prize_app/src/data/trivia/trivia_repository.dart';
+import 'package:quiz_prize_app/src/domain/storage_notifiers.dart';
 
 import 'token_model.dart';
 import 'token_state.dart';

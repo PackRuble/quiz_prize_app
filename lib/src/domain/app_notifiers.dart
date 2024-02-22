@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/data/local_storage/app_storage.dart';
+import 'package:quiz_prize_app/src/data/local_storage/app_storage.dart';
 
 import 'storage_notifiers.dart';
 

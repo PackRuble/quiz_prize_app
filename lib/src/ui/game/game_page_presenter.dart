@@ -1,8 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quizzes/quizzes_notifier.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/stats_notifier.dart';
-import 'package:trivia_app/src/domain/quiz_game/quiz_game_notifier.dart';
-import 'package:trivia_app/src/domain/quiz_game/quiz_game_result.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quizzes/quizzes_notifier.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/stats_notifier.dart';
+import 'package:quiz_prize_app/src/domain/quiz_game/quiz_game_notifier.dart';
+import 'package:quiz_prize_app/src/domain/quiz_game/quiz_game_result.dart';
 
 import 'game_page_state.dart';
 

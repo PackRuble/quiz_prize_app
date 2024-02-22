@@ -1,8 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:trivia_app/src/data/trivia/model_dto/category/category.dto.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/categories_notifier.dart';
-import 'package:trivia_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
-import 'package:trivia_app/src/domain/quiz_game/quiz_game_notifier.dart';
+import 'package:quiz_prize_app/src/data/trivia/model_dto/category/category.dto.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/categories_notifier.dart';
+import 'package:quiz_prize_app/src/domain/bloc/trivia/quiz_config/quiz_config_notifier.dart';
+import 'package:quiz_prize_app/src/domain/quiz_game/quiz_game_notifier.dart';
 
 class HomePagePresenter extends AutoDisposeNotifier<void> {
   static final instance = AutoDisposeNotifierProvider<HomePagePresenter, void>(
