@@ -1,5 +1,7 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
+
 import '../bloc/trivia/quizzes/model/quiz.model.dart';
 
 class QuizIteratorBloc {
@@ -22,4 +24,9 @@ class QuizIteratorBloc {
 
     return null;
   }
+
+  @override
+  @protected
+  String toString() =>
+      super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
 }
