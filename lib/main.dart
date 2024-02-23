@@ -93,7 +93,7 @@ class QuizPrizeApp extends ConsumerWidget {
     );
 
     return MaterialApp(
-      title: 'Trivia App',
+      title: 'Quiz Prize',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       localeResolutionCallback: (locale, _) => locale ?? const Locale('en'),

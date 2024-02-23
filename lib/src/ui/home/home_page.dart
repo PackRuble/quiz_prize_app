@@ -59,7 +59,7 @@ class HomePage extends HookConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Trivia Quiz',
+                'Quiz Prize',
                 textAlign: TextAlign.center,
                 style: th.textTheme.displaySmall?.copyWith(
                   shadows: [
