@@ -209,10 +209,13 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       if (request.clearIfSuccess) _clearQueueByConfig(request);
     } else if (triviaResult case TriviaExceptionApi(exception: final exc)) {
       log('$this-> result is $exc');
-      if (exc case TriviaException.rateLimit) {
+      if (exc case TriviaException.noResults) {
+        newState = _getLoadingStateWhenRepeatRequest();
+      } else if (exc case TriviaException.rateLimit) {
         // we are sure that added query will be executed because `_updateStateWithResult` method
         // is always executed in a `while (_executionRequestQueue.isNotEmpty)` loop.
         _executionRequestQueue.addFirst(request);
+        // just in case we will increase the delay time
         _callDelay += const Duration(seconds: 1);
 
         // futodo(15.02.2024): Another solution to the problem is to use threads
@@ -231,6 +234,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
           }
 
           _clearQueueByConfig(request);
+        } else {
+          newState = _getLoadingStateWhenRepeatRequest();
         }
       } else if (exc case TriviaException.tokenNotFound) {
         newState = const QuizGameResult.tokenExpired();
@@ -238,18 +243,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         _clearQueueByConfig(request);
       } else if (exc case TriviaException.invalidParameter) {
         newState = QuizGameResult.error(exc.message);
-      } else if (exc case TriviaException.noResults) {
-        final nextRequest = _executionRequestQueue.firstOrNull;
-        if (nextRequest != null) {
-          state = QuizGameResult.loading(
-            switch (nextRequest.amountQuizzes) {
-              < _maxAmountQuizzesForRequest =>
-                'Requesting latest ${nextRequest.amountQuizzes} quizzes...',
-              1 => 'Requesting last quiz...',
-              _ => null,
-            },
-          );
-        }
       }
     } else if (triviaResult case TriviaError(:final error)) {
       log('$this-> result error: $error');
@@ -267,6 +260,26 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       state = newState;
     }
   }
+
+  QuizGameLoading? _getLoadingStateWhenRepeatRequest() {
+    final nextRequest = _executionRequestQueue.firstOrNull;
+    if (nextRequest != null) {
+      return QuizGameLoading(
+        _getLoadingMessageByAmountQuizzes(nextRequest.amountQuizzes),
+      );
+    } else {
+      return null;
+    }
+  }
+
+  /// Get a message about the number of quizzes in the current request.
+  String? _getLoadingMessageByAmountQuizzes(int amountQuizzes) =>
+      switch (amountQuizzes) {
+        < _maxAmountQuizzesForRequest =>
+          'Requesting latest $amountQuizzes quizzes...',
+        1 => 'Requesting last quiz...',
+        _ => null,
+      };
 
   /// Removes requests from the queue if they have the same config as the current request.
   void _clearQueueByConfig(QuizRequest request) {
