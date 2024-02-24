@@ -67,9 +67,12 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     return const QuizGameResult.loading();
   }
 
-  /// Maximum number of quizzes per request.
-  int get _maxAmountQuizzesPerRequest =>
-      _quizConfig.quizCategory.isAny ? 50 : 16;
+  /// Maximum number of quizzes allowed for request.
+  static const _maxAmountQuizzesForRequest = 50;
+
+  /// Maximum number of quizzes per request by current config.
+  int get _amountQuizzesPerRequest =>
+      _quizConfig.quizCategory.isAny ? _maxAmountQuizzesForRequest : 16;
 
   QuizConfig get _quizConfig => _quizConfigNotifier.state;
 
@@ -139,7 +142,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         // subsequent calls will be delayed :(
         QuizRequest(
           quizConfig: _quizConfig,
-          amountQuizzes: isPopularConfig ? _maxAmountQuizzesPerRequest : 1,
+          amountQuizzes: isPopularConfig ? _amountQuizzesPerRequest : 1,
           clearIfSuccess: isPopularConfig,
         ),
       );
@@ -233,6 +236,18 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         _clearQueueByConfig(request);
       } else if (exc case TriviaException.invalidParameter) {
         newState = QuizGameResult.error(exc.message);
+      } else if (exc case TriviaException.noResults) {
+        final nextRequest = _executionRequestQueue.firstOrNull;
+        if (nextRequest != null) {
+          state = QuizGameResult.loading(
+            switch (nextRequest.amountQuizzes) {
+              < _maxAmountQuizzesForRequest =>
+                'Requesting latest ${nextRequest.amountQuizzes} quizzes...',
+              1 => 'Requesting last quiz...',
+              _ => null,
+            },
+          );
+        }
       }
     } else if (triviaResult case TriviaError(:final error)) {
       log('$this-> result error: $error');
@@ -267,12 +282,12 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     final first = _executionRequestQueue.firstOrNull;
 
     if (first == null ||
-        !(first.amountQuizzes == _maxAmountQuizzesPerRequest &&
+        !(first.amountQuizzes == _amountQuizzesPerRequest &&
             first.quizConfig == quizConfig)) {
       // make a request only if there is no similar request in the queue
       _executionRequestQueue.add(
         QuizRequest(
-          amountQuizzes: _maxAmountQuizzesPerRequest,
+          amountQuizzes: _amountQuizzesPerRequest,
           quizConfig: quizConfig,
           // clear the queue with this config if the request was successful
           clearIfSuccess: true,
@@ -307,7 +322,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// If the category is popular, we will make 6 requests,
   /// otherwise we will make only 4.
   ListBiIterator<int> _getReductionNumbers() =>
-      ListBiIterator(getReductionsSequence(_maxAmountQuizzesPerRequest));
+      ListBiIterator(getReductionsSequence(_amountQuizzesPerRequest));
 
   @override
   @protected
