@@ -140,7 +140,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         QuizRequest(
           quizConfig: _quizConfig,
           amountQuizzes: isPopularConfig ? _maxAmountQuizzesPerRequest : 1,
-          desiredDelay: Duration.zero,
           clearIfSuccess: isPopularConfig,
         ),
       );
@@ -166,11 +165,26 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     }
   }
 
+  /// The timer is designed to delay the call to the quizzes service.
+  /// If it's active, then the retrieval request needs to be delayed (on 5 sec).
+  Timer? _timerCallLimit;
+  Duration _callDelay = Duration.zero;
+
   Future<void> _updateStateWithResult(QuizRequest request) async {
-    final triviaResult = await _quizzesNotifier.fetchQuiz(
+    final triviaResult = await _quizzesNotifier
+        .fetchQuiz(
       amountQuizzes: request.amountQuizzes,
       quizConfig: request.quizConfig,
-      delay: request.desiredDelay,
+      delay: _callDelay,
+    )
+        .whenComplete(
+      () {
+        _callDelay = const Duration(seconds: 5);
+        _timerCallLimit = Timer(_callDelay, () {
+          _callDelay = Duration.zero;
+          _timerCallLimit?.cancel();
+        });
+      },
     );
 
     QuizGameResult? newState;
@@ -193,7 +207,8 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       if (exc case TriviaException.rateLimit) {
         // we are sure that added query will be executed because `_updateStateWithResult` method
         // is always executed in a `while (_executionRequestQueue.isNotEmpty)` loop.
-        _executionRequestQueue.addFirst(request.copyWith(delay: () => null));
+        _executionRequestQueue.addFirst(request);
+        _callDelay += const Duration(seconds: 1);
 
         // futodo(15.02.2024): Another solution to the problem is to use threads
         //  that can listen and perform actions as long as there are elements in the queue
@@ -224,6 +239,7 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       newState = QuizGameResult.error(error.toString());
     }
 
+    log('$this._updateStateWithResult ended-> newState=$newState');
     if (state is QuizGameData) {
       return;
     } else if (newState != null) {

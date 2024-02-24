@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../bloc/trivia/quizzes/model/quiz.model.dart';
 
 sealed class QuizGameResult {
@@ -11,6 +13,11 @@ sealed class QuizGameResult {
   const factory QuizGameResult.tokenExpired([String message]) =
       QuizGameTokenExpired;
   const factory QuizGameResult.error(String message) = QuizGameError;
+
+  @override
+  @protected
+  String toString() =>
+      super.toString().replaceFirst('Instance of ', '').replaceAll("'", '');
 }
 
 class QuizGameData extends QuizGameResult {
