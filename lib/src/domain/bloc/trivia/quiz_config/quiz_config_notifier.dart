@@ -42,6 +42,13 @@ class QuizConfigNotifier extends AutoDisposeNotifier<QuizConfig> {
     );
   }
 
+  // ignore: avoid_public_notifier_properties
+  QuizConfig get getDefaultConfig => const QuizConfig(
+        quizDifficulty: TriviaQuizDifficulty.any,
+        quizType: TriviaQuizType.any,
+        quizCategory: CategoryDTO.any,
+      );
+
   /// Determines if the quiz matches the current quiz configuration
   bool matchQuizByFilter(Quiz quiz) {
     final category = state.quizCategory;

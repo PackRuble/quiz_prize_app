@@ -110,8 +110,13 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
       case TokenEmptySession():
         exception = const TriviaExceptionApi(TriviaException.tokenEmptySession);
       case TokenExpired():
-      // this state can be handled separately, however, we will not torture
-      // the user in obtaining the token independently
+        // this state can be handled separately, however, we will not torture
+        // the user in obtaining the token independently
+
+        // we will also clear all cache to avoid repeat quizzes
+        await clearAll();
+        continue noneLabel;
+      noneLabel:
       case TokenNone():
         final triviaToken = await _tokenNotifier.fetchNewToken();
         if (triviaToken == null) {

@@ -118,11 +118,29 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
     state = QuizGameResult.data(quiz);
   }
 
+  /// Silently caches the maximum number of quizzes if successful.
+  ///
+  /// This is necessary for later game balancing and in case the user started
+  /// playing with a non-standard configuration.
+  Future<void> _maybeCacheIsNewGame() async {
+    if (_quizzesNotifier.state.isEmpty) {
+      _executionRequestQueue.addFirst(
+        QuizRequest(
+          quizConfig: _quizConfigNotifier.getDefaultConfig,
+          amountQuizzes: _maxAmountQuizzesForRequest,
+        ),
+      );
+    }
+  }
+
   /// Request for the next quiz. The state will be updated reactively.
   Future<void> nextQuiz() async {
     log('$this.nextQuiz-> Request for the next quiz');
 
     state = const QuizGameResult.loading();
+
+    // futodo(24.02.2024): resolve this gap by controlling the balance of all cached quizzes by diversity
+    _maybeCacheIsNewGame().ignore();
 
     bool needSilentRequest = false;
     // looking for a quiz that matches the filters
