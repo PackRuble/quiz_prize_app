@@ -275,9 +275,9 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
   /// Get a message about the number of quizzes in the current request.
   String? _getLoadingMessageByAmountQuizzes(int amountQuizzes) =>
       switch (amountQuizzes) {
+        1 => 'Requesting last quiz...',
         < _maxAmountQuizzesForRequest =>
           'Requesting latest $amountQuizzes quizzes...',
-        1 => 'Requesting last quiz...',
         _ => null,
       };
 

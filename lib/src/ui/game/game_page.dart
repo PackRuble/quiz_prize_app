@@ -44,11 +44,10 @@ class _GamePageData extends ConsumerWidget {
           messageWidget: Column(
             children: [
               const CircularProgressIndicator(),
-              if (message != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(message),
-                ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(message ?? ''),
+              ),
             ],
           ),
           actions: const [],
