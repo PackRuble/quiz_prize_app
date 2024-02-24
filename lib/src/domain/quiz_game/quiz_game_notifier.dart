@@ -224,10 +224,14 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
       newState = QuizGameResult.error(error.toString());
     }
 
-    if (!request.onlyCache ||
-        state is QuizGameLoading ||
-        state is QuizGameError) {
-      if (newState != null) state = newState;
+    if (state is QuizGameData) {
+      return;
+    } else if (newState != null) {
+      if (newState is QuizGameError && _executionRequestQueue.isNotEmpty) {
+        return;
+      }
+
+      state = newState;
     }
   }
 
@@ -254,7 +258,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         QuizRequest(
           amountQuizzes: _maxAmountQuizzesPerRequest,
           quizConfig: quizConfig,
-          onlyCache: true,
           // clear the queue with this config if the request was successful
           clearIfSuccess: true,
         ),
@@ -272,7 +275,6 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
         QuizRequest(
           amountQuizzes: amount,
           quizConfig: quizConfig,
-          onlyCache: true,
           // the last request must be a cleanup request
           clearIfSuccess: amount == 1,
         ),

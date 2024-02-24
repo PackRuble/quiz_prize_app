@@ -6,14 +6,12 @@ class QuizRequest {
   const QuizRequest({
     required this.quizConfig,
     required this.amountQuizzes,
-    this.onlyCache = false,
     this.clearIfSuccess = false,
     this.desiredDelay,
   });
 
   final QuizConfig quizConfig;
   final int amountQuizzes;
-  final bool onlyCache;
   final bool clearIfSuccess;
   final Duration? desiredDelay;
 
@@ -27,7 +25,6 @@ class QuizRequest {
     return QuizRequest(
       quizConfig: quizConfig ?? this.quizConfig,
       amountQuizzes: amountQuizzes ?? this.amountQuizzes,
-      onlyCache: onlyCache ?? this.onlyCache,
       clearIfSuccess: clearIfSuccess ?? this.clearIfSuccess,
       desiredDelay: delay != null ? delay() : desiredDelay,
     );
