@@ -170,8 +170,10 @@ class QuizGameNotifier extends AutoDisposeNotifier<QuizGameResult> {
 
   /// The timer is designed to delay the call to the quizzes service.
   /// If it's active, then the retrieval request needs to be delayed (on 5 sec).
-  Timer? _timerCallLimit;
-  Duration _callDelay = Duration.zero;
+  ///
+  /// Fields are specifically static so that neither [_timerCallLimit] nor [_callDelay] are reset.
+  static Timer? _timerCallLimit;
+  static Duration _callDelay = Duration.zero;
 
   Future<void> _updateStateWithResult(QuizRequest request) async {
     final triviaResult = await _quizzesNotifier
