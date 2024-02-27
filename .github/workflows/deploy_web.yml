@@ -1,0 +1,41 @@
+
+name: deploy_web
+
+on:
+  workflow_dispatch:
+
+#  push:
+#    tags:
+#      - '**' # when any tags are pushed
+#    branches: [feat_deploy_on_web]
+#    paths:
+#      - 'example/my_app'
+#      - '!**.md' # ignore the readme files
+permissions:
+  contents: write
+
+jobs:
+
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+      - run: flutter config --enable-web
+      - run: flutter pub get
+
+        # for deployment to Github Pages we should always use `base-href=repo_name`
+      - run: flutter build web --base-href='/quiz_prize_app/' --web-renderer=canvaskit --release
+
+      - name: 'deploy on Github Pages'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: deploy_web
+          folder: 'build/web'
+          single-commit: true
