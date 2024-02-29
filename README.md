@@ -26,9 +26,8 @@ and others in [pubspec.yaml](pubspec.yaml)...❤
 - structure our project – _layer-first_
 - BLoC uses
 
-![architecture_flow.png](res/architecture_flow.png)
+![layers.png](res/layers.png)
 
 ## Notes
 
 - no session token implementation – which means an infinite number of questions that can be repeated.
-

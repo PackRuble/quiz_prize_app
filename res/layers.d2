@@ -1,0 +1,74 @@
+title: Quiz Prize Application Architecture {
+    near: top-center
+    shape: text
+    style: {
+    font-size: 40
+    bold: true
+    }
+}
+
+direction: left
+
+UI: "ui: ui|presentation" {
+    direction: left
+    GamePage -> GamePagePresenter
+}
+
+BLOC: "domain: BLoC|notifiers" {
+    direction: right
+    QuizGameNotifier -> QuizStatsNotifier
+    QuizGameNotifier -> QuizzesNotifier
+    QuizGameNotifier -> QuizConfigNotifier
+    QuizGameNotifier -> QuizIteratorBloc
+
+    bloc_models: {
+        Quiz
+    }
+}
+
+DATA: "data: repository|storage" {
+    repository: {
+        TriviaRepository
+        TriviaTokenRepository
+    }
+
+    dto_model: {
+        QuizDTO
+        CategoryDTO
+
+        enums: {
+            TriviaQuizDifficulty
+            TriviaQuizType
+        }
+    }
+
+    Cardoteka: {
+        AppStorage
+        GameStorage
+        SecretStorage
+    }
+
+    Cardoteka -> dto_model
+    repository -> dto_model
+}
+
+UI.GamePagePresenter -> BLOC.QuizGameNotifier
+BLOC -> DATA
+DATA.Cardoteka -> BLOC.bloc_models
+
+# Data return
+DATA.repository -> BLOC: "TriviaRepoResult<T>" {
+    style: {
+    stroke-dash: 5
+    }
+}
+BLOC.QuizGameNotifier -> UI.GamePagePresenter: "QuizGameResult" {
+    style: {
+    stroke-dash: 5
+    }
+}
+UI.GamePagePresenter -> UI.GamePage: "GamePageState" {
+    style: {
+    stroke-dash: 5
+    }
+}
