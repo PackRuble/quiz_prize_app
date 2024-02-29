@@ -1,4 +1,4 @@
-title: Quiz Prize Application Architecture {
+title: "Quiz Prize Application Architecture v2" {
     near: top-center
     shape: text
     style: {
@@ -32,7 +32,7 @@ DATA: "data: repository|storage" {
         TriviaTokenRepository
     }
 
-    dto_model: {
+    dto_models: {
         QuizDTO
         CategoryDTO
 
@@ -48,8 +48,8 @@ DATA: "data: repository|storage" {
         SecretStorage
     }
 
-    Cardoteka -> dto_model
-    repository -> dto_model
+    Cardoteka -> dto_models
+    repository -> dto_models
 }
 
 UI.GamePagePresenter -> BLOC.QuizGameNotifier
