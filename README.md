@@ -4,7 +4,7 @@
 
 A simple MVP quiz app to test the capabilities of [Cardoteka][cardoteka_github_link].
 
-You can launch the application simply by following the link and enjoy the web version — [Quiz Prize Web](https://packruble.github.io/quiz_prize_app/) 🎉🎉🎉! Also visit the [releases](https://github.com/PackRuble/cardoteka/releases) tab and check the available platforms.
+You can launch the application simply by following the link and enjoy the web version — [Quiz Prize Web](https://packruble.github.io/quiz_prize_app/) 🎉🎉🎉! Also visit the [releases](https://github.com/PackRuble/quiz_prize_app/releases) tab and check the available platforms.
 
 In any other cases, clone this repository locally and run it with the `flutter run` command.
 
