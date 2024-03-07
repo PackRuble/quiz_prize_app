@@ -12,7 +12,6 @@ import 'token_model.dart';
 import 'token_state.dart';
 
 /// Notifier contains methods for working with the [TokenModel].
-///
 class TokenNotifier extends Notifier<TokenState> {
   static final instance = NotifierProvider<TokenNotifier, TokenState>(
     TokenNotifier.new,
@@ -28,11 +27,11 @@ class TokenNotifier extends Notifier<TokenState> {
 
     final token = _storage.getOrNull(SecretCards.token);
 
-    log('$this-> $token, valid=${token != null ? isValidToken(token) : null}');
+    log('$this-> $token, valid=${token != null ? _isValidToken(token) : null}');
 
     return switch (token) {
       null => const TokenState.none(),
-      TokenModel() => isValidToken(token)
+      TokenModel() => _isValidToken(token)
           ? TokenState.active(token)
           : TokenState.expired(token),
     };
@@ -40,7 +39,7 @@ class TokenNotifier extends Notifier<TokenState> {
 
   /// Local token verification. If the token has not been used, it will be reset
   /// via [TriviaTokenRepository.tokenLifetime].
-  bool isValidToken(TokenModel token) =>
+  bool _isValidToken(TokenModel token) =>
       DateTime.now().difference(token.dateOfRenewal ?? token.dateOfReceipt) <
       TriviaTokenRepository.tokenLifetime;
 
@@ -87,6 +86,9 @@ class TokenNotifier extends Notifier<TokenState> {
         SecretCards.token,
         token.copyWith(dateOfRenewal: DateTime.now()),
       );
+      // we don't need to update the state since the validity of the token
+      // is independent of the local date.
+      // Although I don't rule out that a different state management should fix this
     }
   }
 
