@@ -46,6 +46,7 @@ class QuizzesNotifier extends AutoDisposeNotifier<List<Quiz>> {
     );
   }
 
+  // todo(07.03.2024): this method must be private!
   Future<void> cacheQuizzes(List<Quiz> fetched) async {
     await _storage.set<List<Quiz>>(
       GameCard.quizzes,
