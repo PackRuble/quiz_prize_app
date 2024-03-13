@@ -35,6 +35,14 @@ Made with [Trivia API](https://opentdb.com/api_config.php) and [Dart 3.0](https:
 
 and others in [pubspec.yaml](pubspec.yaml)...❤
 
+## Screenshots
+
+| ![](res/screenshots/windows_web_app.png) |
+|------------------------------------------|
+
+| ![](res/screenshots/android_web_pwa_app_home.png) | ![](res/screenshots/android_web_pwa_app_game.png) | ![](res/screenshots/android_web_pwa_app_stats.png) |
+|---------------------------------------------------|---------------------------------------------------|----------------------------------------------------|
+
 ## Architectural delights
 
 - structure our project — _layer-first_ — 3 layers (ui, domain, data)
@@ -47,6 +55,12 @@ and others in [pubspec.yaml](pubspec.yaml)...❤
 ![](res/layers.png)
 _Note that not all elements are involved. The emphasis is on interaction:_
 > `GamePage` -> `GamePagePresentor` -> `QuizGameNotifier` -> `Notifiers` -> `Repo&Cardoteka`
+
+## Articles
+
+- [Приложение викторины: внедрение Cardoteka и основные паттерны проектирования с Riverpod / Хабр](https://habr.com/ru/articles/799437/)
+- [Я сделал Cardoteka и вот как её использовать \[кто любит черпать\] / Хабр](https://habr.com/ru/articles/783712/)
+  - [Stop using dynamic key-value storage! Use Cardoteka for typed access to Shared Preferences | by Ruble | Medium](https://medium.com/@pack.ruble/stop-using-dynamic-key-value-storage-use-cardoteka-for-typed-access-to-shared-preferences-567c9f799d7d)
 
 ## Author contact
 
